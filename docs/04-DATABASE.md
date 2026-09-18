@@ -71,6 +71,8 @@ create policy tenant_isolation on leads
 - `organizations` policy uses `id = current_setting('app.org_id', true)::uuid`.
 - Privileged paths are narrow `SECURITY DEFINER` functions that write an audit row: `app.bootstrap_org(...)` (signup) and `app.admin_*` (platform staff only).
 - CI test: create two orgs, attempt cross-org read/write on every tenant table, expect zero rows / error.
+- Implemented in `db/migrations/0002_security.sql`; structural invariants (RLS forced on every `app` table, no access to partition children, definer functions not executable by PUBLIC/app_worker) are asserted in `db/test/structure.test.ts`.
+- Tenant context helpers: `app.current_org_id()`, `app.current_user_id()`; set per transaction via `withTenant()` / `withUser()` from `@leadforge/db`.
 
 ## Best-value computation
 `companies.best` = per field, the current `field_values` row with the highest confidence (ties -> newest). Recomputed by the pipeline after inserts for that entity; never edited by hand. User overrides live in `leads.overrides` (tenant) and, when marked "correct for everyone", create a `method=user` field value after review.

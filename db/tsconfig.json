@@ -1,0 +1,20 @@
+{
+  "extends": "@leadforge/config/tsconfig/library.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "types": ["node"],
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true
+  },
+  "include": [
+    "schema",
+    "src",
+    "scripts",
+    "seeds",
+    "test",
+    "drizzle.config.ts",
+    "vitest.config.ts",
+    "eslint.config.js"
+  ]
+}

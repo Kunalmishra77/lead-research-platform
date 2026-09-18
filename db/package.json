@@ -1,0 +1,36 @@
+{
+  "name": "@leadforge/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "generate": "drizzle-kit generate",
+    "generate:custom": "drizzle-kit generate --custom",
+    "migrate": "node scripts/migrate.ts",
+    "seed": "node seeds/run.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "postgres": "^3.4.9"
+  },
+  "devDependencies": {
+    "@leadforge/config": "workspace:*",
+    "@leadforge/dev-dns": "workspace:*",
+    "@types/node": "^24",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "^10.10.0",
+    "typescript": "~6.0.3",
+    "uuidv7": "^1.2.1",
+    "vitest": "^5.0.1"
+  }
+}

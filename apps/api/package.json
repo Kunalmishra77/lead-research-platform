@@ -15,6 +15,7 @@
     "@aws-sdk/client-s3": "^3.1135.0",
     "@fastify/static": "^10.1.4",
     "@leadforge/contracts": "workspace:*",
+    "@leadforge/db": "workspace:*",
     "@leadforge/dev-dns": "workspace:*",
     "@nestjs/common": "^11.2.5",
     "@nestjs/core": "^11.2.5",

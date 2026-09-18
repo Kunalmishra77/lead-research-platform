@@ -1,12 +1,20 @@
+import { createDb, type Database } from '@leadforge/db';
 import { Global, Inject, Module, type OnApplicationShutdown } from '@nestjs/common';
 import postgres from 'postgres';
 
 import { APP_CONFIG } from '../../config/config.module';
 import type { AppConfig } from '../../config/env.schema';
 
-/** Raw postgres.js client (role app_api via the Supabase transaction pooler). Drizzle wraps it in 1.6. */
+/** Raw postgres.js client (role app_api via the Supabase transaction pooler). */
 export const SQL = Symbol('SQL');
 export type Sql = postgres.Sql;
+
+/**
+ * Drizzle over the same client. Tenant tables must only be queried inside
+ * `withTenant(db, { orgId, userId }, tx => ...)` from @leadforge/db (RLS reads that context).
+ */
+export const DB = Symbol('DB');
+export type { Database };
 
 @Global()
 @Module({
@@ -25,8 +33,9 @@ export type Sql = postgres.Sql;
           onnotice: () => undefined,
         }),
     },
+    { provide: DB, inject: [SQL], useFactory: (sql: Sql): Database => createDb(sql) },
   ],
-  exports: [SQL],
+  exports: [SQL, DB],
 })
 export class DbModule implements OnApplicationShutdown {
   constructor(@Inject(SQL) private readonly sql: Sql) {}

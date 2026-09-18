@@ -34,8 +34,8 @@ alter default privileges for role postgres in schema app
   grant select, insert, update, delete on tables to app_api, app_worker;
 alter default privileges for role postgres in schema app
   grant usage, select on sequences to app_api, app_worker;
-grant select, insert, update, delete on all tables in schema app to app_api, app_worker;
-grant usage, select on all sequences in schema app to app_api, app_worker;
+-- No blanket "grant ... on all tables": migrations narrow privileges table by table (append-only
+-- tables, column grants, partition children), and a re-run of this script must never undo that.
 
 -- Functions are not callable unless a migration grants EXECUTE explicitly (ADR-0003).
 -- Per-schema default privileges cannot remove the global PUBLIC grant, so this must be global:

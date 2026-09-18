@@ -1,0 +1,9 @@
+{
+  "extends": "@leadforge/config/tsconfig/library.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "types": ["node"],
+    "rewriteRelativeImportExtensions": true
+  },
+  "include": ["schema", "src"]
+}

@@ -7,5 +7,7 @@ export default defineConfig({
   test: {
     include: ['test/**/*.test.ts', 'src/**/*.test.ts'],
     env: { NODE_ENV: 'test' },
+    // Booting the Nest app imports Nest + AWS SDK + Drizzle; cold runs can exceed the 10 s default.
+    hookTimeout: 30_000,
   },
 });

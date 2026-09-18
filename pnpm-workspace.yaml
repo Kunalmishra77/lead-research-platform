@@ -2,9 +2,11 @@ packages:
   - apps/*
   - packages/*
   - infra/*
+  - db
 allowBuilds:
   '@scarf/scarf': false
   '@swc/core': true
+  esbuild: true
 minimumReleaseAgeExclude:
   - prettier@3.9.8
   - '@aws-sdk/client-s3@3.1135.0'

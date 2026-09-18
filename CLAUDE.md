@@ -56,7 +56,9 @@ pnpm dev                     # web + api (turbo); API alone: pnpm --filter @lead
 pnpm lint && pnpm typecheck  # root files + all TS packages (turbo)
 pnpm test                    # TS tests
 pnpm format / format:check   # prettier (docs/*.md and services/workers are excluded)
-pnpm db:generate / db:migrate / db:seed
+pnpm db:generate             # drizzle-kit: SQL from db/schema (partitioned tables + RLS live in custom migrations)
+pnpm db:migrate              # apply migrations as owner (DATABASE_URL_MIGRATIONS)
+pnpm db:seed                 # idempotent seeds (sources)
 pnpm contracts:gen           # regenerate TS + Python types from JSON Schemas
 pnpm contracts:check         # fail if generated contracts are stale (CI)
 cd services/workers && uv sync && uv run pytest && uv run ruff check . && uv run mypy .

@@ -15,6 +15,13 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 
 ---
 
+### 2026-09-18 — Phase 1 — Task 1.6 database schema, RLS and tenant helpers
+- Done: `db/` package `@leadforge/db`. Drizzle schema in schema `app`: organizations, workspaces, memberships, user_profiles, sources, research_jobs (minimal), credit_ledger, usage_unit_keys; plus partitioned audit_logs and usage_events. Migrations 0000-0004 applied to the dev DB. RLS enabled and forced on every table (partition children too). Context helpers `app.current_org_id()` / `app.current_user_id()`. SECURITY DEFINER functions `bootstrap_org`, `admin_list_orgs`, `admin_list_users`, `is_platform_staff`, `ensure_monthly_partitions` (nightly pg_cron job, 12 months pre-created). `withTenant` / `withUser` with UUID validation and a DB-side membership check. Migrate and seed scripts (11 sources). API `DbModule` exposes Drizzle as `DB`.
+- Decisions (link ADRs): ADR-0003 amended (own partition function instead of pg_partman; composite (id, org_id) FKs; billing columns and ledger inserts closed to app_api; bootstrap never re-grants existing tables).
+- Tests/checks status: db tests 17/17 against the live dev DB (structural invariants plus tenant context), 2 pass and 15 skip when no DB is configured. Workspace: lint, typecheck, build and format green; api 26, contracts 32, dev-dns 10 tests. Code-reviewer: CHANGES REQUESTED -> the cross-org workspace leak (blocker), partition-grant exposure (blocker) and all should-fix items fixed in migrations 0003/0004.
+- Open issues / blockers: RBAC for membership/role changes is API-side (tasks 1.7/1.8 must test it). Credit reservation and grants need definer functions (Phase 2).
+- Next step: task 1.7 Supabase Auth (needs the publishable key for the server-side auth calls; JWT verification via JWKS works without it).
+
 ### 2026-09-18 — Phase 1 — Task 1.5 API skeleton
 - Done: `apps/api` NestJS 11 + Fastify (CJS): Zod-validated env (`NODE_ENV` required), `/health/live` + `/health/ready` (DB/Redis/S3 with real abort on 3 s deadline), RFC 7807 problem+json filter + `AppError`, request ids (UUID v7 or valid incoming `X-Request-Id`, echoed in header, same id in pino logs), nestjs-pino with header redaction + query-string-free request serializer, OpenAPI at `/docs` + `/docs/json` (non-production), global ZodValidationPipe, 1 MB body limit, postgres.js/ioredis/S3 infra modules with shutdown hooks.
 - Decisions (link ADRs): build via `nest build` (cleans dist; `rm -rf` is denied in settings); only Fastify `FST_*` errors pass their message through, everything else unknown -> 500; problem `type` base `https://leadforge.dev/problems/<code>`.

@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { configureApp, createAdapter } from '../../src/app.factory';
 import { AppModule } from '../../src/app.module';
 import { AppError } from '../../src/common/errors/app-error';
-import { SQL } from '../../src/infra/db/db.module';
+import { DB, SQL } from '../../src/infra/db/db.module';
 import { REDIS } from '../../src/infra/redis/redis.module';
 import { S3 } from '../../src/infra/storage/storage.module';
 import { setupOpenApi } from '../../src/openapi';
@@ -103,6 +103,9 @@ export async function createTestApp(fakes: Fakes): Promise<NestFastifyApplicatio
   })
     .overrideProvider(SQL)
     .useValue(sql)
+    // Skeleton routes never use Drizzle; feature tests replace this with a real test database.
+    .overrideProvider(DB)
+    .useValue({})
     .overrideProvider(REDIS)
     .useValue(redis)
     .overrideProvider(S3)

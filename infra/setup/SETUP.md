@@ -42,4 +42,6 @@ where user_id = (select id from auth.users where email = 'you@example.com');
   enable Secure DNS (Chrome: Settings -> Privacy -> Use secure DNS -> Cloudflare). The DB pooler
   host (`*.pooler.supabase.com`) is not affected.
 - **Free Supabase project paused** after inactivity: restore it from the dashboard, then `pnpm infra:check`.
-- **`permission denied` as app_api**: re-run `pnpm infra:bootstrap` (it re-applies grants).
+- **`permission denied` as app_api**: privileges on tables come from migrations (default privileges
+  set by bootstrap plus per-table revokes/grants). Check the table's grants in `db/migrations`; re-running
+  bootstrap never re-grants existing tables.

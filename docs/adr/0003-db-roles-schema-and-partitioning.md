@@ -28,6 +28,20 @@ docs/04 left gaps that Phase 1 hits immediately:
 - **Ledger reasons:** use the docs/11 superset: grant, purchase, subscription_renewal, reserve, consume, release, refund, expire, adjustment.
 
 ## Consequences
+- Amendment 2026-09-18 (task 1.6, implemented in `db/migrations/0001_*`, `0002_security.sql`):
+  - Partitions come from our own `app.ensure_monthly_partitions(regclass, months_ahead)` plus a nightly pg_cron job, not pg_partman (no extra schema to secure). App roles get no privileges on partition children, because parent RLS does not apply when a child is queried directly.
+  - All `app` tables have RLS enabled and forced, global ones included. `sources` has permissive policies: read for both roles, write for `app_worker`.
+  - Pre-org access: users can read their own memberships (`memberships_self_read`), plus the orgs and workspaces they belong to.
+  - `user_profiles`: `app_api` may insert `(user_id, full_name)` and update `full_name` only, never `is_platform_staff`.
+  - `bootstrap_org` requires `p_user_id = app.current_user_id()` and a confirmed email in `auth.users`, and caps a user at 10 owned orgs.
+- Hardening after the security review (migrations `0003_tenant_integrity`, `0004_security_hardening`):
+  - Composite `(id, org_id)` foreign keys on memberships, research_jobs, usage_unit_keys and usage_events, so no tenant row can reference another org's rows.
+  - Partition children have RLS forced with no policies (deny-all).
+  - The bootstrap script no longer issues blanket grants on existing tables.
+  - Only `organizations.name`/`slug` are updatable by `app_api`, and `app_api` cannot insert ledger rows.
+  - Audit inserts cannot claim another actor.
+  - `bootstrap_org` rejects banned/deleted users and takes a per-user advisory lock.
+  - `withTenant` re-checks membership in the database when a user is set.
 - docs/04 must be updated: the `usage_events` constraint, `usage_unit_keys`, PK notes, ledger reasons and the `organizations` policy.
 - The RLS isolation test (task 1.8) must also cover partition children and prove that `app_api` cannot call admin functions without the staff flag.
 - Whether Supavisor (the pooler) accepts custom login roles is verified in task 1.6. If it doesn't, the fallback is a `SET ROLE` right after connecting, documented in an ADR amendment.

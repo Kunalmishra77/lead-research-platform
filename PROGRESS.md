@@ -15,6 +15,28 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 
 ---
 
+### 2026-09-18 — Phase 1 — Task 1.8 RLS isolation suite
+- Done: `db/test/rls.live.test.ts`, 66 live cases as `app_api` and `app_worker`:
+  - SELECT on every tenant table returns org A rows only.
+  - INSERT for org B fails with the exact expected error: RLS where the role holds INSERT (always with a positive control on its own org), `permission denied` otherwise.
+  - UPDATE WITH CHECK: own rows cannot be moved into org B.
+  - UPDATE/DELETE never reach org B rows, and org B data is verified intact afterwards.
+  - Every partition child is denied directly.
+  - No context means no rows, and the context does not leak on a pooled connection.
+  - Composite-FK side channels are blocked.
+  - Pre-org user view is limited to own memberships; a two-org member sees org names only, no tenant data.
+  - `withTenant` refuses foreign orgs.
+  - `user_profiles` self-only, and the staff flag cannot be self-granted.
+  - Audit actor cannot be forged.
+  - Admin/bootstrap function guards hold, and staff listing is audited.
+  - `sources` is read-only for the API.
+  - Coverage check: every `app` table must be listed in the suite and must force RLS.
+  - Added `pnpm db:sweep-test-data`.
+- Decisions (link ADRs): ADR-0003 trust-boundary note (RLS guards against context bugs; the API role stays trusted to set context).
+- Tests/checks status: db 83/83 live. Code-reviewer: CHANGES REQUESTED (missing WITH CHECK coverage, no positive controls) -> all fixed; sweep found no leftovers.
+- Open issues / blockers: CI (1.14) must provide a database for these live suites (Supabase CLI stack); otherwise they skip.
+- Next step: task 1.13 audit log service (login, role change), then 1.9 workers.
+
 ### 2026-09-18 — Phase 1 — Task 1.7 (API part) Supabase Auth + RBAC
 - Done:
   - Global `AuthGuard` (jose, remote JWKS; ES256/RS256 only; exact issuer, audience `authenticated`, required `exp`/`iat`/`sub` and UUID `session_id`; anonymous tokens rejected; JWKS outage returns 503) with a `@Public()` opt-out.

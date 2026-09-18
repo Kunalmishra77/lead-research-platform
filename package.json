@@ -23,7 +23,8 @@
     "redis:start": "pnpm --filter @leadforge/infra-setup redis",
     "db:generate": "pnpm --filter @leadforge/db generate",
     "db:migrate": "pnpm --filter @leadforge/db migrate",
-    "db:seed": "pnpm --filter @leadforge/db seed"
+    "db:seed": "pnpm --filter @leadforge/db seed",
+    "db:sweep-test-data": "pnpm --filter @leadforge/db sweep-test-data"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",

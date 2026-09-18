@@ -42,6 +42,8 @@ docs/04 left gaps that Phase 1 hits immediately:
   - Audit inserts cannot claim another actor.
   - `bootstrap_org` rejects banned/deleted users and takes a per-user advisory lock.
   - `withTenant` re-checks membership in the database when a user is set.
+- Trust boundary (task 1.8): RLS protects against missing or wrong tenant context in application code, not against a compromised app role. `app_api` can call `set_config('app.org_id', ...)` itself, so the API remains trusted to set the context from the verified token and membership. `withTenant` re-checks membership whenever a user is given.
+- A user who belongs to several orgs can see the names of those orgs and workspaces, and their own memberships, even inside another org's context (needed for the switcher). Tenant data (jobs, ledger, usage, audit) stays strictly scoped to the active org.
 - docs/04 must be updated: the `usage_events` constraint, `usage_unit_keys`, PK notes, ledger reasons and the `organizations` policy.
 - The RLS isolation test (task 1.8) must also cover partition children and prove that `app_api` cannot call admin functions without the staff flag.
 - Whether Supavisor (the pooler) accepts custom login roles is verified in task 1.6. If it doesn't, the fallback is a `SET ROLE` right after connecting, documented in an ADR amendment.

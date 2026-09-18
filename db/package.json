@@ -17,7 +17,8 @@
     "generate": "drizzle-kit generate",
     "generate:custom": "drizzle-kit generate --custom",
     "migrate": "node scripts/migrate.ts",
-    "seed": "node seeds/run.ts"
+    "seed": "node seeds/run.ts",
+    "sweep-test-data": "node scripts/sweep-test-data.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",

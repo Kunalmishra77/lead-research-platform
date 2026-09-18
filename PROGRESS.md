@@ -5,6 +5,32 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 ## Template
 
 ```
+### 2026-09-18 — Phase 1 — Phase review (not closed: 2 criteria wait on the owner)
+- Tasks: 15/16 ticked. 1.7 is implemented (API JWKS guard, RBAC, server-side Supabase Auth in web, org + workspace creation) but stays unticked until one live sign-up and sign-in through the web UI succeeds. That needs `SUPABASE_PUBLISHABLE_KEY`.
+- Acceptance criteria:
+  - Fresh clone -> quick start < 15 min: **PASS** (about 13 min on this machine; task 1.16 entry).
+  - Sign-up creates org + workspace, login/logout, unverified email blocked: **API PASS** (orgs.live: org + default workspace + owner, 409 on a taken slug, 403 `auth.email_not_confirmed`; session revocation checked). **Web live flow PENDING** (publishable key).
+  - RLS proves org A cannot read/write org B in every tenant table: **PASS** (db 89 tests, including "covers every table in schema app and all partitions force RLS", cross-org FKs, pooled-connection context leak, privileged functions).
+  - `system.ping` round trip, worker crash recovery, DLQ after 5 failures: **PASS** against the real worker (ping.live: SSE state -> progress -> done, stale claim after a hard kill, DLQ + `failed`). Seeing it live in the web UI is **PENDING** (needs login, i.e. the publishable key).
+  - CI green on main, gitleaks passes: gitleaks **PASS** over full history; CI **PENDING** (the workflow exists and passes actionlint, but it has never run because the owner has not pushed yet).
+- Non-negotiables for Phase 1 code:
+  - RLS on every tenant table: PASS.
+  - Secrets: no secrets in the repo (gitleaks); `.env` ignored.
+  - Error taxonomy with trace/org/job ids: PASS, both TS and Python.
+  - Provenance, compliance stops, usage metering: N/A this phase (no data values, no crawler, no paid calls yet); the tables and envelope budget fields exist.
+- Tech debt / follow-ups:
+  - fastify pnpm override: remove when the Nest adapter ships a patched pin.
+  - Admin response types are copied by hand in web.
+  - No Sentry flush on API shutdown; no source-map upload.
+  - The password recovery link lands on /dashboard (no set-password page).
+  - The top bar still lacks jobs, notifications and a user menu.
+  - The protected layout drops the originally requested path.
+  - Supabase Auth per-IP rate limits (all auth calls come from the web server IP).
+  - The platform staff flag is set by SQL.
+  - esbuild moderate advisory via drizzle-kit (dev only).
+  - Local tests use the dev project, not a separate test project.
+- Status: Phase 1 stays **in progress** until the owner pushes (CI green) and provides the publishable key (live web sign-up/login + ping in the UI). Then re-run /review-phase 1.
+
 ### 2026-09-18 — Phase 1 — Task 1.16 commands + quick start verified from a clean clone
 - Done: I cloned the repo into a scratch directory and followed the README quick start as written: `pnpm install` 8m05s, then bootstrap, buckets, `infra:check` (6/6 PASS), migrate and seed (11 sources) 41s, `uv sync` 2m17s. `pnpm dev` came up with API `/health/ready` ok for db, redis and storage, `/docs` 200, `/app/me` 401 without a token, and web `/login` and `/signup` 200 with `/dashboard` redirecting to login. The workers started and consumed the `system` pool.
 - Bugs found and fixed:

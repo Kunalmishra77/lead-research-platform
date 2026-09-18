@@ -15,6 +15,20 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 
 ---
 
+### 2026-09-18 — Phase 1 — Task 1.9 Python workers skeleton
+- Done: `services/workers` (uv, Python 3.12):
+  - pydantic-settings config and structlog JSON logs with secret masking.
+  - OTel tracing, active only when an endpoint is configured.
+  - Async SQLAlchemy Core engine (asyncpg, both statement caches off for the transaction pooler) and `tenant_transaction`.
+  - aioboto3 S3 client and dev-only DoH `getaddrinfo` patch.
+  - Job framework: envelope parsing (re-checks the tenant if/then rule), handler registry with stages, idempotency with a message-id ownership token and heartbeat.
+  - Consumer: groups, XAUTOCLAIM reclaim with cursor, heartbeat via `XCLAIM JUSTID`, delayed retries (one ZSET per stream, Lua promotion, ZADD+XACK in one MULTI), DLQ for terminal/exhausted/crash-loop jobs, `budget_exhausted` pause, failed/paused progress events, error-text redaction, NOGROUP recovery.
+  - `python -m app.main` with graceful shutdown (Windows-safe).
+- Decisions (link ADRs): mypy strict on `app/` (docs/12); ruff on everything. `JOB_MAX_ATTEMPTS` is capped at 5 (schema limit). Busy duplicates of a running job are acked (the owning message is recovered by reclaim). Budget pre-checks and usage recording will live in the metered clients (Phase 2). The contracts generator now emits `py.typed`.
+- Tests/checks status: 20 pytest cases, green on fakeredis and on real Redis 8.10 (`REDIS_TEST_URL`). They cover success, duplicates (sequential and concurrent), retry with next attempt, DLQ after 5, access_restricted, budget pause, failed progress with trace, invalid envelopes, reclaim after crash (with and without claim), crash-loop DLQ, heartbeat vs. rival reclaim, Retry-After, and redaction. ruff and mypy clean. Live smoke: `app_worker` DB context via the pooler, and the worker dead-letters unknown job types. Code-reviewer: CHANGES REQUESTED (blocker: stale claim leading to a wrong DLQ) -> fixed with ownership token + heartbeat; all should-fix items fixed.
+- Open issues / blockers: no graceful drain deadline yet (in-flight jobs are cancelled on stop and recovered by reclaim). The DoH patch is dev-only.
+- Next step: task 1.10 `system.ping` round trip (API publish -> worker -> DB row -> progress -> SSE).
+
 ### 2026-09-18 — Phase 1 — Task 1.13 audit log service
 - Done:
   - `AuditService`: tenant events are written inside the caller's `withTenant` transaction. Org-less events go through `app.record_platform_audit` (allowlist: `auth.session_started`, `auth.signed_out`).

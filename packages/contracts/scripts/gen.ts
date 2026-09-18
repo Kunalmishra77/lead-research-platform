@@ -142,6 +142,8 @@ function renderPython(files: SchemaFile[]): Map<string, string> {
     const all = files.map((f) => `    "${f.moduleName}",`).join('\n');
     out.set('__init__.py', `# ${HEADER}\n\n${imports}\n\n__all__ = [\n${all}\n]\n`);
     out.set('_wire.py', `# ${HEADER}\n${WIRE_MODEL_PY}`);
+    // PEP 561 marker so type checkers use the generated annotations.
+    out.set('py.typed', '');
     return out;
   } finally {
     rmSync(tmp, { recursive: true, force: true });

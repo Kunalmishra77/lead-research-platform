@@ -1,0 +1,9 @@
+{
+  "extends": "@leadforge/config/tsconfig/next.json",
+  "compilerOptions": {
+    "types": ["node", "@testing-library/jest-dom/vitest"],
+    "paths": { "@/*": ["./src/*"] }
+  },
+  "include": ["next-env.d.ts", "src", "e2e", ".next/types/**/*.ts", "*.ts", "*.mts", "*.mjs"],
+  "exclude": ["node_modules", ".next"]
+}

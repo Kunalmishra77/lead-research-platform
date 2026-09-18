@@ -16,3 +16,7 @@ __pycache__/
 .DS_Store
 .claude/settings.local.json
 infra/docker/data/
+playwright-report/
+test-results/
+next-env.d.ts
+*.tsbuildinfo

@@ -5,6 +5,13 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 ## Template
 
 ```
+### 2026-09-18 — Phase 1 — Task 1.11 web skeleton
+- Done: `apps/web` on Next.js 16.3 (App Router, `proxy.ts`), Tailwind v4 theme tokens from docs/09, shadcn-style Button/Input/Card, app shell (sidebar in docs/09 order with later-phase items shown as "Soon", credits pill + workspace switcher at the sidebar bottom, top bar with search placeholder, Admin link for platform staff, sign-out). Login/signup/check-email pages and `/auth/confirm` (token_hash) run Supabase Auth server-side only (@supabase/ssr); the proxy gates pages with `getClaims()`. Onboarding creates org + default workspace via the API. `/api/app/*` is a same-origin streaming proxy to the API (bearer token + `x-workspace-id` added server-side, Origin check on writes, `/app/` path confinement, 1 MB streamed body cap, `redirect: manual`, 502 problem+json on upstream failure, SSE `no-cache, no-transform`, `Last-Event-ID` forwarded). Dev ping page shows live SSE progress (hidden in production).
+- Decisions (link ADRs): ADR-0002 (browser never calls supabase.co). Workspace switching is a POST server action; `GET /workspace/select` only sets an initial default and never replaces a valid choice (no cross-site switching). `lf_ws` cookie flags come from one helper (`secure` follows APP_URL); cleared on sign-out. Open-redirect guard `safeNextPath` resolves against APP_URL and rejects control chars/backslashes.
+- Tests/checks status: vitest 31 passed (redirect guard, proxy path/headers/origin/body cap, cookie flags, workspace action, sign-out clears cookie, shell render); Playwright 6 passed against a production build with placeholder env (no live Supabase); lint, typecheck, build green. Code-reviewer: CHANGES REQUESTED (open redirect via `/\` and tab, `..` path escape in proxy) -> all blockers and should-fix items fixed.
+- Open issues / blockers: live login needs `SUPABASE_PUBLISHABLE_KEY` from the owner (so 1.7 web part stays unticked). Supabase Auth rate limits are per client IP and all auth calls now come from the web server IP: check limits / forwarding before launch (docs/10). `recovery` links land on /dashboard (no set-password page yet); PKCE `code` flow not handled, so email templates must use `token_hash`. Top bar still lacks running-jobs indicator, notifications and user menu (later phases). Protected-layout redirect drops the originally requested path.
+- Next step: task 1.12 admin shell.
+
 ### YYYY-MM-DD — Phase N — <short title>
 - Done:
 - Decisions (link ADRs):

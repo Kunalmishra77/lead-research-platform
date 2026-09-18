@@ -55,6 +55,7 @@ pnpm install                 # JS deps
 pnpm dev                     # web + api (turbo); API alone: pnpm --filter @leadforge/api dev -> http://localhost:4000 (/docs, /health/ready)
 pnpm lint && pnpm typecheck  # root files + all TS packages (turbo)
 pnpm test                    # TS tests
+pnpm --filter @leadforge/web build && pnpm --filter @leadforge/web e2e   # Playwright smoke (chromium)
 pnpm format / format:check   # prettier (docs/*.md and services/workers are excluded)
 pnpm db:generate             # drizzle-kit: SQL from db/schema (partitioned tables + RLS live in custom migrations)
 pnpm db:migrate              # apply migrations as owner (DATABASE_URL_MIGRATIONS)

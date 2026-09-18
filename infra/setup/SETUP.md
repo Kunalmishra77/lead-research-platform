@@ -20,6 +20,9 @@ Decisions: `docs/adr/0002-hosted-dev-services-and-supabase-auth.md`, `docs/adr/0
    - **Storage -> S3 Connection**: enable, create an access key.
    - **Project Settings -> JWT Keys**: signing key must be asymmetric (ES256). New projects already are.
    - **Authentication -> URL Configuration**: Site URL `http://localhost:3000`, redirect `http://localhost:3000/**`.
+   - **Authentication -> Emails -> Templates**: point the links at our own domain, because some ISPs block `supabase.co` in the browser (ADR-0002). In **Confirm signup**, replace the link with
+     `<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">Confirm your email</a>`.
+     In **Reset password**, use the same link with `type=recovery`. (Without this change the default link still works where `supabase.co` is reachable, via the `?code=` fallback.)
 3. `pnpm install`
 4. In a separate terminal: `pnpm redis:start` (leave it running).
 5. `pnpm infra:bootstrap` (schema `app`, extensions, roles `app_api` / `app_worker`; idempotent).

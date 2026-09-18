@@ -15,13 +15,23 @@ function isOtpType(value: string | null): value is EmailOtpType {
   return OTP_TYPES.some((t) => t === value);
 }
 
-/** Email confirmation link target: verifies the token server-side and starts the session. */
+/**
+ * Email link target; verifies server-side and starts the session (ADR-0002: the browser never
+ * talks to supabase.co). Preferred: `?token_hash=&type=` from our email templates (infra/setup/
+ * SETUP.md), so the link points at our own domain. Fallback: `?code=` (PKCE) when Supabase's
+ * default template redirected here; the verifier cookie was set by the server-side sign-up.
+ */
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const tokenHash = request.nextUrl.searchParams.get('token_hash');
-  const type = request.nextUrl.searchParams.get('type');
-  if (tokenHash && isOtpType(type)) {
+  const params = request.nextUrl.searchParams;
+  const tokenHash = params.get('token_hash');
+  const type = params.get('type');
+  const code = params.get('code');
+  if ((tokenHash && isOtpType(type)) || code) {
     const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+    const { error } =
+      tokenHash && isOtpType(type)
+        ? await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
+        : await supabase.auth.exchangeCodeForSession(code ?? '');
     if (!error) return NextResponse.redirect(new URL('/dashboard', request.url));
   }
   return NextResponse.redirect(new URL('/login?error=confirm', request.url));

@@ -56,7 +56,7 @@ Always install the latest stable version and record it in the lockfile. Verify A
 | Need | Local | Production (initial) |
 | --- | --- | --- |
 | Postgres | Supabase dev project (PG 17, ap-south-1) + separate test project | Supabase paid plan (ap-south-1) |
-| Redis | Redis Cloud free | Redis Cloud paid / managed Redis |
+| Redis | portable Redis 8 for Windows (`pnpm redis:start`) | Redis Cloud paid / managed Redis |
 | Object storage | Supabase Storage (S3 API) | Supabase Storage (R2 optional later, config only) |
 | Mail | Supabase Auth built-in | Resend |
 | Deploy | native processes on the dev machine (no Docker, ADR-0002) | Web on Vercel or container; API + workers as containers on 2-3 VMs or Render/Railway; Terraform later |

@@ -1,0 +1,26 @@
+{
+  "name": "@leadforge/infra-setup",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bootstrap": "node src/bootstrap.ts",
+    "buckets": "node src/buckets.ts",
+    "check": "node src/check.ts",
+    "redis": "node src/redis-local.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1135.0",
+    "@leadforge/dev-dns": "workspace:*",
+    "ioredis": "^6.0.0",
+    "postgres": "^3.4.9"
+  },
+  "devDependencies": {
+    "@leadforge/config": "workspace:*",
+    "@types/node": "^24",
+    "eslint": "^10.10.0",
+    "typescript": "~6.0.3"
+  }
+}

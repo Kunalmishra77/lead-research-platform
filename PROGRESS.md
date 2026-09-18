@@ -15,6 +15,13 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 
 ---
 
+### 2026-09-18 — Phase 1 — Task 1.3 hosted dev infra (no Docker)
+- Done: `infra/setup` (bootstrap.sql + `pnpm infra:bootstrap`: schema `app`, extensions in schema `extensions`, login roles `app_api`/`app_worker`, grants + default privileges, global EXECUTE revoke; `infra:buckets` created private `lf-raw`/`lf-exports`; `infra:check`; `redis:start` portable Redis 8.10.2 for Windows, checksum-pinned, 127.0.0.1), `@leadforge/dev-dns` (DoH for `*.supabase.co`, dev/test only), SETUP.md, `infra/setup/env.template`.
+- Decisions (link ADRs): ADR-0002 amended: dev Redis is local (not Redis Cloud); custom roles work through Supavisor (`<role>.<ref>`), so no SET ROLE fallback. Role passwords are set as client-side SCRAM verifiers with a fixed per-role salt: the pooler caches credentials and a new salt breaks logins until its cache refreshes. Tests run on the dev project with rollback (no separate test project) until the owner creates one.
+- Tests/checks status: `infra:check` 6/6 PASS live (owner, app_api, app_worker via tx pooler, Redis, S3, JWKS ES256); bootstrap re-run is idempotent; dev-dns 10 tests, contracts 32 tests; lint/typecheck/format green. Code-reviewer: CHANGES REQUESTED -> all blocker/should-fix items fixed.
+- Open issues / blockers: `.env` must still be created by the owner from `infra/setup/env.template` (Claude denied); I run with in-memory values. Task 1.6: keep Drizzle's migrations table out of schema `app`. Task 1.8: assert every `app` table has RLS enabled+forced and app_worker cannot execute SECURITY DEFINER functions. `.env.example` is stale (points to template).
+- Next step: task 1.5 API skeleton.
+
 ### 2026-09-18 — Phase 1 — Task 1.4 contracts package
 - Done: `packages/contracts` with JSON Schemas (job-envelope v1, progress-event v1, research-spec v1 skeleton), `scripts/gen.ts` (TS types + schema consts via json-schema-to-typescript; Pydantic v2 models via datamodel-codegen 0.82 with `WireModel` base + `to_wire()`), ajv 2020 validators, shared fixtures, `pnpm contracts:gen` / `contracts:check` (also removes/flags orphaned generated files). Base tsconfig moved to `packages/config/tsconfig/base.json` (Vite does not follow pnpm symlinks for relative `extends`).
 - Decisions (link ADRs): envelope budget uses `cost_cap_micros` (integer money) instead of `cost_cap_usd`; progress event carries `org_id` + `trace_id`; envelope if/then requires `org_id` when `research_job_id` is set (TS-only in schema; workers parser must re-check in 1.9); Python strict int/str/bool; `fields` uniqueness enforced TS-side only.

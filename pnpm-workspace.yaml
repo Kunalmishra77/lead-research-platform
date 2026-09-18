@@ -1,5 +1,7 @@
 packages:
   - apps/*
   - packages/*
+  - infra/*
 minimumReleaseAgeExclude:
   - prettier@3.9.8
+  - '@aws-sdk/client-s3@3.1135.0'

@@ -30,7 +30,7 @@ This file is loaded automatically in every session. Keep it short. Detailed spec
 - `apps/web` — Next.js (App Router), TypeScript, Tailwind, shadcn/ui, TanStack Query/Table/Virtual
 - `apps/api` — NestJS, TypeScript, Drizzle ORM (owns ALL DB migrations), Supabase Auth (JWT verified via JWKS), Zod
 - `services/workers` — Python 3.12, uv, asyncio, httpx, Playwright, Pydantic v2, SQLAlchemy Core (no migrations in Python)
-- Supabase: PostgreSQL 17 (+ pgvector, pg_trgm, PostGIS; app tables in schema `app`), Auth, Storage (S3 API) · Redis 7 on Redis Cloud (Streams for jobs, cache, rate limits)
+- Supabase: PostgreSQL 17 (+ pgvector, pg_trgm, PostGIS; app tables in schema `app`), Auth, Storage (S3 API) · Redis 8 (Streams for jobs, cache, rate limits): local portable build in dev, managed in prod
 - No Docker on the dev machine: all infra is hosted (ADR-0002). The browser never calls `*.supabase.co` directly (Indian ISP DNS block); auth runs server-side in Next.js.
 - Job contract between TS and Python = Redis Streams + JSON envelope defined in `packages/contracts` (JSON Schema). Never call Python from Node directly.
 
@@ -60,7 +60,10 @@ pnpm db:generate / db:migrate / db:seed
 pnpm contracts:gen           # regenerate TS + Python types from JSON Schemas
 pnpm contracts:check         # fail if generated contracts are stale (CI)
 cd services/workers && uv sync && uv run pytest && uv run ruff check . && uv run mypy .
-# no local containers: dev uses hosted Supabase + Redis Cloud (see infra/setup/, ADR-0002)
+pnpm redis:start             # local Redis (separate terminal, keep running)
+pnpm infra:bootstrap         # schema app, extensions, app roles (idempotent)
+pnpm infra:buckets           # storage buckets
+pnpm infra:check             # all dev services must PASS (setup guide: infra/setup/SETUP.md)
 ```
 
 ## Coding conventions (full list: `docs/12-CODING-STANDARDS.md`)

@@ -35,12 +35,13 @@ Option 3, with Supabase Auth replacing Better Auth.
 | Users, orgs, roles | `auth.users` is Supabase-owned. We own `app.user_profiles` (1:1, holds `is_platform_staff`), `organizations`, `workspaces`, `memberships` with our 5 roles. Org + default workspace are created by an API call after the first verified login (no triggers on the `auth` schema). |
 | Auth email | Built-in Supabase email for Phase 1 dev (team members only). Custom SMTP (e.g. Resend) before any outside user signs up. Mailpit dropped. |
 | Object storage | Supabase Storage via its S3 endpoint, private buckets `lf-raw`, `lf-exports`. Code uses a generic S3 client, so moving to R2 later is config only. |
-| Redis | Redis Cloud free database for dev (Streams, pub/sub, rate limits). Upgrade to a paid plan before Phase 3 crawl volume. |
+| Redis | Dev: portable Redis 8 for Windows (`pnpm redis:start`, checksum-pinned download from github.com/redis-windows, Apache-2.0) on 127.0.0.1. Staging/prod: Redis Cloud or another managed Redis (the free Redis Cloud tier is too small for crawl volume). |
 | Local runtime | API, web and workers run natively on Windows. `uvloop` only when not on Windows. The dev machine enables Windows DNS-over-HTTPS (or uses a DoH-resolving DNS) so server-side code can reach `*.supabase.co`. |
 | Production reachability | Before beta, put a Supabase custom domain (paid add-on) or our own reverse proxy in front of Auth/Storage so no customer-facing URL depends on `supabase.co`. Signed download URLs for exports are served through our domain. |
 | Tests | Local integration tests run against a second Supabase project `leadforge-test` (never dev). CI (GitHub Actions) runs the Supabase CLI local stack + Redis service container per run, so CI never touches hosted data. |
 
 ## Consequences
+- Amendment 2026-09-18 (task 1.3): custom login roles `app_api`/`app_worker` work through the Supabase pooler (`<role>.<project-ref>` user), so the ADR-0003 `SET ROLE` fallback is not needed. Dev Redis is local (see Redis row). Node/Python resolve `*.supabase.co` over DoH when `DEV_DNS_OVER_HTTPS=true` (`@leadforge/dev-dns`).
 - Phase 1 task 1.3 becomes "hosted dev services + setup guide + bucket/role bootstrap scripts" instead of a compose file; 1.7 becomes Supabase Auth; 1.8 uses the test project locally and the Supabase CLI in CI.
 - Docs to update after acceptance: CLAUDE.md (stack, commands), docs/01, 02, 04 (auth tables, `app` schema), 05 (auth section), 10 (session/cookie controls), 13 (Testcontainers), phase-01, `.env.example`.
 - Development needs internet. Free-plan pausing/deletion after inactivity must be expected; the setup guide covers restoring.

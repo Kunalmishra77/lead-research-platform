@@ -5,7 +5,9 @@ Multi-source lead generation and deep research SaaS. See `CLAUDE.md` for how thi
 ## Quick start (after Phase 1)
 
 ```bash
-cp .env.example .env   # fill in Supabase + Redis Cloud values (see infra/setup/)
+cp infra/setup/env.template .env   # fill in values, see infra/setup/SETUP.md
+pnpm redis:start                    # separate terminal
+pnpm infra:bootstrap && pnpm infra:buckets && pnpm infra:check
 pnpm install
 pnpm db:migrate && pnpm db:seed
 pnpm dev

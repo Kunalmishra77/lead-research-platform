@@ -10,7 +10,11 @@
 
 ## Auth and RBAC
 - Supabase Auth (ADR-0002): email+password with confirmation; Google OAuth later. All Supabase Auth calls happen server-side in Next.js (browser never calls supabase.co); session in httpOnly cookies on our domain. The API receives `Authorization: Bearer <access_token>` and verifies it against the project JWKS. Orgs, workspaces, memberships and roles are our own tables; `POST /app/orgs` bootstraps org + default workspace through `app.bootstrap_org`.
-- Roles: owner, admin, manager, member, viewer.
+- Roles: owner, admin, manager, member, viewer (per workspace membership; the role is always read from the DB, never from the token).
+- Implemented (task 1.7):
+  - A global `AuthGuard` verifies ES256/RS256 access tokens against the project JWKS: exact issuer `${SUPABASE_URL}/auth/v1`, audience `authenticated`, and `exp`/`iat`/`sub` plus a UUID `session_id` required. Anonymous tokens are rejected. A JWKS outage returns 503 `auth.unavailable`, not 401. `@Public()` opts a route out.
+  - Workspace-scoped routes use `@RequirePermission(<permission>)`: send `X-Workspace-Id`. The guard checks the session is still active (`app.session_is_active`: not signed out or expired, user not banned or deleted) and the caller's membership. Non-member and unknown workspaces return the same 403 `tenant.forbidden`; a missing permission returns 403 `rbac.forbidden`.
+  - Error codes: `auth.missing_token` / `auth.invalid_token` / `auth.session_revoked` (401, `WWW-Authenticate: Bearer[ error="invalid_token"]`), `auth.email_not_confirmed`, `auth.user_blocked`, `org.slug_taken` (409), `org.limit_reached` (422).
 
 | Permission | owner | admin | manager | member | viewer |
 | --- | --- | --- | --- | --- | --- |

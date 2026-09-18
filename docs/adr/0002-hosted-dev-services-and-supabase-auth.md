@@ -41,6 +41,7 @@ Option 3, with Supabase Auth replacing Better Auth.
 | Tests | Local integration tests run against a second Supabase project `leadforge-test` (never dev). CI (GitHub Actions) runs the Supabase CLI local stack + Redis service container per run, so CI never touches hosted data. |
 
 ## Consequences
+- Session revocation (task 1.7): access tokens stay valid until `exp` (Supabase default 1 h). Workspace-scoped requests additionally check `auth.sessions` / ban / deletion state through `app.session_is_active`. `/app/me` and org creation rely on token expiry, and on `bootstrap_org`'s own user checks.
 - Amendment 2026-09-18 (task 1.3): custom login roles `app_api`/`app_worker` work through the Supabase pooler (`<role>.<project-ref>` user), so the ADR-0003 `SET ROLE` fallback is not needed. Dev Redis is local (see Redis row). Node/Python resolve `*.supabase.co` over DoH when `DEV_DNS_OVER_HTTPS=true` (`@leadforge/dev-dns`).
 - Phase 1 task 1.3 becomes "hosted dev services + setup guide + bucket/role bootstrap scripts" instead of a compose file; 1.7 becomes Supabase Auth; 1.8 uses the test project locally and the Supabase CLI in CI.
 - Docs to update after acceptance: CLAUDE.md (stack, commands), docs/01, 02, 04 (auth tables, `app` schema), 05 (auth section), 10 (session/cookie controls), 13 (Testcontainers), phase-01, `.env.example`.

@@ -2,8 +2,10 @@ import { Controller, Get, HttpCode, Res } from '@nestjs/common';
 import { ApiOkResponse, ApiServiceUnavailableResponse, ApiTags } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
 
+import { Public } from '../auth/public.decorator';
 import { HealthService, type Readiness } from './health.service';
 
+@Public()
 @ApiTags('health')
 @Controller('health')
 export class HealthController {

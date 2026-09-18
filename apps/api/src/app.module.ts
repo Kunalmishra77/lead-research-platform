@@ -11,7 +11,9 @@ import type { AppConfig } from './config/env.schema';
 import { DbModule } from './infra/db/db.module';
 import { RedisModule } from './infra/redis/redis.module';
 import { StorageModule } from './infra/storage/storage.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
+import { OrgsModule } from './modules/orgs/orgs.module';
 
 @Module({
   imports: [
@@ -46,7 +48,9 @@ import { HealthModule } from './modules/health/health.module';
     DbModule,
     RedisModule,
     StorageModule,
+    AuthModule,
     HealthModule,
+    OrgsModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },

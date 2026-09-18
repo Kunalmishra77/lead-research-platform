@@ -3,29 +3,37 @@ import { z } from 'zod';
 const bool = z.enum(['true', 'false']).transform((v) => v === 'true');
 
 /** Every environment variable the API reads. Validated once at startup. */
-export const envSchema = z.object({
-  // Required on purpose: a missing value must not silently enable dev behaviour (Swagger, pretty logs).
-  NODE_ENV: z.enum(['development', 'test', 'production']),
-  HOST: z.string().default('0.0.0.0'),
-  PORT: z.coerce.number().int().min(1).max(65535).default(4000),
-  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
-  APP_URL: z.url(),
-  DEV_DNS_OVER_HTTPS: bool.default(false),
+export const envSchema = z
+  .object({
+    // Required on purpose: a missing value must not silently enable dev behaviour (Swagger, pretty logs).
+    NODE_ENV: z.enum(['development', 'test', 'production']),
+    HOST: z.string().default('0.0.0.0'),
+    PORT: z.coerce.number().int().min(1).max(65535).default(4000),
+    LOG_LEVEL: z
+      .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
+      .default('info'),
+    APP_URL: z.url(),
+    DEV_DNS_OVER_HTTPS: bool.default(false),
 
-  DATABASE_URL: z.url(),
-  DB_POOL_MAX: z.coerce.number().int().min(1).max(50).default(10),
-  REDIS_URL: z.url(),
+    DATABASE_URL: z.url(),
+    DB_POOL_MAX: z.coerce.number().int().min(1).max(50).default(10),
+    REDIS_URL: z.url(),
 
-  S3_ENDPOINT: z.url(),
-  S3_REGION: z.string().min(1),
-  S3_BUCKET_RAW: z.string().min(3),
-  S3_BUCKET_EXPORTS: z.string().min(3),
-  S3_ACCESS_KEY_ID: z.string().min(1),
-  S3_SECRET_ACCESS_KEY: z.string().min(1),
+    S3_ENDPOINT: z.url(),
+    S3_REGION: z.string().min(1),
+    S3_BUCKET_RAW: z.string().min(3),
+    S3_BUCKET_EXPORTS: z.string().min(3),
+    S3_ACCESS_KEY_ID: z.string().min(1),
+    S3_SECRET_ACCESS_KEY: z.string().min(1),
 
-  SUPABASE_URL: z.url(),
-  SUPABASE_JWKS_URL: z.url(),
-});
+    // Normalized without trailing slash: the token issuer is `${SUPABASE_URL}/auth/v1`, exactly.
+    SUPABASE_URL: z.url().transform((u) => u.replace(/\/+$/, '')),
+    SUPABASE_JWKS_URL: z.url(),
+  })
+  .refine((c) => new URL(c.SUPABASE_JWKS_URL).origin === new URL(c.SUPABASE_URL).origin, {
+    path: ['SUPABASE_JWKS_URL'],
+    message: 'must be on the same origin as SUPABASE_URL',
+  });
 
 export type AppConfig = z.infer<typeof envSchema>;
 

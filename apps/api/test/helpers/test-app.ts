@@ -1,6 +1,7 @@
-import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, type Type } from '@nestjs/common';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
+import type { JWTVerifyGetKey } from 'jose';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
@@ -10,6 +11,8 @@ import { AppError } from '../../src/common/errors/app-error';
 import { DB, SQL } from '../../src/infra/db/db.module';
 import { REDIS } from '../../src/infra/redis/redis.module';
 import { S3 } from '../../src/infra/storage/storage.module';
+import { Public } from '../../src/modules/auth/public.decorator';
+import { JWT_KEY_SET } from '../../src/modules/auth/token-verifier';
 import { setupOpenApi } from '../../src/openapi';
 
 export const TEST_ENV = {
@@ -41,6 +44,7 @@ const EchoSchema = z.object({ name: z.string().min(2), count: z.number().int().p
 class EchoDto extends createZodDto(EchoSchema) {}
 
 /** Test-only routes that exercise validation and error mapping through the real pipeline. */
+@Public()
 @Controller('__probe')
 class ProbeController {
   @Post('echo')
@@ -65,8 +69,26 @@ class ProbeController {
   }
 }
 
-export async function createTestApp(fakes: Fakes): Promise<NestFastifyApplication> {
+export interface TestAppOptions {
+  /** Verifies test tokens (defaults to a key set that rejects everything). */
+  keySet?: JWTVerifyGetKey;
+  /** Use the real database from DATABASE_URL instead of fakes (live tests only). */
+  realDb?: boolean;
+  controllers?: Type[];
+}
+
+const rejectAllKeys: JWTVerifyGetKey = () => Promise.reject(new Error('no test key set'));
+
+export async function createTestApp(
+  fakes: Fakes,
+  options: TestAppOptions = {},
+): Promise<NestFastifyApplication> {
+  const realDbUrl = process.env.DATABASE_URL;
   Object.assign(process.env, TEST_ENV);
+  if (options.realDb === true) {
+    if (!realDbUrl) throw new Error('realDb requires DATABASE_URL');
+    process.env.DATABASE_URL = realDbUrl;
+  }
   const fail = (): Promise<never> => Promise.reject(new Error('down'));
   const sql = Object.assign(
     () =>
@@ -97,20 +119,21 @@ export async function createTestApp(fakes: Fakes): Promise<NestFastifyApplicatio
     destroy: () => undefined,
   };
 
-  const moduleRef = await Test.createTestingModule({
+  let builder = Test.createTestingModule({
     imports: [AppModule],
-    controllers: [ProbeController],
+    controllers: [ProbeController, ...(options.controllers ?? [])],
   })
-    .overrideProvider(SQL)
-    .useValue(sql)
-    // Skeleton routes never use Drizzle; feature tests replace this with a real test database.
-    .overrideProvider(DB)
-    .useValue({})
+    .overrideProvider(JWT_KEY_SET)
+    .useValue(options.keySet ?? rejectAllKeys)
     .overrideProvider(REDIS)
     .useValue(redis)
     .overrideProvider(S3)
-    .useValue(s3)
-    .compile();
+    .useValue(s3);
+  if (options.realDb !== true) {
+    // Skeleton routes never use Drizzle; live tests pass realDb instead.
+    builder = builder.overrideProvider(SQL).useValue(sql).overrideProvider(DB).useValue({});
+  }
+  const moduleRef = await builder.compile();
 
   const app = moduleRef.createNestApplication<NestFastifyApplication>(createAdapter(), {
     bufferLogs: true,

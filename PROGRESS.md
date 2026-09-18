@@ -15,6 +15,17 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 
 ---
 
+### 2026-09-18 — Phase 1 — Task 1.7 (API part) Supabase Auth + RBAC
+- Done:
+  - Global `AuthGuard` (jose, remote JWKS; ES256/RS256 only; exact issuer, audience `authenticated`, required `exp`/`iat`/`sub` and UUID `session_id`; anonymous tokens rejected; JWKS outage returns 503) with a `@Public()` opt-out.
+  - `TenantGuard` + `@RequirePermission()` (X-Workspace-Id, DB role, session-revocation check, the docs/05 matrix; fails closed without a permission).
+  - `GET /app/me` and `POST /app/orgs` via `app.bootstrap_org` (UUID v7 ids, slug generation, distinct error codes). Migration 0005 adds `app.session_is_active` and custom SQLSTATEs LF001-LF003.
+  - ESLint blocks direct `drizzle-orm` imports in the API; Drizzle operators come from `@leadforge/db`.
+- Decisions (link ADRs): ADR-0002 note on session revocation; docs/05 auth section updated.
+- Tests/checks status: api 64 tests. Unit: RBAC matrix, token verifier with local ES256 keys (expired, issuer, audience, foreign key, HS256, anonymous, no exp, JWKS outage). e2e: 401 handling. Live against the dev DB, 10 tests: org create + audit row, /me isolation, 409 slug, unconfirmed email 403, RBAC owner/viewer/non-member/header, revoked session 401; cleanup verified. All packages green. Code-reviewer: CHANGES REQUESTED -> all should-fix items fixed.
+- Open issues / blockers: 1.7 checkbox stays open until the server-side auth routes in Next.js exist (built with 1.11). Signup and login need `SUPABASE_PUBLISHABLE_KEY` (Project Settings -> API Keys), which the owner must add to `.env`. `SUPABASE_JWKS_URL` must stay on the same origin as `SUPABASE_URL`.
+- Next step: task 1.8 RLS isolation suite (cross-org read/write on every tenant table).
+
 ### 2026-09-18 — Phase 1 — Task 1.6 database schema, RLS and tenant helpers
 - Done: `db/` package `@leadforge/db`. Drizzle schema in schema `app`: organizations, workspaces, memberships, user_profiles, sources, research_jobs (minimal), credit_ledger, usage_unit_keys; plus partitioned audit_logs and usage_events. Migrations 0000-0004 applied to the dev DB. RLS enabled and forced on every table (partition children too). Context helpers `app.current_org_id()` / `app.current_user_id()`. SECURITY DEFINER functions `bootstrap_org`, `admin_list_orgs`, `admin_list_users`, `is_platform_staff`, `ensure_monthly_partitions` (nightly pg_cron job, 12 months pre-created). `withTenant` / `withUser` with UUID validation and a DB-side membership check. Migrate and seed scripts (11 sources). API `DbModule` exposes Drizzle as `DB`.
 - Decisions (link ADRs): ADR-0003 amended (own partition function instead of pg_partman; composite (id, org_id) FKs; billing columns and ledger inserts closed to app_api; bootstrap never re-grants existing tables).

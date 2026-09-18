@@ -36,6 +36,13 @@
       "when": 1789716769664,
       "tag": "0004_security_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789718105408,
+      "tag": "0005_auth_session_checks",
+      "breakpoints": true
     }
   ]
 }

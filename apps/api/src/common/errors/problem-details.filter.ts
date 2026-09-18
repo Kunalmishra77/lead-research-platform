@@ -23,6 +23,15 @@ export class ProblemDetailsFilter implements ExceptionFilter {
 
     // Streaming/hijacked replies (SSE) may already have sent headers: log only, never send twice.
     if (reply.sent || reply.raw.headersSent) return;
+    if (body.status === 401) {
+      // RFC 6750: tell clients whether to refresh (invalid_token) or just authenticate.
+      const tokenProblem =
+        body.code === 'auth.invalid_token' || body.code === 'auth.session_revoked';
+      void reply.header(
+        'www-authenticate',
+        tokenProblem ? 'Bearer error="invalid_token"' : 'Bearer',
+      );
+    }
     void reply.status(body.status).header('content-type', 'application/problem+json').send(body);
   }
 }

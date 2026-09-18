@@ -11,6 +11,18 @@ describe('parseEnv', () => {
     expect(config.HOST).toBe('0.0.0.0');
   });
 
+  it('normalizes SUPABASE_URL (token issuer must match exactly)', () => {
+    expect(
+      parseEnv({ ...TEST_ENV, SUPABASE_URL: 'https://example.supabase.co/' }).SUPABASE_URL,
+    ).toBe('https://example.supabase.co');
+  });
+
+  it('requires the JWKS URL on the same origin as SUPABASE_URL', () => {
+    expect(() =>
+      parseEnv({ ...TEST_ENV, SUPABASE_JWKS_URL: 'https://evil.example.com/jwks.json' }),
+    ).toThrow(/SUPABASE_JWKS_URL/);
+  });
+
   it('lists every invalid variable without echoing values', () => {
     const secret = 'hunter2-is-not-a-url';
     const env: NodeJS.ProcessEnv = { ...TEST_ENV, DATABASE_URL: secret, PORT: 'abc' };

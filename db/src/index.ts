@@ -16,6 +16,10 @@ export * from '../schema/research.ts';
 export * from '../schema/sources.ts';
 export * from '../schema/tenancy.ts';
 
+// Consumers (the CommonJS API) must use Drizzle through this package: importing drizzle-orm directly
+// there would load its CJS build next to this ESM build (incompatible types, dual-package hazard).
+export { and, asc, desc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
+
 export const schema = { ...enums, ...tenancy, ...sources, ...research, ...billing, ...partitioned };
 
 export type Database = PostgresJsDatabase<typeof schema>;

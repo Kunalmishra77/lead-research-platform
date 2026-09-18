@@ -17,14 +17,15 @@
     "prepare": "husky",
     "contracts:gen": "pnpm --filter @leadforge/contracts gen",
     "contracts:check": "pnpm --filter @leadforge/contracts check",
-    "infra:bootstrap": "pnpm --filter @leadforge/infra-setup bootstrap",
-    "infra:buckets": "pnpm --filter @leadforge/infra-setup buckets",
-    "infra:check": "pnpm --filter @leadforge/infra-setup check",
-    "redis:start": "pnpm --filter @leadforge/infra-setup redis",
+    "infra:bootstrap": "pnpm build:packages && pnpm --filter @leadforge/infra-setup bootstrap",
+    "infra:buckets": "pnpm build:packages && pnpm --filter @leadforge/infra-setup buckets",
+    "infra:check": "pnpm build:packages && pnpm --filter @leadforge/infra-setup check",
+    "redis:start": "pnpm build:packages && pnpm --filter @leadforge/infra-setup redis",
     "db:generate": "pnpm --filter @leadforge/db generate",
-    "db:migrate": "pnpm --filter @leadforge/db migrate",
-    "db:seed": "pnpm --filter @leadforge/db seed",
-    "db:sweep-test-data": "pnpm --filter @leadforge/db sweep-test-data"
+    "db:migrate": "pnpm build:packages && pnpm --filter @leadforge/db migrate",
+    "db:seed": "pnpm build:packages && pnpm --filter @leadforge/db seed",
+    "db:sweep-test-data": "pnpm --filter @leadforge/db sweep-test-data",
+    "build:packages": "turbo run build --filter=./packages/* --output-logs=errors-only"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",

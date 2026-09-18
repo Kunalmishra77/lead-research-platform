@@ -5,6 +5,19 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 ## Template
 
 ```
+### 2026-09-18 — Phase 1 — Task 1.16 commands + quick start verified from a clean clone
+- Done: I cloned the repo into a scratch directory and followed the README quick start as written: `pnpm install` 8m05s, then bootstrap, buckets, `infra:check` (6/6 PASS), migrate and seed (11 sources) 41s, `uv sync` 2m17s. `pnpm dev` came up with API `/health/ready` ok for db, redis and storage, `/docs` 200, `/app/me` 401 without a token, and web `/login` and `/signup` 200 with `/dashboard` redirecting to login. The workers started and consumed the `system` pool.
+- Bugs found and fixed:
+  - (1) infra:* and db:* scripts failed on a fresh clone because they import built workspace packages. They now run `pnpm build:packages` first (turbo-cached).
+  - (2) `pnpm dev` did not build packages. The turbo `dev` task now depends on `^build`.
+  - (3) Turbo strict env mode dropped shell env vars for tasks. `globalPassThroughEnv` now lists the app variables, and the web build hashes `SENTRY_DSN_WEB`/`SENTRY_ENVIRONMENT`.
+  - (4) The email confirmation flow: Supabase's default template links to supabase.co (blocked by the ISP) and uses PKCE. `/auth/confirm` now also accepts `?code=`, and SETUP.md tells the owner to point the templates at our own domain with `token_hash`.
+  - The README quick start is rewritten in the right order, and CLAUDE.md commands are updated. SETUP.md troubleshooting now covers the stale Turbopack cache (every page 404 after a hard kill) and env loading.
+- Decisions (link ADRs): none new. ADR-0002 (no browser calls to supabase.co) motivates the email template change.
+- Tests/checks status: web vitest 39 (new confirm-route tests), lint, typecheck and format green.
+- Open issues / blockers: I could not do a live sign-up or sign-in because the owner has not provided `SUPABASE_PUBLISHABLE_KEY`. The confirm email template change is a manual dashboard step. Setup time on this machine was about 13 min (install dominated by copying the pnpm store across drives), which is inside the 15-minute acceptance target but close.
+- Next step: /review-phase 1.
+
 ### 2026-09-18 — Phase 1 — Task 1.15 Sentry wiring
 - Done: all three services report errors to Sentry, each switched on only by its own DSN (`SENTRY_DSN_WEB`, `SENTRY_DSN_API`, `SENTRY_DSN_WORKERS`; empty means off), plus `SENTRY_ENVIRONMENT` and `SENTRY_TRACES_SAMPLE_RATE` (default 0, which means tracing is off).
   - API (`@sentry/nestjs` 10.75): Sentry is initialised in `main.ts`. The problem-details filter reports unexpected 5xx errors, except classified `transient`/`rate_limited` outages, which are only logged.

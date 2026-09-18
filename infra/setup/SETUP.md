@@ -65,3 +65,7 @@ Source maps are not uploaded (no `SENTRY_AUTH_TOKEN`), so browser stack traces s
 - **`permission denied` as app_api**: privileges on tables come from migrations (default privileges
   set by bootstrap plus per-table revokes/grants). Check the table's grants in `db/migrations`; re-running
   bootstrap never re-grants existing tables.
+- **Every web page returns 404 in `pnpm dev`** after the dev server was killed hard: the Turbopack
+  dev cache is stale. Stop the server, delete `apps/web/.next`, start again.
+- **`Invalid environment configuration` from the API**: the API reads the repo-root `.env`; check the
+  file exists there. Variables exported in the shell also work (`turbo.json` passes them through).

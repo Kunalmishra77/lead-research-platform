@@ -1,9 +1,32 @@
 {
   "$schema": "https://turborepo.com/schema.json",
+  "globalPassThroughEnv": [
+    "NODE_ENV",
+    "CI",
+    "HOST",
+    "PORT",
+    "LOG_LEVEL",
+    "APP_URL",
+    "API_URL",
+    "DEV_DNS_OVER_HTTPS",
+    "TRUST_PROXY",
+    "DB_POOL_MAX",
+    "DATABASE_URL*",
+    "APP_API_DB_PASSWORD",
+    "APP_WORKER_DB_PASSWORD",
+    "SUPABASE_*",
+    "REDIS_*",
+    "S3_*",
+    "JOBS_*",
+    "PROGRESS_STREAM_MAX_MS",
+    "OTEL_*",
+    "SENTRY_*"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
+      "env": ["SENTRY_DSN_WEB", "SENTRY_ENVIRONMENT"]
     },
     "lint": {
       "dependsOn": ["^build"]

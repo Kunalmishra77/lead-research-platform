@@ -52,7 +52,7 @@ phases/             phase plans with checklists
 
 ```
 pnpm install                 # JS deps
-pnpm dev                     # web + api
+pnpm dev                     # web + api (turbo); API alone: pnpm --filter @leadforge/api dev -> http://localhost:4000 (/docs, /health/ready)
 pnpm lint && pnpm typecheck  # root files + all TS packages (turbo)
 pnpm test                    # TS tests
 pnpm format / format:check   # prettier (docs/*.md and services/workers are excluded)

@@ -15,6 +15,13 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 
 ---
 
+### 2026-09-18 — Phase 1 — Task 1.5 API skeleton
+- Done: `apps/api` NestJS 11 + Fastify (CJS): Zod-validated env (`NODE_ENV` required), `/health/live` + `/health/ready` (DB/Redis/S3 with real abort on 3 s deadline), RFC 7807 problem+json filter + `AppError`, request ids (UUID v7 or valid incoming `X-Request-Id`, echoed in header, same id in pino logs), nestjs-pino with header redaction + query-string-free request serializer, OpenAPI at `/docs` + `/docs/json` (non-production), global ZodValidationPipe, 1 MB body limit, postgres.js/ioredis/S3 infra modules with shutdown hooks.
+- Decisions (link ADRs): build via `nest build` (cleans dist; `rm -rf` is denied in settings); only Fastify `FST_*` errors pass their message through, everything else unknown -> 500; problem `type` base `https://leadforge.dev/problems/<code>`.
+- Tests/checks status: api 26 tests (unit: problem mapping, env, logging redaction; e2e via app.inject: health ok/503/timeout-abort, request id, 404/400/413/500 problems, OpenAPI); all packages 68 tests; lint/typecheck/format/build green. Live run against Supabase + local Redis: /health/ready all ok, query secrets not logged. Code-reviewer: CHANGES REQUESTED -> all should-fix items fixed.
+- Open issues / blockers: SSE handler (1.10) must set `x-request-id` itself (onSend hook does not run for hijacked replies). Client-supplied `X-Request-Id` is trusted (edge-only trust later).
+- Next step: task 1.6 Drizzle schema, migrations, RLS, `withTenant()`.
+
 ### 2026-09-18 — Phase 1 — Task 1.3 hosted dev infra (no Docker)
 - Done: `infra/setup` (bootstrap.sql + `pnpm infra:bootstrap`: schema `app`, extensions in schema `extensions`, login roles `app_api`/`app_worker`, grants + default privileges, global EXECUTE revoke; `infra:buckets` created private `lf-raw`/`lf-exports`; `infra:check`; `redis:start` portable Redis 8.10.2 for Windows, checksum-pinned, 127.0.0.1), `@leadforge/dev-dns` (DoH for `*.supabase.co`, dev/test only), SETUP.md, `infra/setup/env.template`.
 - Decisions (link ADRs): ADR-0002 amended: dev Redis is local (not Redis Cloud); custom roles work through Supavisor (`<role>.<ref>`), so no SET ROLE fallback. Role passwords are set as client-side SCRAM verifiers with a fixed per-role salt: the pooler caches credentials and a new salt breaks logins until its cache refreshes. Tests run on the dev project with rollback (no separate test project) until the owner creates one.

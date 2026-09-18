@@ -20,6 +20,7 @@ export * from '../schema/tenancy.ts';
 
 // Consumers (the CommonJS API) must use Drizzle through this package: importing drizzle-orm directly
 // there would load its CJS build next to this ESM build (incompatible types, dual-package hazard).
+export type { SQL } from 'drizzle-orm';
 export { and, asc, desc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 
 export const schema = {

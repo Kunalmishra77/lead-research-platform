@@ -66,6 +66,8 @@
 | POST | /privacy/requests | Public DSR form | 7 |
 | * | /admin/* | Admin panel API (platform staff only) | 1+ |
 
+- Implemented (task 1.12): `GET /admin/orgs` and `GET /admin/users` (`?limit=1..200&cursor=<nextCursor>`, response `{ items, nextCursor }`). Both call the SECURITY DEFINER functions `app.admin_list_orgs` / `app.admin_list_users` after an `app.session_is_active` check. The functions enforce `user_profiles.is_platform_staff` and write an `admin.*.listed` audit row with IP and user agent in the same transaction (migration 0011). Non-staff get 403 `admin.forbidden` and no audit row. Users are ordered by id (keyset), not by signup time, because `auth.users` ids are random. The web `/admin` area renders these lists server-side and returns 404 to non-staff. The browser proxy only reaches `/app/*`, never `/admin/*`.
+
 ## Public API v1 (Phase 8)
 POST /v1/research · POST /v1/research/parse · GET /v1/research/{id} · GET /v1/research/{id}/results · POST /v1/research/{id}/cancel · GET /v1/leads · GET/PATCH /v1/leads/{id} · GET /v1/companies/{id} · GET /v1/companies/lookup?domain= · GET /v1/companies/{id}/similar · POST /v1/enrich · POST /v1/verify/emails · POST /v1/lists · POST/GET /v1/lists/{id}/items · POST /v1/saved-searches · POST /v1/exports · GET /v1/exports/{id} · GET /v1/jobs/{id} · GET /v1/usage · POST /v1/webhooks
 

@@ -1,9 +1,10 @@
-import { and, eq, memberships, sql, withUser } from '@leadforge/db';
+import { and, eq, memberships, withUser } from '@leadforge/db';
 import { type CanActivate, type ExecutionContext, Inject, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { FastifyRequest } from 'fastify';
 
 import { type Database, DB } from '../../infra/db/db.module';
+import { assertSessionActive } from '../db/session';
 import { AppError } from '../errors/app-error';
 import { hasPermission, type MembershipRole, type Permission } from './permissions';
 
@@ -47,26 +48,15 @@ export class TenantGuard implements CanActivate {
       });
     }
 
-    const { active, membership } = await withUser(this.db, auth.userId, async (tx) => {
-      // Tokens stay valid until expiry; reject signed-out/revoked sessions and banned/deleted users.
-      const [session] = await tx.execute<{ active: boolean }>(
-        sql`select app.session_is_active(${auth.sessionId}::uuid) as active`,
-      );
+    const membership = await withUser(this.db, auth.userId, async (tx) => {
+      await assertSessionActive(tx, auth.sessionId);
       const [row] = await tx
         .select({ orgId: memberships.orgId, role: memberships.role })
         .from(memberships)
         .where(and(eq(memberships.workspaceId, workspaceId), eq(memberships.userId, auth.userId)))
         .limit(1);
-      return { active: session?.active === true, membership: row };
+      return row;
     });
-    if (!active) {
-      throw new AppError({
-        code: 'auth.session_revoked',
-        httpStatus: 401,
-        title: 'Session is no longer valid',
-        detail: 'Sign in again',
-      });
-    }
     if (!membership) {
       throw new AppError({
         code: 'tenant.forbidden',

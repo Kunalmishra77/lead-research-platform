@@ -10,6 +10,7 @@ import {
 import { Inject, Injectable } from '@nestjs/common';
 import { uuidv7 } from 'uuidv7';
 
+import { pgCode } from '../../common/db/pg-error';
 import { AppError } from '../../common/errors/app-error';
 import { type Database, DB } from '../../infra/db/db.module';
 import type { AuthUser } from '../auth/auth.types';
@@ -17,15 +18,6 @@ import type { CreatedOrg, MeResponse } from './orgs.dto';
 import { slugFromName } from './slug';
 
 const DEFAULT_WORKSPACE_NAME = 'Default';
-
-/** Postgres error code from a postgres.js error, possibly wrapped by Drizzle. */
-function pgCode(err: unknown): string | undefined {
-  for (let e: unknown = err; e instanceof Error; e = e.cause) {
-    const code = (e as { code?: unknown }).code;
-    if (typeof code === 'string' && /^[0-9A-Z]{5}$/.test(code)) return code;
-  }
-  return undefined;
-}
 
 @Injectable()
 export class OrgsService {

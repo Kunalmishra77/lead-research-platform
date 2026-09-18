@@ -52,3 +52,8 @@ test('the API proxy refuses paths that would escape /app/', async ({ request }) 
     expect([400, 404], path).toContain(res.status());
   }
 });
+
+test('the admin area requires sign-in', async ({ page }) => {
+  await page.goto('/admin/users');
+  await expect(page).toHaveURL(/\/login\?next=%2Fadmin%2Fusers$/);
+});

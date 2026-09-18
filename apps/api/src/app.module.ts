@@ -12,6 +12,7 @@ import { DbModule } from './infra/db/db.module';
 import { RedisModule } from './infra/redis/redis.module';
 import { StorageModule } from './infra/storage/storage.module';
 import { StreamsModule } from './infra/streams/streams.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DevModule } from './modules/dev/dev.module';
@@ -58,6 +59,7 @@ import { OrgsModule } from './modules/orgs/orgs.module';
     HealthModule,
     OrgsModule,
     MembersModule,
+    AdminModule,
     DevModule,
   ],
   providers: [

@@ -1,0 +1,14 @@
+pnpm-lock.yaml
+node_modules
+dist
+build
+coverage
+.next
+.turbo
+**/generated/**
+db/migrations
+services/workers
+docs
+phases
+*.md
+.claude

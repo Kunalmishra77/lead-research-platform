@@ -15,6 +15,13 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 
 ---
 
+### 2026-09-18 — Phase 1 — Task 1.2 monorepo tooling
+- Done: pnpm workspace + Turborepo 2.10, `tsconfig.base.json` (strict, noUncheckedIndexedAccess), `packages/config` (ESLint 10 flat configs `base` + type-aware `typescript(dir)`, tsconfig presets node/next/library), Prettier, EditorConfig, `.gitattributes` (LF), Husky pre-commit (lint-staged) + commit-msg (commitlint), `.nvmrc` 24.
+- Decisions (link ADRs): ADR-0004 versions; import order via `eslint-plugin-simple-import-sort` (eslint-plugin-import does not support ESLint 10); pnpm 11 auto-added `minimumReleaseAgeExclude: prettier@3.9.8`.
+- Tests/checks status: `pnpm lint`, `pnpm typecheck` (no TS packages yet), `pnpm format:check` pass; lint probe catches unsorted imports + unused vars; commitlint rejects "bad msg", accepts "chore: ok".
+- Open issues / blockers: Node is 22.18 locally (engines warns, wants 24); owner actions from ADR-0002 still pending.
+- Next step: task 1.3 hosted infra setup (needs Redis Cloud URL, test project, DoH, `.env`).
+
 ### 2026-09-18 — Phase 1 — Phase started, plan approved
 - Done: Phase 1 plan approved; phase set to in progress; task 1.1 ticked (ADR-0002/0003); ADR-0004 pins TS 6.0, NestJS 11 + nestjs-zod, Node 24, asyncpg.
 - Decisions (link ADRs): docs/adr/0004-toolchain-version-pins.md; platform staff flag set manually via SQL for now.

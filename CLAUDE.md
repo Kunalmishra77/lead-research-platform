@@ -53,8 +53,9 @@ phases/             phase plans with checklists
 ```
 pnpm install                 # JS deps
 pnpm dev                     # web + api
-pnpm lint && pnpm typecheck  # all TS packages
+pnpm lint && pnpm typecheck  # root files + all TS packages (turbo)
 pnpm test                    # TS tests
+pnpm format / format:check   # prettier (docs/*.md and services/workers are excluded)
 pnpm db:generate / db:migrate / db:seed
 pnpm contracts:gen           # regenerate TS + Python types from JSON Schemas
 cd services/workers && uv sync && uv run pytest && uv run ruff check . && uv run mypy .

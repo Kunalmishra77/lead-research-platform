@@ -5,7 +5,7 @@ Create folders when a phase needs them; do not scaffold empty modules early.
 ```text
 lead-research-platform/
 ├── CLAUDE.md  README.md  PROGRESS.md  .env.example  .gitignore
-├── package.json  pnpm-workspace.yaml  turbo.json  tsconfig.base.json
+├── package.json  pnpm-workspace.yaml  turbo.json  eslint.config.js  commitlint.config.js
 ├── .claude/ (settings.json, commands/, agents/)
 ├── .github/workflows/ci.yml
 ├── apps/
@@ -75,9 +75,9 @@ lead-research-platform/
 │           └── tests/ (unit/, integration/, fixtures/)
 ├── packages/
 │   ├── contracts/   # JSON Schemas: research-spec, job-envelope, field-catalogue, progress-event, scoring-model
-│   │   ├── schemas/  generated/ts/  generated/python/  scripts/gen.ts
+│   │   ├── schemas/  fixtures/  src/generated/ (TS)  generated/python/leadforge_contracts/  scripts/gen.ts  pyproject.toml
 │   ├── ui/
-│   └── config/ (eslint, tsconfig, tailwind preset)
+│   └── config/ (eslint, tsconfig/base.json + presets, tailwind preset)
 ├── db/
 │   ├── schema/      # drizzle schema files (source of truth)
 │   ├── migrations/

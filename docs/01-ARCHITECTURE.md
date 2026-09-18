@@ -36,14 +36,14 @@ flowchart LR
 ## Job contract (details: `docs/adr/0001-stack-and-job-contract.md`)
 - Streams: `jobs:research`, `jobs:discovery`, `jobs:crawl_http`, `jobs:crawl_browser`, `jobs:pipeline`, `jobs:llm`, `jobs:export`, `jobs:integration`, `jobs:schedule`. Dead letters: `dlq:<stream>`.
 - Consumer groups per worker pool. Max attempts 5, exponential backoff with jitter using a delayed ZSET `jobs:delayed`.
-- Envelope (JSON Schema in `packages/contracts/job-envelope.schema.json`):
+- Envelope (JSON Schema in `packages/contracts/schemas/job-envelope.schema.json`; money as integer USD micros):
 ```json
-{ "job_id": "uuidv7", "type": "crawl.fetch", "org_id": "uuid|null", "research_job_id": "uuid|null",
+{ "envelope_version": 1, "job_id": "uuidv7", "type": "crawl.fetch", "org_id": "uuid|null", "research_job_id": "uuid|null",
   "idempotency_key": "string", "attempt": 1, "priority": "interactive|scheduled|backfill",
-  "budget": {"credits_remaining": 120, "cost_cap_usd": 0.5}, "trace_id": "string",
+  "budget": {"credits_remaining": 120, "cost_cap_micros": 500000}, "trace_id": "string",
   "payload": {}, "created_at": "iso8601" }
 ```
-- Progress events on Redis pub/sub `progress:{research_job_id}`: `{stage, counts, credits_used, message, ts}`. API relays as SSE; final state is always persisted in Postgres.
+- Progress events on Redis pub/sub `progress:{job_id}` (`packages/contracts/schemas/progress-event.schema.json`): `{event_version, job_id, org_id, trace_id, stage, status, counts, credits_used, message, error_class, ts}`. API relays as SSE; final state is always persisted in Postgres.
 
 ## Research flow
 Input -> Spec parse -> Plan -> Source selection -> Discovery -> Crawl -> Extract -> Normalize -> Resolve -> Verify -> Critic loop -> Enrich -> AI analysis -> Score -> Leads materialized -> Index -> Export. Stage details: `06-DATA-PIPELINE.md`.

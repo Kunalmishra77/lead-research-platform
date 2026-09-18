@@ -14,7 +14,9 @@
     "test": "turbo run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "contracts:gen": "pnpm --filter @leadforge/contracts gen",
+    "contracts:check": "pnpm --filter @leadforge/contracts check"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",

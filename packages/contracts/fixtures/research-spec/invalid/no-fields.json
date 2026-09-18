@@ -1,0 +1,26 @@
+{
+  "spec_version": 1,
+  "entity": "company",
+  "intent": "prospecting",
+  "filters": {
+    "industry": { "include": ["restaurant"], "exclude": [], "taxonomy_ids": [] },
+    "location": {
+      "country": "IN",
+      "states": [],
+      "cities": ["Delhi"],
+      "radius_km": null,
+      "include_metro_area": true
+    },
+    "has_website": true,
+    "contact": { "any_of": ["email", "phone"] },
+    "social": { "instagram": { "required": true, "active_within_days": 30 } },
+    "min_confidence": 0.6
+  },
+  "keywords": { "must": [], "should": [], "not": [] },
+  "fields": [],
+  "custom_columns": [],
+  "depth": "standard",
+  "limits": { "max_results": 500, "max_credits": 2000 },
+  "exclude": { "lists": [], "existing_leads": true },
+  "feasibility": [{ "filter": "social.instagram", "mode": "post_filter", "note": "" }]
+}

@@ -58,6 +58,7 @@ pnpm test                    # TS tests
 pnpm format / format:check   # prettier (docs/*.md and services/workers are excluded)
 pnpm db:generate / db:migrate / db:seed
 pnpm contracts:gen           # regenerate TS + Python types from JSON Schemas
+pnpm contracts:check         # fail if generated contracts are stale (CI)
 cd services/workers && uv sync && uv run pytest && uv run ruff check . && uv run mypy .
 # no local containers: dev uses hosted Supabase + Redis Cloud (see infra/setup/, ADR-0002)
 ```

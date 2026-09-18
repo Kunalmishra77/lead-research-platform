@@ -15,6 +15,13 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 
 ---
 
+### 2026-09-18 — Phase 1 — Task 1.4 contracts package
+- Done: `packages/contracts` with JSON Schemas (job-envelope v1, progress-event v1, research-spec v1 skeleton), `scripts/gen.ts` (TS types + schema consts via json-schema-to-typescript; Pydantic v2 models via datamodel-codegen 0.82 with `WireModel` base + `to_wire()`), ajv 2020 validators, shared fixtures, `pnpm contracts:gen` / `contracts:check` (also removes/flags orphaned generated files). Base tsconfig moved to `packages/config/tsconfig/base.json` (Vite does not follow pnpm symlinks for relative `extends`).
+- Decisions (link ADRs): envelope budget uses `cost_cap_micros` (integer money) instead of `cost_cap_usd`; progress event carries `org_id` + `trace_id`; envelope if/then requires `org_id` when `research_job_id` is set (TS-only in schema; workers parser must re-check in 1.9); Python strict int/str/bool; `fields` uniqueness enforced TS-side only.
+- Tests/checks status: vitest 32 passed (fixtures + Python->TS cross-language round trip), pytest 23 passed / 1 skipped (TS-only if/then rule); typecheck, lint, format, contracts:check green. Code-reviewer: CHANGES REQUESTED -> all blocker/should-fix items addressed.
+- Open issues / blockers: CI must install uv + Python 3.12 for the contracts job (task 1.14); `ajvFormats.default` interop may need a fallback if validators are ever bundled for the browser.
+- Next step: task 1.3 hosted infra setup (portable Redis, DoH resolver for supabase.co, bootstrap SQL) with in-memory credentials.
+
 ### 2026-09-18 — Phase 1 — Task 1.2 monorepo tooling
 - Done: pnpm workspace + Turborepo 2.10, `tsconfig.base.json` (strict, noUncheckedIndexedAccess), `packages/config` (ESLint 10 flat configs `base` + type-aware `typescript(dir)`, tsconfig presets node/next/library), Prettier, EditorConfig, `.gitattributes` (LF), Husky pre-commit (lint-staged) + commit-msg (commitlint), `.nvmrc` 24.
 - Decisions (link ADRs): ADR-0004 versions; import order via `eslint-plugin-simple-import-sort` (eslint-plugin-import does not support ESLint 10); pnpm 11 auto-added `minimumReleaseAgeExclude: prettier@3.9.8`.

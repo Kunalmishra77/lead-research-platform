@@ -1,0 +1,14 @@
+{
+  "event_version": 1,
+  "job_id": "01923f4e-7b3a-7c2d-9f10-3a4b5c6d7e8f",
+  "org_id": "01923f4e-7b3a-7c2d-9f10-000000000001",
+  "stage": "ping",
+  "status": "running",
+  "counts": {
+    "steps_done": 1
+  },
+  "credits_used": 0,
+  "message": "working",
+  "error_class": null,
+  "ts": "2026-09-18T10:00:01Z"
+}

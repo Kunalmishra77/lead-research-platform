@@ -1,0 +1,9 @@
+{
+  "spec_version": 1,
+  "entity": "company",
+  "intent": "single_company",
+  "filters": {},
+  "fields": ["name"],
+  "depth": "quick",
+  "limits": { "max_results": 1, "max_credits": 10 }
+}

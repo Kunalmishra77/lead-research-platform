@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leadforge.dev/contracts/job-envelope.schema.json",
+  "title": "JobEnvelope",
+  "description": "Envelope for every job published on a Redis Stream (docs/01, ADR-0001). Version 1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "envelope_version",
+    "job_id",
+    "type",
+    "org_id",
+    "research_job_id",
+    "idempotency_key",
+    "attempt",
+    "priority",
+    "budget",
+    "trace_id",
+    "payload",
+    "created_at"
+  ],
+  "properties": {
+    "envelope_version": {
+      "const": 1,
+      "description": "Bumped on breaking envelope changes."
+    },
+    "job_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID v7 of this job."
+    },
+    "type": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$",
+      "description": "<domain>.<action>, e.g. crawl.fetch, system.ping."
+    },
+    "org_id": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "Tenant; null only for global (non-tenant) work."
+    },
+    "research_job_id": {
+      "type": ["string", "null"],
+      "format": "uuid"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "1-based delivery attempt; max 5 matches the retry policy (DLQ entries keep attempt 5)."
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["interactive", "scheduled", "backfill"]
+    },
+    "budget": {
+      "$ref": "#/$defs/Budget"
+    },
+    "trace_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Job-type specific payload, validated by the handler."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "Budget": {
+      "title": "Budget",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["credits_remaining", "cost_cap_micros"],
+      "properties": {
+        "credits_remaining": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cost_cap_micros": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Internal cost cap in USD micros (integer money rule)."
+        }
+      }
+    }
+  },
+  "if": {
+    "properties": {
+      "research_job_id": {
+        "type": "string"
+      }
+    },
+    "required": ["research_job_id"]
+  },
+  "then": {
+    "properties": {
+      "org_id": {
+        "type": "string"
+      }
+    }
+  },
+  "$comment": "Tenant rule: work for a research job must carry its org_id (if/then; also enforced by the Python envelope parser)."
+}

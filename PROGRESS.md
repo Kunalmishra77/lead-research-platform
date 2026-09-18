@@ -15,6 +15,13 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 
 ---
 
+### 2026-09-18 — Phase 1 — Phase started, plan approved
+- Done: Phase 1 plan approved; phase set to in progress; task 1.1 ticked (ADR-0002/0003); ADR-0004 pins TS 6.0, NestJS 11 + nestjs-zod, Node 24, asyncpg.
+- Decisions (link ADRs): docs/adr/0004-toolchain-version-pins.md; platform staff flag set manually via SQL for now.
+- Tests/checks status: n/a (no code yet).
+- Open issues / blockers: owner to narrow the `.env.*` deny rule in `.claude/settings.json` (Claude is blocked from self-editing settings) so `.env.example` can be maintained; owner actions from ADR-0002 still pending (Redis Cloud, test project, Node 24, Windows DoH, `.env`).
+- Next step: task 1.2 monorepo tooling.
+
 ### 2026-09-18 — Phase 0 — Orientation, hosting and auth decisions
 - Done: orientation review of all docs; git repo initialised with GitHub remote; ADR-0002 (no Docker: Supabase DB/Auth/Storage + Redis Cloud) and ADR-0003 (DB roles, `app` schema, bootstrap/admin functions, partitioning) accepted; docs, CLAUDE.md and phase-01 updated to match.
 - Decisions (link ADRs): docs/adr/0002-hosted-dev-services-and-supabase-auth.md, docs/adr/0003-db-roles-schema-and-partitioning.md. Node 24 LTS target; Python 3.12 via uv.

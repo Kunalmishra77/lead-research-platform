@@ -7,7 +7,7 @@ A running monorepo with local infra, database with RLS, authentication with orga
 CLAUDE.md, docs/00, 01, 02, 03, 04 (conventions + tenant tables), 05 (auth/RBAC), 10 (Phase 1 rows), 12, 13, adr/0001
 
 ## Tasks
-- [ ] 1.1 Decide auth integration approach and API framework confirmation (ADR-0002 if deviating from ADR-0001)
+- [x] 1.1 Decide auth integration approach and API framework confirmation (ADR-0002 if deviating from ADR-0001)
 - [ ] 1.2 Monorepo: pnpm workspaces, Turborepo, tsconfig base, ESLint/Prettier, Husky + lint-staged, commitlint
 - [ ] 1.3 `infra/setup/` (ADR-0002, no Docker): SETUP.md for Supabase dev + test projects, Redis Cloud, Storage buckets `lf-raw`/`lf-exports`, Windows DNS-over-HTTPS note; bootstrap SQL for schema `app`, extensions and roles `app_api`, `app_worker`; connectivity check script (DB, Redis, S3, JWKS)
 - [ ] 1.4 `packages/contracts`: JSON Schemas for job-envelope, progress-event, research-spec (v1 skeleton); generator script producing TS types and Pydantic models; CI check that generated code is up to date

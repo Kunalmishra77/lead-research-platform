@@ -4,7 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, PostgresDsn, RedisDsn, field_validator
+from pydantic import Field, PostgresDsn, RedisDsn, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -35,6 +35,11 @@ class Settings(BaseSettings):
 
     OTEL_EXPORTER_OTLP_ENDPOINT: str | None = None
 
+    # Error reporting (task 1.15): off unless a DSN is set. `KEY=` in .env counts as unset.
+    SENTRY_DSN_WORKERS: str | None = None
+    SENTRY_ENVIRONMENT: str | None = None
+    SENTRY_TRACES_SAMPLE_RATE: float = Field(default=0.0, ge=0.0, le=1.0)
+
     #: Comma-separated pools this process consumes, e.g. "system,crawl_http" (streams jobs:<pool>).
     WORKER_POOLS: str = "system"
     #: Consumer name inside the group; defaults to host + pid at runtime.
@@ -46,6 +51,15 @@ class Settings(BaseSettings):
     JOB_CONCURRENCY: int = Field(default=4, ge=1, le=256)
     JOB_RECLAIM_INTERVAL_MS: int = Field(default=5_000, ge=100)
     JOB_RETRY_BASE_DELAY_MS: int = Field(default=2_000, ge=10)
+
+    @field_validator(
+        "SENTRY_DSN_WORKERS", "SENTRY_ENVIRONMENT", "SENTRY_TRACES_SAMPLE_RATE", mode="before"
+    )
+    @classmethod
+    def _empty_is_unset(cls, value: object, info: ValidationInfo) -> object:
+        if value != "":
+            return value
+        return 0.0 if info.field_name == "SENTRY_TRACES_SAMPLE_RATE" else None
 
     @field_validator("DATABASE_URL_WORKERS")
     @classmethod

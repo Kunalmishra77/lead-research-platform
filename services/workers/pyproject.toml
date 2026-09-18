@@ -17,6 +17,7 @@ dependencies = [
   "aioboto3>=15.5,<16",
   "uuid6>=2025.0.1",
   "uvloop>=0.22; sys_platform != 'win32'",
+  "sentry-sdk>=2.69,<3",
 ]
 
 [dependency-groups]

@@ -35,6 +35,23 @@ update app.user_profiles set is_platform_staff = true
 where user_id = (select id from auth.users where email = 'you@example.com');
 ```
 
+## Sentry (optional error reporting)
+Sentry is off until a DSN is set. Only errors are sent. Credentials, cookies, request bodies, query strings and user fields other than the id are stripped first. Worker exception text goes through the same redaction as the logs.
+
+1. Sign up at https://sentry.io (the free Developer plan is enough) and create an organization.
+2. Create three projects, one per service, so errors stay separate:
+   - platform **Next.js**, named `leadforge-web`
+   - platform **NestJS**, named `leadforge-api`
+   - platform **Python**, named `leadforge-workers`
+
+   You can skip the in-app setup wizard; the SDKs are already installed.
+3. Copy each project's DSN (Project Settings -> Client Keys (DSN)) into `.env` as `SENTRY_DSN_WEB`, `SENTRY_DSN_API` and `SENTRY_DSN_WORKERS`.
+4. Optional: set `SENTRY_ENVIRONMENT` (default `development`). Leave `SENTRY_TRACES_SAMPLE_RATE=0` unless you want performance traces.
+5. Restart the services. For the browser, rebuild the web app too: the web DSN is inlined at build time.
+6. What gets reported: unexpected API errors (5xx), failed page renders, route handlers and server actions in the web app, and jobs that fail for good in the workers. Expected outcomes such as validation errors, 4xx responses, compliance stops (`access_restricted`) and budget pauses are not reported. Reported errors show up under each project's **Issues**.
+
+Source maps are not uploaded (no `SENTRY_AUTH_TOKEN`), so browser stack traces stay minified. We will add that with the deploy pipeline.
+
 ## Troubleshooting
 
 - **`SSL/TLS connection failed` or `UNEXPECTED_EOF` for `*.supabase.co`**: your ISP sinkholes the domain.

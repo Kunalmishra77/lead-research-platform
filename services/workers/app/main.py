@@ -13,6 +13,7 @@ from app.config import Settings, get_settings
 from app.db.engine import create_engine
 from app.db.job_runs import SqlJobRunsRepo
 from app.devdns import install_dev_dns
+from app.error_reporting import configure_error_reporting, report_exception
 from app.handlers import build_registry
 from app.jobs.consumer import ConsumerSettings, StreamConsumer
 from app.jobs.envelope import stream_for
@@ -29,8 +30,9 @@ async def _promote_loop(redis: Redis, streams: list[str], stop: asyncio.Event) -
         try:
             for stream in streams:
                 await promote_due(redis, stream)
-        except Exception:
+        except Exception as exc:
             log.exception("delayed promotion failed", error_class="transient")
+            report_exception(exc, error_class="transient", component="retry_promotion")
         with contextlib.suppress(asyncio.TimeoutError):
             await asyncio.wait_for(stop.wait(), timeout=1.0)
 
@@ -77,6 +79,11 @@ def main() -> None:
     configure_logging(settings.LOG_LEVEL)
     install_dev_dns(enabled=settings.DEV_DNS_OVER_HTTPS, node_env=settings.NODE_ENV)
     configure_tracing(settings.OTEL_EXPORTER_OTLP_ENDPOINT, settings.NODE_ENV)
+    configure_error_reporting(
+        settings.SENTRY_DSN_WORKERS,
+        settings.SENTRY_ENVIRONMENT or settings.NODE_ENV,
+        settings.SENTRY_TRACES_SAMPLE_RATE,
+    )
     if sys.platform != "win32":
         import uvloop  # noqa: PLC0415 - optional, Linux/macOS only (ADR-0002)
 

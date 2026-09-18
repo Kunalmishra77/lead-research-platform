@@ -1,0 +1,27 @@
+{
+  "name": "@leadforge/observability",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Framework-agnostic Sentry event/breadcrumb scrubbing shared by apps/api and apps/web.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@leadforge/config": "workspace:*",
+    "@sentry/core": "10.75.0",
+    "@types/node": "^24",
+    "eslint": "^10.10.0",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.1"
+  }
+}

@@ -21,7 +21,7 @@ CLAUDE.md, docs/00, 01, 02, 03, 04 (conventions + tenant tables), 05 (auth/RBAC)
 - [x] 1.12 Admin shell: `/admin` route group restricted to platform staff flag; users and orgs list (read-only)
 - [x] 1.13 Audit log service used for login, org creation, role change
 - [x] 1.14 CI (GitHub Actions): TS lint/typecheck/test, Python ruff/mypy/pytest, contracts check, build; gitleaks; dependency audit
-- [ ] 1.15 Sentry wiring (web, api, workers) behind env flag
+- [x] 1.15 Sentry wiring (web, api, workers) behind env flag
 - [ ] 1.16 Update CLAUDE.md Commands section with exact working commands; README quick start verified from clean clone
 
 ## Deliverables

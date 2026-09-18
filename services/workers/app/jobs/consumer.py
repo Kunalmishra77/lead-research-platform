@@ -27,6 +27,7 @@ from opentelemetry import trace
 from redis.asyncio import Redis
 from redis.exceptions import ResponseError
 
+from app.error_reporting import report_exception, report_job_failure
 from app.jobs.context import JobContext
 from app.jobs.envelope import ENVELOPE_FIELD, dlq_for, parse_envelope
 from app.jobs.errors import RETRYABLE, ErrorClass, InvalidInputError, classify
@@ -154,9 +155,11 @@ class StreamConsumer:
                     await self.ensure_group()
                     continue
                 self._log.exception("consumer loop error", error_class="transient")
+                report_exception(exc, stream=self._s.stream, error_class="transient")
                 await self._pause(stop)
-            except Exception:  # keep the loop alive; the error is logged with context
+            except Exception as exc:  # keep the loop alive; the error is logged with context
                 self._log.exception("consumer loop error", error_class="transient")
+                report_exception(exc, stream=self._s.stream, error_class="transient")
                 await self._pause(stop)
 
     @staticmethod
@@ -283,6 +286,16 @@ class StreamConsumer:
                 await pipe.execute()
             ctx.log.info("job retry scheduled", next_attempt=retry.attempt, delay_s=round(delay, 2))
             return
+
+        # Final failure (no more retries): report it; budget/compliance stops are filtered inside.
+        report_job_failure(
+            exc,
+            error_class=error_class,
+            job_type=envelope.type,
+            job_id=str(envelope.job_id),
+            org_id=str(envelope.org_id) if envelope.org_id else None,
+            trace_id=envelope.trace_id,
+        )
 
         if error_class is ErrorClass.BUDGET_EXHAUSTED:
             # Persist first, then announce (same order as the DLQ path).

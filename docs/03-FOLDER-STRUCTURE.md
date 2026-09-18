@@ -76,6 +76,8 @@ lead-research-platform/
 ├── packages/
 │   ├── contracts/   # JSON Schemas: research-spec, job-envelope, field-catalogue, progress-event, scoring-model
 │   │   ├── schemas/  fixtures/  src/generated/ (TS)  generated/python/leadforge_contracts/  scripts/gen.ts  pyproject.toml
+│   ├── dev-dns/        # dev-only DNS-over-HTTPS for *.supabase.co (ADR-0002)
+│   ├── observability/  # Sentry event/breadcrumb scrubbing shared by api + web (task 1.15)
 │   ├── ui/
 │   └── config/ (eslint, tsconfig/base.json + presets, tailwind preset)
 ├── db/

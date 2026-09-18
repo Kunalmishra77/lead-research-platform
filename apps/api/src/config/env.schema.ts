@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
 const bool = z.enum(['true', 'false']).transform((v) => v === 'true');
+/** `KEY=` in .env means "unset", not an invalid value. */
+const optional = <T extends z.ZodType>(schema: T) =>
+  z.preprocess((v) => (v === '' ? undefined : v), schema.optional());
 
 /** Every environment variable the API reads. Validated once at startup. */
 export const envSchema = z
@@ -51,6 +54,11 @@ export const envSchema = z
     // Normalized without trailing slash: the token issuer is `${SUPABASE_URL}/auth/v1`, exactly.
     SUPABASE_URL: z.url().transform((u) => u.replace(/\/+$/, '')),
     SUPABASE_JWKS_URL: z.url(),
+
+    // Error reporting (task 1.15): off unless a DSN is set. Only errors, no PII, no tracing by default.
+    SENTRY_DSN_API: optional(z.url()),
+    SENTRY_ENVIRONMENT: optional(z.string().max(64)),
+    SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0),
   })
   .refine((c) => new URL(c.SUPABASE_JWKS_URL).origin === new URL(c.SUPABASE_URL).origin, {
     path: ['SUPABASE_JWKS_URL'],

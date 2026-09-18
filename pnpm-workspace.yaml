@@ -5,6 +5,7 @@ packages:
   - db
 allowBuilds:
   '@scarf/scarf': false
+  '@sentry/cli': false # source-map upload CLI; not used (no withSentryConfig)
   '@swc/core': true
   esbuild: true
 minimumReleaseAgeExclude:

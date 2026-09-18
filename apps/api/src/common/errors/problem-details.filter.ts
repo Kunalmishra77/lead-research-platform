@@ -2,6 +2,7 @@ import { type ArgumentsHost, Catch, type ExceptionFilter } from '@nestjs/common'
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { PinoLogger } from 'nestjs-pino';
 
+import { reportError, shouldReport } from '../observability/sentry';
 import { toProblem } from './problem-details';
 
 /** Global filter: every error leaves the API as `application/problem+json` (docs/05). */
@@ -18,8 +19,17 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     const { body, errorClass, unexpected } = toProblem(exception, request.id);
 
     const context = { code: body.code, status: body.status, error_class: errorClass };
-    if (unexpected) this.logger.error({ ...context, err: exception }, 'request failed');
-    else this.logger.info(context, 'request rejected');
+    if (unexpected) {
+      this.logger.error({ ...context, err: exception }, 'request failed');
+      if (shouldReport(unexpected, errorClass)) {
+        reportError(exception, {
+          requestId: request.id,
+          code: body.code,
+          userId: request.auth?.userId,
+          orgId: request.tenant?.orgId,
+        });
+      }
+    } else this.logger.info(context, 'request rejected');
 
     // Streaming/hijacked replies (SSE) may already have sent headers: log only, never send twice.
     if (reply.sent || reply.raw.headersSent) return;

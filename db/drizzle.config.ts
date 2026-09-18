@@ -16,6 +16,7 @@ export default defineConfig({
     './schema/sources.ts',
     './schema/research.ts',
     './schema/billing.ts',
+    './schema/jobs.ts',
   ],
   out: './migrations',
   schemaFilter: ['app'],

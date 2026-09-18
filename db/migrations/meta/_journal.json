@@ -57,6 +57,27 @@
       "when": 1789719571491,
       "tag": "0007_audit_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789720759079,
+      "tag": "0008_job_runs",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789720771011,
+      "tag": "0009_job_runs_security",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789721704020,
+      "tag": "0010_job_runs_api_compensation",
+      "breakpoints": true
     }
   ]
 }

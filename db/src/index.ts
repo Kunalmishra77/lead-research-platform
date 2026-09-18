@@ -4,6 +4,7 @@ import type postgres from 'postgres';
 
 import * as billing from '../schema/billing.ts';
 import * as enums from '../schema/enums.ts';
+import * as jobs from '../schema/jobs.ts';
 import * as partitioned from '../schema/partitioned.ts';
 import * as research from '../schema/research.ts';
 import * as sources from '../schema/sources.ts';
@@ -11,6 +12,7 @@ import * as tenancy from '../schema/tenancy.ts';
 
 export * from '../schema/billing.ts';
 export * from '../schema/enums.ts';
+export * from '../schema/jobs.ts';
 export * from '../schema/partitioned.ts';
 export * from '../schema/research.ts';
 export * from '../schema/sources.ts';
@@ -20,7 +22,15 @@ export * from '../schema/tenancy.ts';
 // there would load its CJS build next to this ESM build (incompatible types, dual-package hazard).
 export { and, asc, desc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 
-export const schema = { ...enums, ...tenancy, ...sources, ...research, ...billing, ...partitioned };
+export const schema = {
+  ...enums,
+  ...tenancy,
+  ...sources,
+  ...research,
+  ...billing,
+  ...jobs,
+  ...partitioned,
+};
 
 export type Database = PostgresJsDatabase<typeof schema>;
 export type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];

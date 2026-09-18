@@ -52,6 +52,8 @@ class ConsumerSettings:
     visibility_timeout_ms: int = 60_000
     batch_size: int = 4
     block_ms: int = 1_000
+    retry_base_delay_s: float = 2.0
+    reclaim_every_s: float = 5.0
 
 
 def _text(value: bytes | str) -> str:
@@ -136,12 +138,12 @@ class StreamConsumer:
             await self._process(mid, fields)
         return len(claimed)
 
-    async def run(self, stop: asyncio.Event, reclaim_every_s: float = 5.0) -> None:
+    async def run(self, stop: asyncio.Event) -> None:
         await self.ensure_group()
         last_reclaim = 0.0
         while not stop.is_set():
             try:
-                if time.monotonic() - last_reclaim >= reclaim_every_s:
+                if time.monotonic() - last_reclaim >= self._s.reclaim_every_s:
                     await self.reclaim_stale()
                     last_reclaim = time.monotonic()
                 await self.run_once()
@@ -270,7 +272,11 @@ class StreamConsumer:
 
         if error_class in RETRYABLE and envelope.attempt < self._s.max_attempts:
             retry = envelope.model_copy(update={"attempt": envelope.attempt + 1})
-            delay = backoff_seconds(envelope.attempt, getattr(exc, "retry_after_s", None))
+            delay = backoff_seconds(
+                envelope.attempt,
+                getattr(exc, "retry_after_s", None),
+                base_s=self._s.retry_base_delay_s,
+            )
             async with self._redis.pipeline(transaction=True) as pipe:
                 queue_retry(pipe, self._s.stream, retry.to_wire(), delay)
                 pipe.xack(self._s.stream, self._s.group, ctx.message_id)
@@ -279,6 +285,8 @@ class StreamConsumer:
             return
 
         if error_class is ErrorClass.BUDGET_EXHAUSTED:
+            # Persist first, then announce (same order as the DLQ path).
+            await self._notify_failure(envelope, error_class, error, envelope.attempt)
             await self._final_progress(envelope, "paused", error_class, error)
             await self._ack(ctx.message_id)
             return
@@ -317,6 +325,7 @@ class StreamConsumer:
     ) -> None:
         error = redact(error)
         if envelope is not None:
+            await self._notify_failure(envelope, error_class, error, attempts)
             await self._final_progress(envelope, "failed", error_class, error)
         async with self._redis.pipeline(transaction=True) as pipe:
             pipe.xadd(
@@ -337,6 +346,20 @@ class StreamConsumer:
         self._log.error(
             "job dead-lettered", message_id=message_id, error_class=error_class.value, error=error
         )
+
+    async def _notify_failure(
+        self, envelope: JobEnvelope, error_class: ErrorClass, error: str, attempts: int | None
+    ) -> None:
+        """Lets the handler module persist the failure (e.g. job_runs.status). Never raises."""
+        hook = self._registry.failure_hook(envelope.type)
+        if hook is None:
+            return
+        try:
+            await hook(envelope, error_class, error, attempts)
+        except Exception:
+            self._log.exception(
+                "failure hook error", job_id=str(envelope.job_id), error_class="transient"
+            )
 
     async def _ack(self, message_id: str) -> None:
         await self._redis.xack(self._s.stream, self._s.group, message_id)

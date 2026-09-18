@@ -31,9 +31,11 @@ def delayed_key(stream: str) -> str:
     return f"jobs:delayed:{stream}"
 
 
-def backoff_seconds(attempt: int, retry_after_s: float | None = None) -> float:
+def backoff_seconds(
+    attempt: int, retry_after_s: float | None = None, *, base_s: float = BASE_DELAY_S
+) -> float:
     """Exponential backoff with full jitter; honours Retry-After when larger."""
-    exponential = min(MAX_DELAY_S, BASE_DELAY_S * (2 ** max(0, attempt - 1)))
+    exponential = min(MAX_DELAY_S, base_s * (2 ** max(0, attempt - 1)))
     delay = random.uniform(exponential / 2, exponential)  # noqa: S311 - jitter, not crypto
     if retry_after_s is not None:
         delay = max(delay, retry_after_s)

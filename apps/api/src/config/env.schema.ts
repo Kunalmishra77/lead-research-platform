@@ -33,6 +33,12 @@ export const envSchema = z
           .filter(Boolean);
       }),
     REDIS_URL: z.url(),
+    /** Stream pool for system.* jobs (tests use a per-run pool). */
+    JOBS_SYSTEM_POOL: z
+      .string()
+      .regex(/^[a-z][a-z0-9_]{1,40}$/)
+      .default('system'),
+    PROGRESS_STREAM_MAX_MS: z.coerce.number().int().min(1_000).max(3_600_000).default(600_000),
 
     S3_ENDPOINT: z.url(),
     S3_REGION: z.string().min(1),

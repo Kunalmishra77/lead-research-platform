@@ -44,6 +44,8 @@ class Settings(BaseSettings):
     # The envelope schema caps `attempt` at 5 (job-envelope.schema.json).
     JOB_MAX_ATTEMPTS: int = Field(default=5, ge=1, le=5)
     JOB_CONCURRENCY: int = Field(default=4, ge=1, le=256)
+    JOB_RECLAIM_INTERVAL_MS: int = Field(default=5_000, ge=100)
+    JOB_RETRY_BASE_DELAY_MS: int = Field(default=2_000, ge=10)
 
     @field_validator("DATABASE_URL_WORKERS")
     @classmethod

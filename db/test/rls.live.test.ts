@@ -90,6 +90,7 @@ const TENANT_TABLES = [
   'usage_unit_keys',
   'usage_events',
   'audit_logs',
+  'job_runs',
 ] as const;
 type TenantTable = (typeof TENANT_TABLES)[number];
 const USER_SCOPED_TABLES = ['user_profiles'] as const;
@@ -130,6 +131,8 @@ function insertFor(
       return `insert into app.usage_events (id, org_id, research_job_id, meter, units, unit_key) values ('${id}', '${target.org}', '${target.job}', 'x', 1, 'y')`;
     case 'audit_logs':
       return `insert into app.audit_logs (id, org_id, actor_user_id, action) values ('${id}', '${target.org}', ${actor ? `'${actor}'` : 'null'}, 'test.probe')`;
+    case 'job_runs':
+      return `insert into app.job_runs (id, org_id, workspace_id, type) values ('${id}', '${target.org}', '${target.workspace}', 'system.ping')`;
   }
 }
 
@@ -172,6 +175,8 @@ describe.skipIf(!live)('RLS isolation between organizations', () => {
                 values (${o.org}, ${o.job}, 'test', ${`k-${label}`}, ${usageId})`;
     await owner`insert into app.audit_logs (id, org_id, actor_user_id, action)
                 values (${uuidv7()}, ${o.org}, ${o.user}, 'test.seeded')`;
+    await owner`insert into app.job_runs (id, org_id, workspace_id, type)
+                values (${uuidv7()}, ${o.org}, ${o.workspace}, 'system.ping')`;
   }
 
   beforeAll(async () => {
@@ -268,12 +273,17 @@ describe.skipIf(!live)('RLS isolation between organizations', () => {
     );
 
     it.each(TENANT_TABLES)('%s: UPDATE/DELETE never touch org B rows', async (table) => {
-      const [privileges] = await owner<{ upd: boolean; del: boolean }[]>`
+      const [privileges] = await owner<{ upd: boolean; del: boolean; col: string | null }[]>`
         select has_any_column_privilege(${role}, ${`app.${table}`}, 'update') as upd,
-               has_table_privilege(${role}, ${`app.${table}`}, 'delete') as del`;
+               has_table_privilege(${role}, ${`app.${table}`}, 'delete') as del,
+               (select a.attname from pg_attribute a
+                where a.attrelid = ${`app.${table}`}::regclass and a.attnum > 0 and not a.attisdropped
+                  and has_column_privilege(${role}, a.attrelid, a.attnum, 'update')
+                order by a.attnum limit 1) as col`;
       const column = table === 'organizations' ? 'id' : 'org_id';
-      // organizations: only (name, slug) are updatable, so touch name to reach the RLS policy.
-      const setClause = table === 'organizations' ? 'name = name' : `${column} = ${column}`;
+      // Touch a column the role may update (column grants), so the statement reaches RLS.
+      const updatable = privileges?.col ?? column;
+      const setClause = `${updatable} = ${updatable}`;
       const cases = [
         {
           can: privileges?.upd === true,

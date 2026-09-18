@@ -10,6 +10,8 @@ import sys
 from redis.asyncio import Redis
 
 from app.config import Settings, get_settings
+from app.db.engine import create_engine
+from app.db.job_runs import SqlJobRunsRepo
 from app.devdns import install_dev_dns
 from app.handlers import build_registry
 from app.jobs.consumer import ConsumerSettings, StreamConsumer
@@ -37,7 +39,8 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
     redis = Redis.from_url(
         str(settings.REDIS_URL), socket_connect_timeout=5, health_check_interval=30
     )
-    registry = build_registry()
+    engine = create_engine(settings)
+    registry = build_registry(job_runs=SqlJobRunsRepo(engine))
     name = settings.WORKER_NAME or f"{socket.gethostname()}-{os.getpid()}"
     consumers = [
         StreamConsumer(
@@ -50,6 +53,8 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
                 max_attempts=settings.JOB_MAX_ATTEMPTS,
                 visibility_timeout_ms=settings.JOB_VISIBILITY_TIMEOUT_MS,
                 batch_size=settings.JOB_CONCURRENCY,
+                retry_base_delay_s=settings.JOB_RETRY_BASE_DELAY_MS / 1000,
+                reclaim_every_s=settings.JOB_RECLAIM_INTERVAL_MS / 1000,
             ),
             log,
         )
@@ -63,6 +68,7 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
                 tasks.create_task(consumer.run(stop))
     finally:
         await redis.aclose()
+        await engine.dispose()
         log.info("workers stopped")
 
 

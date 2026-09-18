@@ -15,6 +15,22 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 
 ---
 
+### 2026-09-18 — Phase 1 — Task 1.10 system.ping round trip
+- Done:
+  - `app.job_runs` (migrations 0008-0010: RLS, composite FK, worker column-only UPDATE, narrow API compensation grant).
+  - API `JobPublisher` (validates the envelope against the contract before XADD) and dev-only `POST/GET /app/dev/ping-job[/:id[/events]]`. Server-generated trace_id; the row is marked failed if publishing fails.
+  - `ProgressHub` (one multiplexed subscriber, per-user and global stream caps) and `streamProgress` SSE (state -> progress -> done with buffering, heartbeat state poll, disconnect cleanup, max duration).
+  - Workers: `system.ping` handler, `JobRunsRepo` (never regresses finished rows), registry failure hooks (DLQ, pause, crash-loop), configurable retry base delay and reclaim interval.
+- Decisions (link ADRs): `paused` counts as terminal for SSE; `JOBS_SYSTEM_POOL` and `PROGRESS_STREAM_MAX_MS` are configurable (tests use a per-run pool).
+- Tests/checks status: acceptance proven live across languages (`apps/api/test/ping.live.test.ts` spawns the real Python worker):
+  - SSE round trip.
+  - SIGKILL mid-job, restart, completes on the same attempt (stale claim).
+  - 5 failures -> DLQ, and the row is failed.
+
+  Also: api unit tests for hub/stream/guard/publisher; workers 25 tests; db 89 live incl. job_runs isolation. All packages lint/typecheck/build/format green. Code-reviewer: CHANGES REQUESTED -> connection-per-client, ordering, orphan rows, trace id, row regression and pause ordering all fixed.
+- Open issues / blockers: no Last-Event-ID resume (reconnect gets `state` first instead). Between retries the row stays `running`.
+- Next step: task 1.11 web skeleton (Next.js, Supabase server-side auth, app shell, dev ping page with SSE via server proxy).
+
 ### 2026-09-18 — Phase 1 — Task 1.9 Python workers skeleton
 - Done: `services/workers` (uv, Python 3.12):
   - pydantic-settings config and structlog JSON logs with secret masking.

@@ -1,9 +1,11 @@
 """Job handlers. `build_registry()` wires every handler module into one registry."""
 
+from app.db.job_runs import JobRunsRepo
+from app.handlers.system import register_system_handlers
 from app.jobs.registry import HandlerRegistry
 
 
-def build_registry() -> HandlerRegistry:
+def build_registry(*, job_runs: JobRunsRepo) -> HandlerRegistry:
     registry = HandlerRegistry()
-    # Handler modules register themselves here as they are added (system.ping in task 1.10).
+    register_system_handlers(registry, job_runs)
     return registry

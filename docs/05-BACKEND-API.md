@@ -74,6 +74,7 @@ POST /v1/research · POST /v1/research/parse · GET /v1/research/{id} · GET /v1
 - Versioning: `/v1`, additive changes only; `Sunset` header + 12 months notice for removals.
 
 ## SSE progress
+- Implemented (task 1.10) in `apps/api/src/common/sse/`: one shared Redis subscriber per API process (`ProgressHub`, channels reference-counted; max 5 streams per user, 500 per process, 429 beyond). The stream sends `state`, then buffered and live `progress`, then `done`. Heartbeats re-read the persisted state, so a lost terminal event still ends the stream. Max duration is `PROGRESS_STREAM_MAX_MS` (default 10 min). The browser reaches it through the Next.js server proxy, because EventSource cannot send the bearer header. Dev demo: `POST /app/dev/ping-job` -> `GET /app/dev/ping-job/:id/events` (not available in production).
 - `GET /app/research/:id/events` authorizes, subscribes to Redis `progress:{id}`, sends `event: progress` messages, heartbeats every 15 s, ends with `event: done`. On reconnect, first send current persisted state.
 
 ## Credits in API

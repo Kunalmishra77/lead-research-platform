@@ -74,6 +74,8 @@ export interface TestAppOptions {
   keySet?: JWTVerifyGetKey;
   /** Use the real database from DATABASE_URL instead of fakes (live tests only). */
   realDb?: boolean;
+  /** Use the real Redis from REDIS_URL instead of the in-memory fake (live tests only). */
+  realRedis?: boolean;
   controllers?: Type[];
 }
 
@@ -84,10 +86,15 @@ export async function createTestApp(
   options: TestAppOptions = {},
 ): Promise<NestFastifyApplication> {
   const realDbUrl = process.env.DATABASE_URL;
+  const realRedisUrl = process.env.REDIS_URL;
   Object.assign(process.env, TEST_ENV);
   if (options.realDb === true) {
     if (!realDbUrl) throw new Error('realDb requires DATABASE_URL');
     process.env.DATABASE_URL = realDbUrl;
+  }
+  if (options.realRedis === true) {
+    if (!realRedisUrl) throw new Error('realRedis requires REDIS_URL');
+    process.env.REDIS_URL = realRedisUrl;
   }
   const fail = (): Promise<never> => Promise.reject(new Error('down'));
   const sql = Object.assign(
@@ -133,10 +140,9 @@ export async function createTestApp(
   })
     .overrideProvider(JWT_KEY_SET)
     .useValue(options.keySet ?? rejectAllKeys)
-    .overrideProvider(REDIS)
-    .useValue(redis)
     .overrideProvider(S3)
     .useValue(s3);
+  if (options.realRedis !== true) builder = builder.overrideProvider(REDIS).useValue(redis);
   if (options.realDb !== true) {
     // Skeleton routes never use Drizzle; live tests pass realDb instead.
     builder = builder.overrideProvider(SQL).useValue(sql).overrideProvider(DB).useValue({});

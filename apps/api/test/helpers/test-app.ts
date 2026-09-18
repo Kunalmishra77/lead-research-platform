@@ -97,9 +97,17 @@ export async function createTestApp(
       }),
     { end: () => Promise.resolve() },
   );
+  const kv = new Map<string, string>();
   const redis = {
     status: 'ready',
     ping: () => (fakes.redisOk ? Promise.resolve('PONG') : fail()),
+    // SET key value EX ttl NX (session-audit markers)
+    set: (key: string, value: string, ...args: unknown[]) => {
+      if (args.includes('NX') && kv.has(key)) return Promise.resolve(null);
+      kv.set(key, value);
+      return Promise.resolve('OK');
+    },
+    del: (key: string) => Promise.resolve(kv.delete(key) ? 1 : 0),
     connect: () => Promise.resolve(),
     quit: () => Promise.resolve('OK'),
     disconnect: () => undefined,

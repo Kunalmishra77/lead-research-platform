@@ -3,14 +3,15 @@ import 'reflect-metadata';
 import { createApp } from './app.factory';
 import { AppModule } from './app.module';
 import { APP_CONFIG } from './config/config.module';
-import type { AppConfig } from './config/env.schema';
+import { type AppConfig, parseEnv } from './config/env.schema';
 import { loadEnvironment } from './config/load-env';
 import { setupOpenApi } from './openapi';
 
 async function bootstrap(): Promise<void> {
   // Config is parsed during DI (ConfigModule), so loading .env here is early enough.
   loadEnvironment();
-  const app = await createApp(AppModule);
+  // The adapter is built before DI, so read TRUST_PROXY through the same validated parser.
+  const app = await createApp(AppModule, parseEnv(process.env).TRUST_PROXY);
   const config = app.get<AppConfig>(APP_CONFIG);
   if (config.NODE_ENV !== 'production') setupOpenApi(app);
   await app.listen(config.PORT, config.HOST);

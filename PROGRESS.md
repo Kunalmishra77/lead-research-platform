@@ -15,6 +15,19 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 
 ---
 
+### 2026-09-18 — Phase 1 — Task 1.13 audit log service
+- Done:
+  - `AuditService`: tenant events are written inside the caller's `withTenant` transaction. Org-less events go through `app.record_platform_audit` (allowlist: `auth.session_started`, `auth.signed_out`).
+  - Login audit: `SessionAuditService` records `auth.session_started` on the first request of each Supabase session. It uses a Redis SET NX marker (30 d), runs detached from the request, and skips (with a log) when Redis isn't ready.
+  - Org creation is audited by `bootstrap_org`.
+  - Role change: `GET /app/members` (directory via `app.workspace_members`) and `PATCH /app/members/:userId` (`team.manage`). Owner-only rules and the last-owner rule are checked against the actor's role read under `FOR UPDATE`; the audit row is written in the same transaction.
+  - Redis connects at startup; `TRUST_PROXY` (hop count or CIDRs, never `true`) makes audit IPs real behind a load balancer.
+  - Migrations 0006/0007.
+- Decisions (link ADRs): admins can change non-owner roles, including other admins and themselves; owner role changes are owner-only.
+- Tests/checks status: api 79 tests (SessionAuditService unit, TRUST_PROXY config, 11 live members/audit tests incl. stale-role and SQL-level directory checks). All packages green; sweep clean. Code-reviewer: CHANGES REQUESTED -> all should-fix items fixed.
+- Open issues / blockers: `auth.signed_out` is allowlisted but only emitted once the web sign-out route exists (1.11).
+- Next step: task 1.9 Python workers skeleton.
+
 ### 2026-09-18 — Phase 1 — Task 1.8 RLS isolation suite
 - Done: `db/test/rls.live.test.ts`, 66 live cases as `app_api` and `app_worker`:
   - SELECT on every tenant table returns org A rows only.

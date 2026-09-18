@@ -3,6 +3,8 @@ import { Reflector } from '@nestjs/core';
 import type { FastifyRequest } from 'fastify';
 
 import { AppError } from '../../common/errors/app-error';
+import { requestOrigin } from '../../common/request-origin';
+import { SessionAuditService } from '../audit/session-audit.service';
 import { IS_PUBLIC } from './public.decorator';
 import { TokenVerifier } from './token-verifier';
 
@@ -14,6 +16,7 @@ export class AuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly verifier: TokenVerifier,
+    private readonly sessionAudit: SessionAuditService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -34,6 +37,8 @@ export class AuthGuard implements CanActivate {
       });
     }
     request.auth = await this.verifier.verify(match[1]);
+    // Login audit: first request of each Supabase session (detached; never delays or fails it).
+    this.sessionAudit.track(request.auth, requestOrigin(request));
     return true;
   }
 }

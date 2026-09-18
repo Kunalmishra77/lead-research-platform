@@ -17,6 +17,21 @@ export const envSchema = z
 
     DATABASE_URL: z.url(),
     DB_POOL_MAX: z.coerce.number().int().min(1).max(50).default(10),
+    // Reverse proxies in front of the API: a hop count ("1") or comma-separated CIDRs. Unset = none.
+    TRUST_PROXY: z
+      .string()
+      .optional()
+      .refine((v) => v?.trim().toLowerCase() !== 'true', {
+        message: 'use a hop count or proxy CIDRs, not "true" (lets clients spoof their IP)',
+      })
+      .transform((v): number | string[] | false => {
+        if (v === undefined || v.trim() === '' || v === 'false') return false;
+        if (/^\d+$/.test(v)) return Number(v);
+        return v
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+      }),
     REDIS_URL: z.url(),
 
     S3_ENDPOINT: z.url(),

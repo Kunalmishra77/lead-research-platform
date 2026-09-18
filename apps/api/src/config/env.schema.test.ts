@@ -23,6 +23,15 @@ describe('parseEnv', () => {
     ).toThrow(/SUPABASE_JWKS_URL/);
   });
 
+  it('parses TRUST_PROXY as hops or CIDRs and refuses "true"', () => {
+    expect(parseEnv({ ...TEST_ENV }).TRUST_PROXY).toBe(false);
+    expect(parseEnv({ ...TEST_ENV, TRUST_PROXY: '1' }).TRUST_PROXY).toBe(1);
+    expect(parseEnv({ ...TEST_ENV, TRUST_PROXY: '10.0.0.0/8, 172.16.0.0/12' }).TRUST_PROXY).toEqual(
+      ['10.0.0.0/8', '172.16.0.0/12'],
+    );
+    expect(() => parseEnv({ ...TEST_ENV, TRUST_PROXY: 'true' })).toThrow(/TRUST_PROXY/);
+  });
+
   it('lists every invalid variable without echoing values', () => {
     const secret = 'hunter2-is-not-a-url';
     const env: NodeJS.ProcessEnv = { ...TEST_ENV, DATABASE_URL: secret, PORT: 'abc' };

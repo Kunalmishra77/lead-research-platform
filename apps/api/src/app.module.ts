@@ -11,8 +11,10 @@ import type { AppConfig } from './config/env.schema';
 import { DbModule } from './infra/db/db.module';
 import { RedisModule } from './infra/redis/redis.module';
 import { StorageModule } from './infra/storage/storage.module';
+import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
+import { MembersModule } from './modules/members/members.module';
 import { OrgsModule } from './modules/orgs/orgs.module';
 
 @Module({
@@ -48,9 +50,11 @@ import { OrgsModule } from './modules/orgs/orgs.module';
     DbModule,
     RedisModule,
     StorageModule,
+    AuditModule,
     AuthModule,
     HealthModule,
     OrgsModule,
+    MembersModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },

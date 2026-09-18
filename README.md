@@ -5,8 +5,7 @@ Multi-source lead generation and deep research SaaS. See `CLAUDE.md` for how thi
 ## Quick start (after Phase 1)
 
 ```bash
-cp .env.example .env
-docker compose -f infra/docker/compose.dev.yml up -d
+cp .env.example .env   # fill in Supabase + Redis Cloud values (see infra/setup/)
 pnpm install
 pnpm db:migrate && pnpm db:seed
 pnpm dev

@@ -84,7 +84,7 @@ lead-research-platform/
 │   ├── rls/         # SQL policies, applied as migrations
 │   └── seeds/       # sources, industries, technologies, demo org
 ├── infra/
-│   └── docker/ (compose.dev.yml, postgres-init.sql)
+│   └── setup/ (SETUP.md, bootstrap SQL for schema/roles, bucket + connectivity check scripts)
 └── docs/ (numbered specs, adr/)  phases/
 ```
 

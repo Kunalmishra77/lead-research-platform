@@ -6,7 +6,7 @@ Not legal advice. Items marked LEGAL must be reviewed by qualified counsel befor
 | Control | Requirement | Phase |
 | --- | --- | --- |
 | Transport | HTTPS only, HSTS, secure cookies (httpOnly, SameSite=Lax), CSRF protection for cookie-auth routes | 1 |
-| Passwords/sessions | Better Auth defaults (strong hashing), email verification, session revocation, optional TOTP 2FA | 1 / 7 |
+| Passwords/sessions | Supabase Auth (hashing, email confirmation, session revocation, TOTP MFA later); auth calls server-side only; custom SMTP before beta | 1 / 7 |
 | RBAC | Permission matrix in `05-BACKEND-API.md`, guard on every route | 1 |
 | Tenant isolation | RLS forced on tenant tables; tenant context per transaction; cross-tenant CI tests | 1 |
 | Secrets | `.env` local only; prod via secrets manager; gitleaks in CI | 1 |

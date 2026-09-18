@@ -16,7 +16,7 @@ Always install the latest stable version and record it in the lockfile. Verify A
 | Forms | react-hook-form + Zod |
 | Maps | MapLibre GL (free) |
 | Charts | Recharts |
-| Auth client | Better Auth client |
+| Auth | Supabase Auth via `@supabase/ssr`, server-side only (browser never calls supabase.co; ADR-0002) |
 | Real-time | EventSource (SSE) |
 | Tests | Vitest + Testing Library, Playwright e2e |
 
@@ -26,18 +26,18 @@ Always install the latest stable version and record it in the lockfile. Verify A
 | Framework | NestJS (Fastify adapter) |
 | ORM + migrations | Drizzle ORM + drizzle-kit (single owner of schema) |
 | Validation | Zod (nestjs-zod) |
-| Auth | Better Auth (email/password, Google, organizations plugin). Fallback if integration is awkward: Auth.js in web issuing JWT verified by API — decide via ADR in Phase 1 |
+| Auth | Supabase Auth; API verifies access tokens against the project JWKS (ES256); orgs, workspaces and roles are our own tables (ADR-0002) |
 | API docs | OpenAPI generated from Zod schemas |
 | Redis | ioredis |
 | Rate limiting | Redis token bucket |
 | Payments | Razorpay (India), Stripe (international) |
-| Email | Resend (prod), Mailpit (local) |
-| Tests | Vitest or Jest + Supertest, Testcontainers for Postgres/Redis |
+| Email | Supabase Auth built-in email (dev, team members only); Resend as custom SMTP + app emails before beta |
+| Tests | Vitest + Supertest; integration tests against the Supabase test project locally, Supabase CLI stack in CI |
 
 ## Workers — services/workers
 | Need | Choice |
 | --- | --- |
-| Runtime | asyncio, uvloop |
+| Runtime | asyncio (uvloop on Linux only) |
 | Queue | Redis Streams (redis-py asyncio) behind own small `jobs` package |
 | HTTP | httpx (HTTP/2) |
 | Browser | Playwright (Chromium), small pool, only when needed |
@@ -55,11 +55,11 @@ Always install the latest stable version and record it in the lockfile. Verify A
 ## Data & infra
 | Need | Local | Production (initial) |
 | --- | --- | --- |
-| Postgres | pgvector/pgvector:pg16 image + postgis extension | Managed Postgres (RDS Mumbai / Neon / Crunchy) |
-| Redis | redis:7 | Managed Redis |
-| Object storage | MinIO | Cloudflare R2 |
-| Mail | Mailpit | Resend / SES |
-| Deploy | docker compose | Web on Vercel or container; API + workers as containers on 2-3 VMs or Render/Railway; Terraform later |
+| Postgres | Supabase dev project (PG 17, ap-south-1) + separate test project | Supabase paid plan (ap-south-1) |
+| Redis | Redis Cloud free | Redis Cloud paid / managed Redis |
+| Object storage | Supabase Storage (S3 API) | Supabase Storage (R2 optional later, config only) |
+| Mail | Supabase Auth built-in | Resend |
+| Deploy | native processes on the dev machine (no Docker, ADR-0002) | Web on Vercel or container; API + workers as containers on 2-3 VMs or Render/Railway; Terraform later |
 | Observability | Sentry dev, console logs | Sentry, Grafana Cloud (OTel), BetterStack uptime |
 | Analytics | - | PostHog |
 

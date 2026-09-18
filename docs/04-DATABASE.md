@@ -1,13 +1,13 @@
 # 04 — Database
 
-PostgreSQL 16 with extensions: `pgvector`, `pg_trgm`, `postgis`, `citext`, `pgcrypto`. Drizzle owns schema and migrations (`db/schema`, `db/migrations`). Python reads/writes with SQLAlchemy Core using the same table names.
+PostgreSQL 17 on Supabase (ADR-0002, ADR-0003) with extensions: `pgvector`, `pg_trgm`, `postgis`, `citext`, `pgcrypto` (+ `pg_partman`, `pg_cron` for partitions). All app tables live in schema `app`, which is not exposed through the Supabase Data API. Drizzle owns schema and migrations (`db/schema`, `db/migrations`). Python reads/writes with SQLAlchemy Core using the same table names.
 
 ## Conventions
 - PK `id uuid` (UUID v7 generated in app). `created_at`, `updated_at timestamptz default now()`.
 - Tenant tables: `org_id uuid not null`, `workspace_id uuid` where relevant, RLS enabled + forced.
 - Soft delete only where users can restore (`deleted_at`); hard-delete jobs handle privacy erasure.
 - jsonb for sparse/variable data; never for fields that are filtered often (promote to columns).
-- Big append-only tables partitioned monthly: `field_values`, `raw_documents`, `usage_events`, `audit_logs`.
+- Big append-only tables partitioned monthly: `field_values`, `raw_documents`, `usage_events`, `audit_logs`. Every PK/unique constraint on a partitioned table must include the partition key; cross-partition uniqueness goes in a small non-partitioned key table (ADR-0003).
 
 ## Global company graph (no RLS)
 | Table | Key columns | Constraints / indexes |
@@ -34,7 +34,7 @@ PostgreSQL 16 with extensions: `pgvector`, `pg_trgm`, `postgis`, `citext`, `pgcr
 | --- | --- | --- |
 | organizations | id, name, slug, plan, region, credits_balance bigint (cache of ledger) | unique(slug) |
 | workspaces | id, org_id, name, settings jsonb | btree(org_id) |
-| users / sessions / accounts | managed by Better Auth tables | unique(email) |
+| user_profiles | user_id (pk, = auth.users.id), full_name, is_platform_staff, created_at | `auth.users` is owned by Supabase Auth; profile readable by self or admin functions |
 | memberships | id, org_id, workspace_id, user_id, role (owner/admin/manager/member/viewer) | unique(workspace_id, user_id) |
 | searches | id, org_id, workspace_id, user_id, raw_query, spec jsonb, spec_version | btree(workspace_id, created_at desc) |
 | research_jobs | id, org_id, workspace_id, search_id, status (queued/planning/running/paused/completed/failed/cancelled), depth, credit_budget, credits_reserved, credits_used, cost_micros, progress jsonb, error_class, started_at, finished_at | btree(org_id, status) |
@@ -52,10 +52,11 @@ PostgreSQL 16 with extensions: `pgvector`, `pg_trgm`, `postgis`, `citext`, `pgcr
 | crm_sync_records | id, org_id, integration_id, lead_id, remote_object, remote_id, status, error, synced_at | unique(integration_id, lead_id, remote_object) |
 | api_keys | id, org_id, workspace_id, name, prefix, key_hash bytea, scopes text[], last_used_at, expires_at, revoked_at | unique(prefix) |
 | webhooks / webhook_deliveries | id, org_id, url, secret_ciphertext, events text[] / id, webhook_id, event, status, attempts, response_code | btree(webhook_id, created_at desc) |
-| usage_events | id, org_id, user_id, research_job_id, meter, units, credits, cost_micros, unit_key, created_at | unique(research_job_id, meter, unit_key); partition monthly |
-| credit_ledger | id, org_id, delta bigint, balance_after bigint, reason (grant/purchase/reserve/consume/release/refund/expire), ref_type, ref_id, created_at | append-only; btree(org_id, created_at desc) |
+| usage_events | id, org_id, user_id, research_job_id, meter, units, credits, cost_micros, unit_key, created_at | pk(id, created_at); partition monthly |
+| usage_unit_keys | org_id, research_job_id, meter, unit_key, usage_event_id, created_at | pk(research_job_id, meter, unit_key); not partitioned; inserted with the usage event so retries never double-charge |
+| credit_ledger | id, org_id, delta bigint, balance_after bigint, reason (grant/purchase/subscription_renewal/reserve/consume/release/refund/expire/adjustment), ref_type, ref_id, created_at | append-only; btree(org_id, created_at desc) |
 | subscriptions / invoices | provider, provider_ids, status, period_start/end, amounts | unique(provider, provider_subscription_id) |
-| audit_logs | id, org_id, actor_user_id, actor_api_key_id, action, target_type, target_id, ip, user_agent, meta jsonb, created_at | append-only; partition monthly |
+| audit_logs | id, org_id, actor_user_id, actor_api_key_id, action, target_type, target_id, ip, user_agent, meta jsonb, created_at | pk(id, created_at); append-only; partition monthly |
 | privacy_requests | id, requester_email, kind (access/erasure/objection), status, verified_at, completed_at | global table, admin only |
 
 ## RLS pattern
@@ -66,7 +67,9 @@ create policy tenant_isolation on leads
   using (org_id = current_setting('app.org_id', true)::uuid)
   with check (org_id = current_setting('app.org_id', true)::uuid);
 ```
-- App role `app_api` has no BYPASSRLS. Admin panel uses a separate audited path.
+- Roles (ADR-0003): `postgres` owns tables and runs migrations only; `app_api` and `app_worker` have no BYPASSRLS.
+- `organizations` policy uses `id = current_setting('app.org_id', true)::uuid`.
+- Privileged paths are narrow `SECURITY DEFINER` functions that write an audit row: `app.bootstrap_org(...)` (signup) and `app.admin_*` (platform staff only).
 - CI test: create two orgs, attempt cross-org read/write on every tenant table, expect zero rows / error.
 
 ## Best-value computation

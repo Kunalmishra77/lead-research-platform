@@ -25,12 +25,13 @@ This file is loaded automatically in every session. Keep it short. Detailed spec
 - **Budgets:** every research job has a credit budget and an internal cost cap. Every paid API / LLM / browser call goes through a metered client that records `usage_events`.
 - **No silent failures:** errors are classified (`transient`, `rate_limited`, `access_restricted`, `parse_failed`, `invalid_input`, `budget_exhausted`) and logged with `trace_id`, `org_id`, `job_id`.
 
-## Stack (see `docs/02-TECH-STACK.md` and `docs/adr/0001-stack-and-job-contract.md`)
+## Stack (see `docs/02-TECH-STACK.md`, `docs/adr/0001-stack-and-job-contract.md`, `0002-hosted-dev-services-and-supabase-auth.md`, `0003-db-roles-schema-and-partitioning.md`)
 
 - `apps/web` — Next.js (App Router), TypeScript, Tailwind, shadcn/ui, TanStack Query/Table/Virtual
-- `apps/api` — NestJS, TypeScript, Drizzle ORM (owns ALL DB migrations), Better Auth, Zod
+- `apps/api` — NestJS, TypeScript, Drizzle ORM (owns ALL DB migrations), Supabase Auth (JWT verified via JWKS), Zod
 - `services/workers` — Python 3.12, uv, asyncio, httpx, Playwright, Pydantic v2, SQLAlchemy Core (no migrations in Python)
-- PostgreSQL 16 + pgvector + pg_trgm + PostGIS · Redis 7 (Streams for jobs, cache, rate limits) · MinIO locally / Cloudflare R2 in prod
+- Supabase: PostgreSQL 17 (+ pgvector, pg_trgm, PostGIS; app tables in schema `app`), Auth, Storage (S3 API) · Redis 7 on Redis Cloud (Streams for jobs, cache, rate limits)
+- No Docker on the dev machine: all infra is hosted (ADR-0002). The browser never calls `*.supabase.co` directly (Indian ISP DNS block); auth runs server-side in Next.js.
 - Job contract between TS and Python = Redis Streams + JSON envelope defined in `packages/contracts` (JSON Schema). Never call Python from Node directly.
 
 ## Repo map
@@ -42,7 +43,7 @@ services/workers    Python: orchestrator, connectors, crawler, extract, normaliz
 packages/contracts  JSON Schemas: ResearchSpec, job envelopes, field catalogue -> generated TS + Pydantic types
 packages/ui         shared React components
 db/                 migrations (drizzle), rls policies, seeds
-infra/              docker compose, later terraform/k8s
+infra/              setup scripts + guide for hosted services, later terraform/k8s
 docs/               specs (numbered), adr/
 phases/             phase plans with checklists
 ```
@@ -57,7 +58,7 @@ pnpm test                    # TS tests
 pnpm db:generate / db:migrate / db:seed
 pnpm contracts:gen           # regenerate TS + Python types from JSON Schemas
 cd services/workers && uv sync && uv run pytest && uv run ruff check . && uv run mypy .
-docker compose -f infra/docker/compose.dev.yml up -d   # postgres, redis, minio, mailpit
+# no local containers: dev uses hosted Supabase + Redis Cloud (see infra/setup/, ADR-0002)
 ```
 
 ## Coding conventions (full list: `docs/12-CODING-STANDARDS.md`)

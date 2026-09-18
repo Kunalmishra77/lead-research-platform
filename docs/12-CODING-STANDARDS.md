@@ -39,4 +39,4 @@
 
 ## Git and CI
 - Branch per task: `phase-<n>/<short-task>`.
-- CI: install -> lint -> typecheck -> unit tests -> integration tests (Testcontainers) -> contracts generation check (no diff) -> build.
+- CI: install -> lint -> typecheck -> unit tests -> integration tests (Supabase CLI stack + Redis service container) -> contracts generation check (no diff) -> build.

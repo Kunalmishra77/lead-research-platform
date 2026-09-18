@@ -9,7 +9,7 @@
 - Idempotency: `Idempotency-Key` header honoured on POST (stored 24h in Redis).
 
 ## Auth and RBAC
-- Better Auth: email+password with verification, Google OAuth, sessions (httpOnly cookies), organizations plugin.
+- Supabase Auth (ADR-0002): email+password with confirmation; Google OAuth later. All Supabase Auth calls happen server-side in Next.js (browser never calls supabase.co); session in httpOnly cookies on our domain. The API receives `Authorization: Bearer <access_token>` and verifies it against the project JWKS. Orgs, workspaces, memberships and roles are our own tables; `POST /app/orgs` bootstraps org + default workspace through `app.bootstrap_org`.
 - Roles: owner, admin, manager, member, viewer.
 
 | Permission | owner | admin | manager | member | viewer |

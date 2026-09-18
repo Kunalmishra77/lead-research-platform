@@ -14,7 +14,7 @@ flowchart LR
   RS --> CON[workers: connectors / crawler]
   RS --> PIPE[workers: extract, normalize, resolve, verify, enrich, score]
   RS --> EXP[workers: export / crm]
-  CON --> S3[(MinIO / R2 raw docs)]
+  CON --> S3[(Supabase Storage S3: raw docs)]
   PIPE --> PG
   EXP --> S3
   ORCH -- progress pub/sub --> API
@@ -49,6 +49,7 @@ flowchart LR
 Input -> Spec parse -> Plan -> Source selection -> Discovery -> Crawl -> Extract -> Normalize -> Resolve -> Verify -> Critic loop -> Enrich -> AI analysis -> Score -> Leads materialized -> Index -> Export. Stage details: `06-DATA-PIPELINE.md`.
 
 ## Multi-tenancy
+- Hosting (ADR-0002): Supabase Postgres + Auth + Storage, Redis Cloud. Users live in Supabase `auth.users`; everything we own is in schema `app`.
 - Organization -> Workspaces -> Memberships (role).
 - Global tables (no RLS, workers write): companies, company_locations, company_domains, people, contacts, social_profiles, websites, field_values, raw_documents, signals, sources, industries, technologies.
 - Tenant tables (RLS on `org_id`): searches, research_jobs, research_tasks, leads, lists, notes, tags, scoring_models, saved_searches, exports, integrations, api_keys, usage_events, credit_ledger, audit_logs.

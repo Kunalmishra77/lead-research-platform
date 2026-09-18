@@ -4,7 +4,7 @@
 | Level | TS (web/api) | Python (workers) | Must cover |
 | --- | --- | --- | --- |
 | Unit | Vitest | pytest | normalizers, matchers, scoring, confidence, credit math, permission checks, mappers |
-| Integration | Supertest + Testcontainers (Postgres, Redis) | pytest + Testcontainers | RLS isolation, job lifecycle, ledger flows, connector with fixtures, pipeline end-to-end on fixture pages |
+| Integration | Supertest against Supabase test project (local) / Supabase CLI stack (CI) + Redis | pytest, same targets | RLS isolation, job lifecycle, ledger flows, connector with fixtures, pipeline end-to-end on fixture pages |
 | Contract | JSON Schema validation both sides | same | job envelopes, ResearchSpec, progress events |
 | E2E | Playwright | - | signup -> research -> results -> list -> export |
 | AI evals | - | eval harness | per AI task accuracy (see 07) |

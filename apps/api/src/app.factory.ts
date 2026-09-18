@@ -8,10 +8,10 @@ import { generateRequestId, REQUEST_ID_HEADER } from './common/request-id';
 const BODY_LIMIT_BYTES = 1024 * 1024;
 
 /**
- * @param trustProxy hop count or proxy CIDRs from TRUST_PROXY (never `true`: that would let clients
- * spoof request.ip, which audit rows record, via X-Forwarded-For).
+ * @param trustProxy proxy IPs/CIDRs from TRUST_PROXY (never `true` or a hop count: those let
+ * clients spoof request.ip, which audit rows record, via X-Forwarded-For).
  */
-export function createAdapter(trustProxy: number | string[] | false = false): FastifyAdapter {
+export function createAdapter(trustProxy: string[] | false = false): FastifyAdapter {
   return new FastifyAdapter({
     genReqId: generateRequestId,
     bodyLimit: BODY_LIMIT_BYTES,
@@ -33,7 +33,7 @@ export function configureApp(app: NestFastifyApplication): void {
 
 export async function createApp(
   module: Type,
-  trustProxy: number | string[] | false = false,
+  trustProxy: string[] | false = false,
 ): Promise<NestFastifyApplication> {
   const app = await NestFactory.create<NestFastifyApplication>(module, createAdapter(trustProxy), {
     bufferLogs: true,

@@ -5,6 +5,13 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 ## Template
 
 ```
+### 2026-09-18 — Phase 1 — Task 1.14 CI
+- Done: `.github/workflows/ci.yml` with five jobs. `js`: format, lint, typecheck, contracts check, build, unit tests. `web-e2e`: Playwright. `workers`: ruff, format check, mypy, pytest on fakeredis and on real Redis. `integration`: Supabase CLI 2.117.0 local stack (DB + Auth) plus a Redis service, bootstrap and migrate, then the DB RLS suites and the API live suites including the `system.ping` round trip with the real worker. `security`: gitleaks 8.30.1 (checksum-verified) over full history, `pnpm audit --audit-level high`, pip-audit. `.gitleaksignore` holds the one reviewed false positive (the e2e placeholder key). The workflow passes actionlint 1.7.12.
+- Decisions (link ADRs): ADR-0004 amendment. A pnpm override forces fastify 5.12.5 (fixes GHSA-w2qp-rph6-63g4 and GHSA-3m5p-2c4r-xxw2). `TRUST_PROXY` now accepts only proxy IPs/CIDRs (hop counts are spoofable and were removed in fastify 5.12). The CI mypy step uses the pyproject scope (strict on `app/`).
+- Tests/checks status: locally, gitleaks over history finds nothing beyond the ignored placeholder, pnpm audit high passes (1 moderate: esbuild via drizzle-kit, dev-only), pip-audit is clean, API 104 tests pass on fastify 5.12.5, and ruff, format and mypy are clean.
+- Open issues / blockers: the workflow has not run on GitHub yet. The owner must `git push -u origin main` (Claude is not allowed to push). The Supabase CLI stack cannot be tried locally (no Docker), so the first run may need small fixes, for example in bootstrap.sql against the local `postgres` role. docs/13 has a CI section.
+- Next step: task 1.15 Sentry wiring.
+
 ### 2026-09-18 — Phase 1 — Task 1.12 admin shell
 - Done: API `admin` module: `GET /admin/orgs` and `GET /admin/users` (Zod-validated `limit`/`cursor`, fetches `limit + 1` so there is no empty last page, Zod-validated DB rows). Migration 0011 recreates `app.admin_list_*` with `p_ip`/`p_user_agent`, so admin audit rows carry the request origin; the old overloads were dropped. Shared `common/db/pg-error.ts` and `common/db/session.ts` (`assertSessionActive`, now also used by TenantGuard). Web `/admin` area (layout 404s for non-staff; orgs/users tables with cursor paging; the fetchers map API 403 to 404 and 401 to /login, because pages render in parallel with the layout check). `@leadforge/db` re-exports the `SQL` type.
 - Decisions (link ADRs): ADR-0003 (admin functions audit and enforce staff). Pagination param is `cursor` per docs/05. `admin.forbidden` is classified `access_restricted`. docs/05 has an "Implemented (task 1.12)" note.

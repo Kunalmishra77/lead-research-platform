@@ -24,3 +24,8 @@ Option 2.
 ## Consequences
 - Revisit when typescript-eslint supports TS 7 and nestjs-zod supports Nest 12: bump in one PR with a note here.
 - asyncpg works with the Windows default event loop, so Playwright can share the process model in Phase 3.
+
+## Amendment 2026-09-18 (task 1.14): patched Fastify, trusted proxies
+- `@nestjs/platform-fastify` 11.2.5 (latest 11.x) pins `fastify` 5.11.3, which has GHSA-w2qp-rph6-63g4 (schema validation bypass) and GHSA-3m5p-2c4r-xxw2 (X-Forwarded-* spoofing with hop-count `trustProxy`). A pnpm override in `pnpm-workspace.yaml` forces `fastify` 5.12.5 (same major). Remove the override when the adapter ships a patched pin.
+- Fastify 5.12 dropped hop-count `trustProxy`. `TRUST_PROXY` now accepts only explicit proxy IPs/CIDRs; `true` and hop counts are refused at startup, because a spoofed `request.ip` would end up in audit rows.
+- CI (`.github/workflows/ci.yml`) pins action majors and tool versions (Supabase CLI 2.117.0, gitleaks 8.30.1 with a checksum, pip-audit 2.10.0). The dependency audit fails on `high` and above. Known moderate finding: esbuild's dev-server advisory (GHSA-67mh-4wv8-2f99), reached only through drizzle-kit dev tooling and never shipped.

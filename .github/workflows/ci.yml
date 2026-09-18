@@ -1,0 +1,193 @@
+# Phase 1 task 1.14. Live suites run against a throwaway Supabase CLI stack + Redis service per run,
+# never against hosted data (ADR-0002). Action versions verified 2026-09-18.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  js:
+    name: TS lint, typecheck, contracts, build, unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v10
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - name: Generated contracts are up to date
+        run: pnpm contracts:check
+      - run: pnpm build
+      - name: Unit tests (live suites skip without DB/Redis env)
+        run: pnpm test
+
+  web-e2e:
+    name: Web smoke tests (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo run build --filter=@leadforge/web...
+      - run: pnpm --filter @leadforge/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @leadforge/web e2e
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: apps/web/test-results/
+          retention-days: 7
+
+  workers:
+    name: Python ruff, mypy, pytest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      redis:
+        image: redis:8-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 10
+    defaults:
+      run:
+        working-directory: services/workers
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          working-directory: services/workers
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy # strict on app/ (pyproject files)
+      - name: pytest (fakeredis)
+        run: uv run pytest -q
+      - name: pytest (real Redis)
+        run: uv run pytest -q
+        env:
+          REDIS_TEST_URL: redis://127.0.0.1:6379/15
+
+  integration:
+    name: Live suites (Supabase CLI stack + Redis)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      redis:
+        image: redis:8-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 10
+    # Placeholder credentials for the throwaway local stack (Supabase CLI defaults); not secrets.
+    env:
+      NODE_ENV: test
+      DATABASE_URL_MIGRATIONS: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      APP_API_DB_PASSWORD: ci-app-api-password-0001
+      APP_WORKER_DB_PASSWORD: ci-app-worker-password-0001
+      DATABASE_URL: postgresql://app_api:ci-app-api-password-0001@127.0.0.1:54322/postgres
+      DATABASE_URL_WORKERS: postgresql://app_worker:ci-app-worker-password-0001@127.0.0.1:54322/postgres
+      REDIS_URL: redis://127.0.0.1:6379/0
+      # The ping worker requires S3 settings but never calls storage in these tests.
+      S3_ENDPOINT: http://127.0.0.1:9
+      S3_REGION: ci
+      S3_BUCKET_RAW: lf-raw
+      S3_BUCKET_EXPORTS: lf-exports
+      S3_ACCESS_KEY_ID: ci
+      S3_SECRET_ACCESS_KEY: ci
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v10
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          working-directory: services/workers
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.117.0
+      - name: Start Supabase local stack (DB + Auth only)
+        run: |
+          mkdir -p "$RUNNER_TEMP/supabase" && cd "$RUNNER_TEMP/supabase"
+          supabase init --force < /dev/null
+          supabase start -x studio,imgproxy,edge-runtime,logflare,vector,realtime,postgres-meta,storage-api
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo run build --filter=@leadforge/db... --filter=@leadforge/contracts...
+      - name: Worker venv (spawned by the ping round-trip test)
+        working-directory: services/workers
+        run: uv sync --frozen
+      - run: pnpm infra:bootstrap
+      - run: pnpm db:migrate
+      - name: DB suites (structure + RLS isolation)
+        run: pnpm --filter @leadforge/db test
+      - name: API suites (orgs, members, admin, system.ping round trip)
+        env:
+          CI: 'true'
+        run: pnpm --filter @leadforge/api test
+      - if: always()
+        name: Stop Supabase
+        run: cd "$RUNNER_TEMP/supabase" && supabase stop --no-backup
+
+  security:
+    name: Secrets scan and dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GITLEAKS_VERSION: 8.30.1
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # scan full history
+      - name: gitleaks (checksum-verified binary)
+        run: |
+          cd "$RUNNER_TEMP"
+          file="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          curl -sSfLO "$base/$file"
+          curl -sSfL "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt" | grep " $file\$" | sha256sum -c -
+          tar -xzf "$file" gitleaks
+          cd "$GITHUB_WORKSPACE" && "$RUNNER_TEMP/gitleaks" git --redact --no-banner -v .
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: JS dependency audit (high and above)
+        run: pnpm audit --audit-level high
+      - uses: astral-sh/setup-uv@v10
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          working-directory: services/workers
+      - name: Python dependency audit
+        working-directory: services/workers
+        run: |
+          uv export --frozen --no-dev --no-emit-project --no-emit-local --no-hashes -o "$RUNNER_TEMP/requirements.txt"
+          uvx pip-audit==2.10.0 -r "$RUNNER_TEMP/requirements.txt" --progress-spinner off

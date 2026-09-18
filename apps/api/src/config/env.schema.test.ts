@@ -23,9 +23,9 @@ describe('parseEnv', () => {
     ).toThrow(/SUPABASE_JWKS_URL/);
   });
 
-  it('parses TRUST_PROXY as hops or CIDRs and refuses "true"', () => {
+  it('parses TRUST_PROXY as proxy CIDRs and refuses "true" and hop counts', () => {
     expect(parseEnv({ ...TEST_ENV }).TRUST_PROXY).toBe(false);
-    expect(parseEnv({ ...TEST_ENV, TRUST_PROXY: '1' }).TRUST_PROXY).toBe(1);
+    expect(() => parseEnv({ ...TEST_ENV, TRUST_PROXY: '1' })).toThrow(/TRUST_PROXY/);
     expect(parseEnv({ ...TEST_ENV, TRUST_PROXY: '10.0.0.0/8, 172.16.0.0/12' }).TRUST_PROXY).toEqual(
       ['10.0.0.0/8', '172.16.0.0/12'],
     );

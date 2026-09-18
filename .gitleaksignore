@@ -1,0 +1,3 @@
+# Reviewed false positives only (fingerprint = commit:file:rule:line). Never add real secrets here.
+# Placeholder Supabase key used by the Playwright smoke tests (no live Supabase calls).
+c59693e1bf08c9deb6da091305b38c3e65ffd4b7:apps/web/playwright.config.ts:generic-api-key:22

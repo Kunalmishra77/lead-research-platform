@@ -20,7 +20,7 @@ CLAUDE.md, docs/00, 01, 02, 03, 04 (conventions + tenant tables), 05 (auth/RBAC)
 - [x] 1.11 `apps/web` Next.js skeleton: Tailwind, shadcn/ui init, theme tokens from docs/09, app shell (sidebar, top bar, credits pill placeholder), login/signup/verify pages wired to Supabase Auth (server-side), protected layout, workspace switcher, dev ping-job page showing SSE progress
 - [x] 1.12 Admin shell: `/admin` route group restricted to platform staff flag; users and orgs list (read-only)
 - [x] 1.13 Audit log service used for login, org creation, role change
-- [ ] 1.14 CI (GitHub Actions): TS lint/typecheck/test, Python ruff/mypy/pytest, contracts check, build; gitleaks; dependency audit
+- [x] 1.14 CI (GitHub Actions): TS lint/typecheck/test, Python ruff/mypy/pytest, contracts check, build; gitleaks; dependency audit
 - [ ] 1.15 Sentry wiring (web, api, workers) behind env flag
 - [ ] 1.16 Update CLAUDE.md Commands section with exact working commands; README quick start verified from clean clone
 

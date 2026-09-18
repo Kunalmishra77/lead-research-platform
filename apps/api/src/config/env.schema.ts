@@ -17,16 +17,17 @@ export const envSchema = z
 
     DATABASE_URL: z.url(),
     DB_POOL_MAX: z.coerce.number().int().min(1).max(50).default(10),
-    // Reverse proxies in front of the API: a hop count ("1") or comma-separated CIDRs. Unset = none.
+    // Reverse proxies in front of the API: comma-separated proxy IPs/CIDRs. Unset = none. Hop counts
+    // and "true" are refused: both let clients spoof request.ip, which audit rows record
+    // (fastify >= 5.12 dropped hop counts for that reason, GHSA-3m5p-2c4r-xxw2).
     TRUST_PROXY: z
       .string()
       .optional()
-      .refine((v) => v?.trim().toLowerCase() !== 'true', {
-        message: 'use a hop count or proxy CIDRs, not "true" (lets clients spoof their IP)',
+      .refine((v) => v?.trim().toLowerCase() !== 'true' && !/^\s*\d+\s*$/.test(v ?? ''), {
+        message: 'list the proxy IPs or CIDRs; "true" and hop counts let clients spoof their IP',
       })
-      .transform((v): number | string[] | false => {
+      .transform((v): string[] | false => {
         if (v === undefined || v.trim() === '' || v === 'false') return false;
-        if (/^\d+$/.test(v)) return Number(v);
         return v
           .split(',')
           .map((s) => s.trim())

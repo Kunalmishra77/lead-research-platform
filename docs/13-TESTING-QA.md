@@ -35,3 +35,11 @@ Each phase file lists acceptance criteria. `/review-phase <n>` must show evidenc
 | duplicate_rate, verified_ratio, email_bounce_rate | workspace | bounce > 8% |
 | export_failures_total | format | spikes |
 | http_request_duration_seconds | route | 5xx > 1%, p95 > 800 ms |
+
+## CI (implemented in task 1.14)
+`.github/workflows/ci.yml` runs on pushes to `main` and on pull requests. It has five jobs:
+- `js`: format, lint, typecheck, contracts check, build, and unit tests. Live suites skip here because no DB/Redis env is set.
+- `web-e2e`: Playwright smoke tests against a production build with a placeholder env.
+- `workers`: ruff, `ruff format --check`, strict mypy on `app/`, and pytest, first on fakeredis and then on a real Redis service.
+- `integration`: starts a throwaway Supabase CLI stack (DB and Auth only) and a Redis service, runs `infra:bootstrap` and `db:migrate`, then the DB suites (structure and RLS isolation) and the API live suites, including the `system.ping` round trip with the real worker.
+- `security`: gitleaks over the full history (reviewed false positives go in `.gitleaksignore` by fingerprint), `pnpm audit --audit-level high`, and pip-audit on the locked worker dependencies.

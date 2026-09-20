@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 
 import { cn } from '@/lib/utils';
 
-import type { NavItem } from './nav';
+import { DEV_NAV, type NavItem, PRIMARY_NAV, SECONDARY_NAV } from './nav';
 
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   const Icon = item.icon;
@@ -41,7 +41,16 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   );
 }
 
-export function SidebarNav({ sections }: { sections: { label?: string; items: NavItem[] }[] }) {
+/**
+ * Server Components may only pass serializable props to this client component, so the sections are
+ * chosen here (icons are component functions and cannot cross that boundary).
+ */
+export function SidebarNav({ showDeveloper }: { showDeveloper: boolean }) {
+  const sections: { label?: string; items: NavItem[] }[] = [
+    { items: PRIMARY_NAV },
+    { label: 'Account', items: SECONDARY_NAV },
+    ...(showDeveloper ? [{ label: 'Developer', items: DEV_NAV }] : []),
+  ];
   const pathname = usePathname();
   return (
     <nav aria-label="Main" className="flex flex-col gap-6">

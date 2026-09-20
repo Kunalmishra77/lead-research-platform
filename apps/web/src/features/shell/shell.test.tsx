@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { PRIMARY_NAV } from './nav';
 import { SidebarNav } from './sidebar';
 import { WorkspaceSwitcher } from './workspace-switcher';
 
@@ -12,11 +11,17 @@ vi.mock('@/features/workspace/actions', () => ({ selectWorkspace: vi.fn() }));
 
 describe('SidebarNav', () => {
   it('renders docs/09 items, marks the active page and disables later-phase items', () => {
-    render(<SidebarNav sections={[{ items: PRIMARY_NAV }]} />);
+    render(<SidebarNav showDeveloper={false} />);
     const dashboard = screen.getByRole('link', { name: 'Dashboard' });
     expect(dashboard).toHaveAttribute('aria-current', 'page');
     expect(screen.queryByRole('link', { name: /New Research/ })).toBeNull();
     expect(screen.getByText('New Research').closest('[aria-disabled="true"]')).not.toBeNull();
+    expect(screen.queryByRole('link', { name: 'Job pipeline check' })).toBeNull();
+  });
+
+  it('shows developer tools only when asked', () => {
+    render(<SidebarNav showDeveloper />);
+    expect(screen.getByRole('link', { name: 'Job pipeline check' })).toBeInTheDocument();
   });
 });
 

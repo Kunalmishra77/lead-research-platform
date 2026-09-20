@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import type { Me, Membership } from '@/features/account/me';
 import { signOut } from '@/features/auth/actions';
 
-import { DEV_NAV, PRIMARY_NAV, SECONDARY_NAV } from './nav';
 import { SidebarNav } from './sidebar';
 import { WorkspaceSwitcher } from './workspace-switcher';
 
@@ -31,12 +30,6 @@ interface AppShellProps {
 }
 
 export function AppShell({ user, memberships, activeWorkspaceId, children }: AppShellProps) {
-  const sections = [
-    { items: PRIMARY_NAV },
-    { label: 'Account', items: SECONDARY_NAV },
-    // /dev/* pages 404 in production (DevOnlyGuard on the API, notFound() on the page).
-    ...(process.env.NODE_ENV === 'production' ? [] : [{ label: 'Developer', items: DEV_NAV }]),
-  ];
   return (
     <div className="flex min-h-dvh">
       <aside className="hidden w-60 shrink-0 flex-col justify-between border-r bg-sidebar p-4 md:flex">
@@ -44,7 +37,8 @@ export function AppShell({ user, memberships, activeWorkspaceId, children }: App
           <Link href="/dashboard" className="px-3 text-lg font-semibold tracking-tight">
             Lead<span className="text-primary">Forge</span>
           </Link>
-          <SidebarNav sections={sections} />
+          {/* /dev/* pages 404 in production (DevOnlyGuard on the API, notFound() on the page). */}
+          <SidebarNav showDeveloper={process.env.NODE_ENV !== 'production'} />
         </div>
         <div className="flex flex-col gap-3">
           <CreditsPill credits={null} />

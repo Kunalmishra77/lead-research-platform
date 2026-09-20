@@ -32,12 +32,26 @@ function fieldErrors(error: z.ZodError): AuthFormState['fieldErrors'] {
   return out;
 }
 
+/** Server-side diagnosis for a refused auth call: code only, never the email or the password. */
+function logAuthFailure(
+  action: string,
+  error: { code?: string; status?: number; message: string },
+) {
+  console.error('auth call refused', {
+    action,
+    code: error.code ?? 'unknown',
+    status: error.status ?? 0,
+    error_class: 'invalid_input',
+  });
+}
+
 export async function signIn(_prev: AuthFormState, form: FormData): Promise<AuthFormState> {
   const parsed = parse(form);
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) {
+    logAuthFailure('sign_in', error);
     // Same message for unknown email / wrong password. An unconfirmed account gets its own hint:
     // it needs the correct password first, so it does not help enumeration.
     return error.code === 'email_not_confirmed'
@@ -56,6 +70,8 @@ export async function signUp(_prev: AuthFormState, form: FormData): Promise<Auth
     options: { emailRedirectTo: `${env().APP_URL}/auth/confirm` },
   });
   if (error) {
+    // e.g. the default Supabase SMTP refuses addresses outside the project team.
+    logAuthFailure('sign_up', error);
     return error.code === 'weak_password'
       ? { fieldErrors: { password: 'Choose a stronger password.' } }
       : { error: 'Could not create the account. Try again in a moment.' };

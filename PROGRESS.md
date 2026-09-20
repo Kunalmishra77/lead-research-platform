@@ -5,6 +5,17 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 ## Template
 
 ```
+### 2026-09-20 — Phase 1 — Task 1.7 verified live in the browser (publishable key received)
+- Done: with the owner's Supabase publishable key, I drove the real UI with Playwright against the running dev stack (web + API + Python worker + Redis + hosted Supabase). 8/8 checks pass: anonymous pages redirect to sign-in; sign-up posts to Supabase server-side; an unconfirmed account is refused with "Confirm your email address first"; the confirmation link (`token_hash` on our own domain) starts the session and lands on onboarding; creating the org gives a default workspace and the app shell; `system.ping` runs API -> Redis -> Python worker -> Postgres -> SSE with live progress ending `completed`; sign-out clears the session; the confirmed user signs in again. Screenshots are in the scratch folder.
+- Bugs found and fixed (only a live signed-in run could catch these):
+  - **App shell crashed every signed-in page**: `AppShell` (server) passed nav items containing Lucide icon components to the client `SidebarNav`. Next.js refuses functions across that boundary, so /dashboard and /dev/ping returned 500. `SidebarNav` now takes `showDeveloper` and builds its own sections; a unit test covers both variants. jsdom tests and the logged-out smoke tests could not see this.
+  - The first ping progress row printed the attempt twice ("attempt 1 · attempt 1"); the message no longer repeats what `counts` already carries.
+  - Auth failures were silent server-side. `signIn`/`signUp` now log `auth call refused` with the Supabase error code (never the email or password), which is how I identified the SMTP limitation below.
+- Decisions (link ADRs): none new.
+- Tests/checks status: web vitest 40, lint, typecheck green; workers 36 tests, ruff, mypy green; live browser run 8/8. All test users, orgs, audit rows and job runs were deleted afterwards (project back to 0 users / 0 orgs / 0 job_runs).
+- Open issues / blockers: Supabase's built-in email only delivers to project team members, so sign-up with any other address fails until custom SMTP is configured (now in SETUP.md troubleshooting). Email templates still point at supabase.co by default; editing them needs custom SMTP, so the `?code=` fallback covers it for now. A web page shows a 500 when the API is unreachable (no friendly error boundary yet). CI still has not run: the owner has not pushed.
+- Next step: owner pushes to GitHub, then close Phase 1 and start Phase 2.
+
 ### 2026-09-18 — Phase 1 — Phase review (not closed: 2 criteria wait on the owner)
 - Tasks: 15/16 ticked. 1.7 is implemented (API JWKS guard, RBAC, server-side Supabase Auth in web, org + workspace creation) but stays unticked until one live sign-up and sign-in through the web UI succeeds. That needs `SUPABASE_PUBLISHABLE_KEY`.
 - Acceptance criteria:

@@ -61,6 +61,10 @@ Source maps are not uploaded (no `SENTRY_AUTH_TOKEN`), so browser stack traces s
   Keep `DEV_DNS_OVER_HTTPS=true` (Node and Python resolve those hosts via DoH), and for your browser
   enable Secure DNS (Chrome: Settings -> Privacy -> Use secure DNS -> Cloudflare). The DB pooler
   host (`*.pooler.supabase.com`) is not affected.
+- **Sign-up says "Could not create the account"**: Supabase's built-in email provider only delivers to
+  addresses of the project's team members, and refuses anything else. Sign up with the email you use for
+  Supabase, or add custom SMTP (Authentication -> Emails -> SMTP Settings). The web server logs the real
+  reason as `auth call refused` with the Supabase error code.
 - **Free Supabase project paused** after inactivity: restore it from the dashboard, then `pnpm infra:check`.
 - **`permission denied` as app_api**: privileges on tables come from migrations (default privileges
   set by bootstrap plus per-table revokes/grants). Check the table's grants in `db/migrations`; re-running

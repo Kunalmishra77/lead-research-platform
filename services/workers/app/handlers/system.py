@@ -57,7 +57,7 @@ def register_system_handlers(registry: HandlerRegistry, job_runs: JobRunsRepo) -
             # Row missing or already finished (e.g. redelivery after completion): nothing to do.
             ctx.log.warning("job run not open; skipping")
             return
-        await progress("running", 0, f"attempt {attempt}")
+        await progress("running", 0)  # the attempt number is already in counts
         if attempt <= payload.fail_times:
             raise TransientError(f"simulated failure on attempt {attempt}")
         for step in range(1, payload.steps + 1):

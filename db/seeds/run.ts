@@ -5,6 +5,8 @@ import { resolve } from 'node:path';
 import postgres from 'postgres';
 import { uuidv7 } from 'uuidv7';
 
+import { loadGeoSeeds, parentKind } from './geo.ts';
+import { INDUSTRY_SEEDS } from './industries.ts';
 import { SOURCE_SEEDS } from './sources.ts';
 
 const envFile = resolve(import.meta.dirname, '..', '..', '.env');
@@ -15,16 +17,62 @@ if (!url) throw new Error('DATABASE_URL_MIGRATIONS is required (see infra/setup/
 
 const sql = postgres(url, { max: 1, prepare: false });
 try {
-  for (const s of SOURCE_SEEDS) {
-    // Policy flags (enabled, legal_approved) are admin decisions and never overwritten by seeds.
-    await sql`
-      insert into app.sources (id, key, name, type, tos_class, default_ttl_days)
-      values (${uuidv7()}, ${s.key}, ${s.name}, ${s.type}, ${s.tosClass}, ${s.defaultTtlDays})
-      on conflict (key) do update
-        set name = excluded.name, type = excluded.type, tos_class = excluded.tos_class,
-            default_ttl_days = excluded.default_ttl_days`;
-  }
-  console.log(`seed: ${String(SOURCE_SEEDS.length)} sources upserted`);
+  await sql.begin(async (tx) => {
+    for (const s of SOURCE_SEEDS) {
+      // Policy flags (enabled, legal_approved) are admin decisions and never overwritten by seeds.
+      await tx`
+        insert into app.sources (id, key, name, type, tos_class, default_ttl_days)
+        values (${uuidv7()}, ${s.key}, ${s.name}, ${s.type}, ${s.tosClass}, ${s.defaultTtlDays})
+        on conflict (key) do update
+          set name = excluded.name, type = excluded.type, tos_class = excluded.tos_class,
+              default_ttl_days = excluded.default_ttl_days`;
+    }
+
+    // Industries: upsert by slug, then link parents by slug (parents are listed before children).
+    for (const i of INDUSTRY_SEEDS) {
+      await tx`
+        insert into app.industries (id, slug, name, synonyms, google_types)
+        values (${uuidv7()}, ${i.slug}, ${i.name}, ${i.synonyms}, ${i.googleTypes})
+        on conflict (slug) do update
+          set name = excluded.name, synonyms = excluded.synonyms, google_types = excluded.google_types`;
+    }
+    for (const i of INDUSTRY_SEEDS.filter((s) => s.parent)) {
+      await tx`
+        update app.industries c set parent_id = p.id
+        from app.industries p
+        where c.slug = ${i.slug} and p.slug = ${i.parent ?? ''}`;
+    }
+
+    // Geography: upsert by (country, kind, slug); parents resolved by slug and parent kind.
+    const geo = loadGeoSeeds();
+    for (const a of geo.areas) {
+      const [minLat, minLng, maxLat, maxLng] = a.bbox;
+      await tx`
+        insert into app.geo_areas (id, kind, country, slug, name, aliases, min_lat, min_lng, max_lat, max_lng, population)
+        values (${uuidv7()}, ${a.kind}, ${a.country}, ${a.slug}, ${a.name}, ${a.aliases},
+                ${minLat}, ${minLng}, ${maxLat}, ${maxLng}, ${a.population})
+        on conflict (country, kind, slug) do update
+          set name = excluded.name, aliases = excluded.aliases, min_lat = excluded.min_lat,
+              min_lng = excluded.min_lng, max_lat = excluded.max_lat, max_lng = excluded.max_lng,
+              population = excluded.population`;
+    }
+    for (const a of geo.areas) {
+      const kind = parentKind(a.kind);
+      if (!a.parent || !kind) continue;
+      await tx`
+        update app.geo_areas c set parent_id = p.id
+        from app.geo_areas p
+        where c.country = ${a.country} and c.kind = ${a.kind} and c.slug = ${a.slug}
+          and p.country = ${a.country} and p.kind = ${kind} and p.slug = ${a.parent}`;
+    }
+  });
+  const [counts] = await sql<{ sources: number; industries: number; geo: number }[]>`
+    select (select count(*) from app.sources)::int as sources,
+           (select count(*) from app.industries)::int as industries,
+           (select count(*) from app.geo_areas)::int as geo`;
+  console.log(
+    `seed: ${String(counts?.sources)} sources, ${String(counts?.industries)} industries, ${String(counts?.geo)} geo areas`,
+  );
 } finally {
   await sql.end();
 }

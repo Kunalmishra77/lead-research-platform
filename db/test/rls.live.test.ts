@@ -91,21 +91,36 @@ const TENANT_TABLES = [
   'usage_events',
   'audit_logs',
   'job_runs',
+  'searches',
+  'research_tasks',
 ] as const;
 type TenantTable = (typeof TENANT_TABLES)[number];
 const USER_SCOPED_TABLES = ['user_profiles'] as const;
 const GLOBAL_TABLES = ['sources'] as const;
+/** Shared company graph: both roles read, only app_worker writes (ADR-0007). */
+const GRAPH_TABLES = ['companies', 'company_domains', 'company_locations', 'field_values'] as const;
+/** Seeded reference data: read-only for both app roles. */
+const REFERENCE_TABLES = ['industries', 'geo_areas'] as const;
 
 interface Org {
   user: string;
   org: string;
   workspace: string;
   job: string;
+  search: string;
+  task: string;
 }
 
 // UUID v7 is time-ordered: anything created by this run sorts after this marker.
 const RUN_MARKER = uuidv7();
-const newOrg = (): Org => ({ user: uuidv7(), org: uuidv7(), workspace: uuidv7(), job: uuidv7() });
+const newOrg = (): Org => ({
+  user: uuidv7(),
+  org: uuidv7(),
+  workspace: uuidv7(),
+  job: uuidv7(),
+  search: uuidv7(),
+  task: uuidv7(),
+});
 
 /** An INSERT into `table` for `target`, written from the point of view of `actor` (the context). */
 function insertFor(
@@ -133,6 +148,10 @@ function insertFor(
       return `insert into app.audit_logs (id, org_id, actor_user_id, action) values ('${id}', '${target.org}', ${actor ? `'${actor}'` : 'null'}, 'test.probe')`;
     case 'job_runs':
       return `insert into app.job_runs (id, org_id, workspace_id, type) values ('${id}', '${target.org}', '${target.workspace}', 'system.ping')`;
+    case 'searches':
+      return `insert into app.searches (id, org_id, workspace_id, raw_query, spec, spec_version) values ('${id}', '${target.org}', '${target.workspace}', 'q', '{}', 1)`;
+    case 'research_tasks':
+      return `insert into app.research_tasks (id, org_id, research_job_id, type) values ('${id}', '${target.org}', '${target.job}', 'discovery.probe')`;
   }
 }
 
@@ -165,7 +184,12 @@ describe.skipIf(!live)('RLS isolation between organizations', () => {
     await owner`insert into app.organizations (id, name, slug) values (${o.org}, ${label}, ${`rls-${label}-${o.org.slice(-12)}`})`;
     await owner`insert into app.workspaces (id, org_id, name) values (${o.workspace}, ${o.org}, 'Default')`;
     await addMember(o, o.user, 'owner');
-    await owner`insert into app.research_jobs (id, org_id, workspace_id) values (${o.job}, ${o.org}, ${o.workspace})`;
+    await owner`insert into app.searches (id, org_id, workspace_id, raw_query, spec, spec_version)
+                values (${o.search}, ${o.org}, ${o.workspace}, ${`restaurants ${label}`}, '{}', 1)`;
+    await owner`insert into app.research_jobs (id, org_id, workspace_id, search_id)
+                values (${o.job}, ${o.org}, ${o.workspace}, ${o.search})`;
+    await owner`insert into app.research_tasks (id, org_id, research_job_id, type)
+                values (${o.task}, ${o.org}, ${o.job}, 'discovery.seed')`;
     await owner`insert into app.credit_ledger (id, org_id, delta, balance_after, reason)
                 values (${uuidv7()}, ${o.org}, 50, 50, 'grant')`;
     const usageId = uuidv7();
@@ -211,7 +235,15 @@ describe.skipIf(!live)('RLS isolation between organizations', () => {
         .filter((r) => !r.child)
         .map((r) => r.relname)
         .sort(),
-    ).toEqual([...TENANT_TABLES, ...USER_SCOPED_TABLES, ...GLOBAL_TABLES].sort());
+    ).toEqual(
+      [
+        ...TENANT_TABLES,
+        ...USER_SCOPED_TABLES,
+        ...GLOBAL_TABLES,
+        ...GRAPH_TABLES,
+        ...REFERENCE_TABLES,
+      ].sort(),
+    );
     expect(rows.filter((r) => !r.forced).map((r) => r.relname)).toEqual([]);
   });
 
@@ -360,6 +392,87 @@ describe.skipIf(!live)('RLS isolation between organizations', () => {
     }
   });
 
+  it('phase 2 tables cannot link to another org or another job (composite FKs)', async () => {
+    const otherJob = uuidv7();
+    const otherTask = uuidv7();
+    await owner`insert into app.research_jobs (id, org_id, workspace_id) values (${otherJob}, ${a.org}, ${a.workspace})`;
+    await owner`insert into app.research_tasks (id, org_id, research_job_id, type)
+                values (${otherTask}, ${a.org}, ${otherJob}, 'discovery.other')`;
+    const attempts: [Database, string][] = [
+      // API-created rows (the API holds INSERT on these).
+      [
+        api,
+        `insert into app.searches (id, org_id, workspace_id, raw_query, spec, spec_version) values ('${uuidv7()}', '${a.org}', '${b.workspace}', 'q', '{}', 1)`,
+      ],
+      [
+        api,
+        `insert into app.research_jobs (id, org_id, workspace_id, search_id) values ('${uuidv7()}', '${a.org}', '${a.workspace}', '${b.search}')`,
+      ],
+      // Worker-created tasks: job of org B, parent task of org B, parent task of another job.
+      [
+        worker,
+        `insert into app.research_tasks (id, org_id, research_job_id, type) values ('${uuidv7()}', '${a.org}', '${b.job}', 'discovery.x')`,
+      ],
+      [
+        worker,
+        `insert into app.research_tasks (id, org_id, research_job_id, parent_task_id, type) values ('${uuidv7()}', '${a.org}', '${a.job}', '${b.task}', 'discovery.x')`,
+      ],
+      [
+        worker,
+        `insert into app.research_tasks (id, org_id, research_job_id, parent_task_id, type) values ('${uuidv7()}', '${a.org}', '${a.job}', '${otherTask}', 'discovery.x')`,
+      ],
+    ];
+    for (const [db, statement] of attempts) {
+      await expect(
+        withTenant(db, { orgId: a.org, userId: db === api ? a.user : null }, (tx) =>
+          tx.execute(sql.raw(statement)),
+        ),
+        statement,
+      ).toFailWith(/foreign key/);
+    }
+    // Positive control: a child of a task in the same job works.
+    await inRolledBack(worker, { orgId: a.org, userId: null }, (tx) =>
+      tx.execute(
+        sql.raw(
+          `insert into app.research_tasks (id, org_id, research_job_id, parent_task_id, type) values ('${uuidv7()}', '${a.org}', '${a.job}', '${a.task}', 'discovery.x')`,
+        ),
+      ),
+    );
+  });
+
+  it('research_tasks: workers update run state only; the API only reads', async () => {
+    const workerCtx = { orgId: a.org, userId: null };
+    await inRolledBack(worker, workerCtx, (tx) =>
+      tx.execute(
+        sql`update app.research_tasks set status = 'running', attempts = 1 where id = ${a.task}`,
+      ),
+    );
+    for (const column of ['input', 'credit_budget', 'type', 'research_job_id', 'org_id']) {
+      await expect(
+        withTenant(worker, workerCtx, (tx) =>
+          tx.execute(
+            sql.raw(`update app.research_tasks set ${column} = ${column} where id = '${a.task}'`),
+          ),
+        ),
+        column,
+      ).toFailWith(DENIED);
+    }
+    await expect(
+      withTenant(api, { orgId: a.org, userId: a.user }, (tx) =>
+        tx.execute(sql`update app.research_tasks set status = 'cancelled' where id = ${a.task}`),
+      ),
+    ).toFailWith(DENIED);
+    await expect(
+      withTenant(api, { orgId: a.org, userId: a.user }, (tx) =>
+        tx.execute(
+          sql.raw(
+            `insert into app.research_tasks (id, org_id, research_job_id, type) values ('${uuidv7()}', '${a.org}', '${a.job}', 'discovery.x')`,
+          ),
+        ),
+      ),
+    ).toFailWith(DENIED);
+  });
+
   it('a user context without an org sees only own memberships and orgs, never teammates', async () => {
     const result = await withUser(api, a.user, async (tx) => ({
       jobs: await tx.execute(sql`select 1 from app.research_jobs`),
@@ -466,5 +579,153 @@ describe.skipIf(!live)('RLS isolation between organizations', () => {
         tx.execute(sql`update app.sources set enabled = true`),
       ),
     ).toFailWith(DENIED);
+  });
+  describe('shared company graph and reference data (ADR-0007)', () => {
+    const company = uuidv7();
+    const googleSource = async () => {
+      const [row] = await owner<
+        { id: string }[]
+      >`select id from app.sources where key = 'google_places'`;
+      if (!row) throw new Error('sources not seeded');
+      return row.id;
+    };
+    const graphInsert = (table: (typeof GRAPH_TABLES)[number], sourceId: string) => {
+      const id = uuidv7();
+      switch (table) {
+        case 'companies':
+          return `insert into app.companies (id, canonical_name, normalized_name) values ('${id}', 'Probe', 'probe')`;
+        case 'company_domains':
+          return `insert into app.company_domains (id, company_id, domain) values ('${id}', '${company}', 'probe-${id}.example')`;
+        case 'company_locations':
+          return `insert into app.company_locations (id, company_id, city) values ('${id}', '${company}', 'Delhi')`;
+        case 'field_values':
+          return `insert into app.field_values (id, entity_type, entity_id, field, value, source_id, source_url, method, confidence, observed_at) values ('${id}', 'company', '${company}', 'name', '"Probe"', '${sourceId}', 'https://maps.google.com/?cid=1', 'api', 0.9, now())`;
+      }
+    };
+
+    beforeAll(async () => {
+      await owner`insert into app.companies (id, canonical_name, normalized_name) values (${company}, 'Probe Co', 'probe co')`;
+    });
+    afterAll(async () => {
+      await owner`delete from app.field_values where entity_id = ${company}`;
+      await owner`delete from app.companies where id = ${company}`;
+    });
+
+    it.each(GRAPH_TABLES)('%s: API reads but cannot write; workers can', async (table) => {
+      const sourceId = await googleSource();
+      await withTenant(api, { orgId: a.org, userId: a.user }, (tx) =>
+        tx.execute(sql.raw(`select 1 from app.${table} limit 1`)),
+      );
+      await expect(
+        withTenant(api, { orgId: a.org, userId: a.user }, (tx) =>
+          tx.execute(sql.raw(graphInsert(table, sourceId))),
+        ),
+        table,
+      ).toFailWith(DENIED);
+      await inRolledBack(worker, { orgId: a.org, userId: null }, (tx) =>
+        tx.execute(sql.raw(graphInsert(table, sourceId))),
+      );
+    });
+
+    it('graph rows are visible from every org (shared, not tenant-scoped)', async () => {
+      for (const o of [a, b]) {
+        const rows = await withTenant(api, { orgId: o.org, userId: o.user }, (tx) =>
+          tx.execute(sql`select id from app.companies where id = ${company}`),
+        );
+        expect(rows).toHaveLength(1);
+      }
+    });
+
+    it('field_values: workers cannot rewrite history, only flip is_current', async () => {
+      await expect(
+        withTenant(worker, { orgId: a.org, userId: null }, (tx) =>
+          tx.execute(sql`update app.field_values set value = '"x"' where entity_id = ${company}`),
+        ),
+      ).toFailWith(DENIED);
+      await inRolledBack(worker, { orgId: a.org, userId: null }, (tx) =>
+        tx.execute(
+          sql`update app.field_values set is_current = false where entity_id = ${company}`,
+        ),
+      );
+      await expect(
+        withTenant(worker, { orgId: a.org, userId: null }, (tx) =>
+          tx.execute(sql`delete from app.field_values where entity_id = ${company}`),
+        ),
+      ).toFailWith(DENIED);
+    });
+
+    it('field_values: database guards for AI honesty and provenance', async () => {
+      const sourceId = await googleSource();
+      const insert = (
+        field: string,
+        method: string,
+        extra: { model?: string; url?: string } = {},
+      ) =>
+        withTenant(worker, { orgId: a.org, userId: null }, (tx) =>
+          tx.execute(sql`insert into app.field_values
+                           (id, entity_type, entity_id, field, value, source_id, source_url, method, confidence, observed_at, model, prompt_version)
+                         values (${uuidv7()}, 'company', ${company}, ${field}, '"x"', ${sourceId},
+                                 ${extra.url ?? 'https://x.test'}, ${method}::app.value_method, 0.5, now(),
+                                 ${extra.model ?? null}, ${extra.model ? 'v1' : null})`),
+        );
+      await expect(insert('summary', 'ai')).toFailWith(/field_values_ai_traceable/);
+      await expect(insert('email', 'ai', { model: 'm' })).toFailWith(/field_values_ai_no_contacts/);
+      await expect(insert('phone', 'ai', { model: 'm' })).toFailWith(/field_values_ai_no_contacts/);
+      await expect(insert('name', 'api', { url: 'ftp://x' })).toFailWith(
+        /field_values_source_url_format/,
+      );
+      await inRolledBack(worker, { orgId: a.org, userId: null }, (tx) =>
+        tx.execute(sql`insert into app.field_values
+                         (id, entity_type, entity_id, field, value, source_id, source_url, method, confidence, observed_at, model, prompt_version)
+                       values (${uuidv7()}, 'company', ${company}, 'summary', '"x"', ${sourceId}, 'https://x.test', 'ai', 0.5, now(), 'm', 'v1')`),
+      );
+    });
+
+    it('graph: check constraints keep upsert keys canonical', async () => {
+      const bad = [
+        `insert into app.companies (id, canonical_name, normalized_name, primary_domain) values ('${uuidv7()}', 'x', 'x', 'www.probe.example')`,
+        `insert into app.companies (id, canonical_name, normalized_name, primary_domain) values ('${uuidv7()}', 'x', 'x', 'Probe.example')`,
+        `insert into app.companies (id, canonical_name, normalized_name, primary_domain) values ('${uuidv7()}', 'x', 'x', 'https://probe.example/about')`,
+        `insert into app.company_locations (id, company_id, phone_e164) values ('${uuidv7()}', '${company}', '011 2345 6789')`,
+        `insert into app.company_locations (id, company_id, country) values ('${uuidv7()}', '${company}', 'in')`,
+      ];
+      for (const statement of bad) {
+        await expect(
+          withTenant(worker, { orgId: a.org, userId: null }, (tx) =>
+            tx.execute(sql.raw(statement)),
+          ),
+          statement,
+        ).toFailWith(/check constraint/);
+      }
+    });
+
+    it('graph: workers upsert locations by google_place_id', async () => {
+      const place = `probe-place-${uuidv7()}`;
+      await inRolledBack(worker, { orgId: a.org, userId: null }, async (tx) => {
+        for (const phone of ['+911123456789', '+911198765432']) {
+          await tx.execute(sql`insert into app.company_locations (id, company_id, google_place_id, phone_e164)
+                               values (${uuidv7()}, ${company}, ${place}, ${phone})
+                               on conflict (google_place_id) do update set phone_e164 = excluded.phone_e164`);
+        }
+        const rows = await tx.execute<{ phone_e164: string }>(
+          sql`select phone_e164 from app.company_locations where google_place_id = ${place}`,
+        );
+        expect(rows.map((r) => r.phone_e164)).toEqual(['+911198765432']);
+      });
+    });
+
+    it.each(REFERENCE_TABLES)('%s: readable, not writable by either role', async (table) => {
+      for (const db of [api, worker]) {
+        await withTenant(db, { orgId: a.org, userId: null }, (tx) =>
+          tx.execute(sql.raw(`select 1 from app.${table} limit 1`)),
+        );
+        await expect(
+          withTenant(db, { orgId: a.org, userId: null }, (tx) =>
+            tx.execute(sql.raw(`delete from app.${table}`)),
+          ),
+          table,
+        ).toFailWith(DENIED);
+      }
+    });
   });
 });

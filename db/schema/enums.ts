@@ -45,3 +45,19 @@ export const creditReason = app.enum('credit_reason', [
   'expire',
   'adjustment',
 ]);
+
+export const researchTaskStatus = app.enum('research_task_status', [
+  'queued',
+  'running',
+  'completed',
+  'failed',
+  'skipped',
+  'cancelled',
+]);
+
+/** How a stored value was obtained (CLAUDE.md provenance rule). */
+export const valueMethod = app.enum('value_method', ['api', 'crawl', 'ai', 'user', 'provider']);
+
+export const entityType = app.enum('entity_type', ['company', 'person', 'location']);
+
+export const geoKind = app.enum('geo_kind', ['country', 'state', 'district', 'city', 'locality']);

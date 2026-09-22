@@ -51,9 +51,9 @@ describe.skipIf(!ownerUrl)('schema app security invariants', () => {
       join pg_class c on c.oid = i.inhrelid
       join pg_class p on p.oid = i.inhparent
       join pg_namespace n on n.oid = p.relnamespace
-      where n.nspname = 'app' and p.relname in ('audit_logs', 'usage_events')
+      where n.nspname = 'app' and p.relname in ('audit_logs', 'usage_events', 'field_values')
       group by p.relname`;
-    expect(rows).toHaveLength(2);
+    expect(rows).toHaveLength(3);
     for (const r of rows) expect(r.ahead, r.parent).toBeGreaterThanOrEqual(3);
   });
 
@@ -63,10 +63,16 @@ describe.skipIf(!ownerUrl)('schema app security invariants', () => {
       select distinct conname from pg_constraint
       where connamespace = 'app'::regnamespace and contype = 'f'
         and conname in ('memberships_workspace_org_fk', 'research_jobs_workspace_org_fk',
-                        'usage_unit_keys_job_org_fk', 'usage_events_job_org_fk')`;
+                        'usage_unit_keys_job_org_fk', 'usage_events_job_org_fk',
+                        'searches_workspace_org_fk', 'research_jobs_search_org_fk',
+                        'research_tasks_job_org_fk', 'research_tasks_parent_job_fk')`;
     expect(rows.map((r) => r.conname).sort()).toEqual([
       'memberships_workspace_org_fk',
+      'research_jobs_search_org_fk',
       'research_jobs_workspace_org_fk',
+      'research_tasks_job_org_fk',
+      'research_tasks_parent_job_fk',
+      'searches_workspace_org_fk',
       'usage_events_job_org_fk',
       'usage_unit_keys_job_org_fk',
     ]);
@@ -110,7 +116,8 @@ describe.skipIf(!ownerUrl)('schema app security invariants', () => {
     const rows = await sql<{ relname: string }[]>`
       select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
       cross join (values ('app_api'), ('app_worker')) as r(role)
-      where n.nspname = 'app' and c.relname in ('credit_ledger', 'audit_logs', 'usage_events', 'usage_unit_keys')
+      where n.nspname = 'app' and c.relname in ('credit_ledger', 'audit_logs', 'usage_events', 'usage_unit_keys',
+                                                 'field_values', 'searches')
         and (has_table_privilege(r.role, c.oid, 'update') or has_table_privilege(r.role, c.oid, 'delete'))`;
     expect(rows).toEqual([]);
   });

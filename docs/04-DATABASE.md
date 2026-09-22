@@ -9,11 +9,13 @@ PostgreSQL 17 on Supabase (ADR-0002, ADR-0003) with extensions: `pgvector`, `pg_
 - jsonb for sparse/variable data; never for fields that are filtered often (promote to columns).
 - Big append-only tables partitioned monthly: `field_values`, `raw_documents`, `usage_events`, `audit_logs`. Every PK/unique constraint on a partitioned table must include the partition key; cross-partition uniqueness goes in a small non-partitioned key table (ADR-0003).
 
-## Global company graph (no RLS)
+## Global company graph (shared; RLS forced with read-all policies, worker-only writes — ADR-0007)
+Phase 2 implements `companies` (without `embedding`/`search_tsv`), `company_domains`, `company_locations` (`lat`/`lng` instead of `geom` until Phase 4) and `field_values`; domains are lower-case `text` instead of `citext`.
 | Table | Key columns | Constraints / indexes |
 | --- | --- | --- |
 | sources | id, key, name, type (api/crawl/registry/provider/user), tos_class (green/amber/red), legal_approved bool, reliability jsonb, cost_per_call_micros, default_ttl_days, enabled | unique(key) |
-| industries | id, parent_id, name, slug, naics_code, synonyms text[] | unique(slug) |
+| industries | id, parent_id, name, slug, naics_code, synonyms text[], google_types text[] | unique(slug); seeded, read-only (ADR-0007) |
+| geo_areas | id, parent_id, kind (country/state/district/city/locality), country, slug, name, aliases text[], min_lat, min_lng, max_lat, max_lng, population | unique(country, kind, slug); seeded, read-only; bounding boxes for search tiling (ADR-0007) |
 | technologies | id, name, category, fingerprint jsonb | unique(name) |
 | companies | id, canonical_name, normalized_name, primary_domain citext, country, state, city, industry_id, employee_band, company_status, best jsonb (computed best values), confidence real, verification_status, last_verified_at, embedding vector(1024), search_tsv tsvector, merged_into_id | partial unique(primary_domain) where primary_domain is not null; gin(search_tsv); gin(normalized_name gin_trgm_ops); hnsw(embedding); btree(country, city, industry_id) |
 | company_domains | company_id, domain citext, is_primary, is_platform bool | unique(domain) where not is_platform |

@@ -4,6 +4,7 @@ import type postgres from 'postgres';
 
 import * as billing from '../schema/billing.ts';
 import * as enums from '../schema/enums.ts';
+import * as graph from '../schema/graph.ts';
 import * as jobs from '../schema/jobs.ts';
 import * as partitioned from '../schema/partitioned.ts';
 import * as research from '../schema/research.ts';
@@ -12,6 +13,7 @@ import * as tenancy from '../schema/tenancy.ts';
 
 export * from '../schema/billing.ts';
 export * from '../schema/enums.ts';
+export * from '../schema/graph.ts';
 export * from '../schema/jobs.ts';
 export * from '../schema/partitioned.ts';
 export * from '../schema/research.ts';
@@ -27,6 +29,7 @@ export const schema = {
   ...enums,
   ...tenancy,
   ...sources,
+  ...graph,
   ...research,
   ...billing,
   ...jobs,

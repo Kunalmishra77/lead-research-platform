@@ -14,6 +14,7 @@ export default defineConfig({
     './schema/enums.ts',
     './schema/tenancy.ts',
     './schema/sources.ts',
+    './schema/graph.ts',
     './schema/research.ts',
     './schema/billing.ts',
     './schema/jobs.ts',

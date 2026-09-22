@@ -3,9 +3,20 @@
  * this file is NOT in drizzle.config.ts `schema`; the DDL lives in a custom SQL migration and these
  * definitions exist only for typed queries. Keep both in sync.
  */
-import { bigint, inet, jsonb, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  bigint,
+  boolean,
+  inet,
+  jsonb,
+  primaryKey,
+  real,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 import { app } from './common.ts';
+import { entityType, valueMethod } from './enums.ts';
 
 const createdAt = () =>
   timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow();
@@ -44,4 +55,32 @@ export const usageEvents = app.table(
     createdAt: createdAt(),
   },
   (t) => [primaryKey({ name: 'usage_events_pkey', columns: [t.id, t.createdAt] })],
+);
+
+/**
+ * One observed value for one field of one global entity, with provenance (CLAUDE.md: no value
+ * without source_id, source_url, observed_at, method and confidence). Append-only except for the
+ * `is_current` flag, which the pipeline flips when a newer observation supersedes a row.
+ */
+export const fieldValues = app.table(
+  'field_values',
+  {
+    id: uuid('id').notNull(),
+    entityType: entityType('entity_type').notNull(),
+    entityId: uuid('entity_id').notNull(),
+    field: text('field').notNull(),
+    value: jsonb('value').notNull(),
+    sourceId: uuid('source_id').notNull(),
+    sourceUrl: text('source_url').notNull(),
+    rawDocumentId: uuid('raw_document_id'),
+    method: valueMethod('method').notNull(),
+    derivation: text('derivation'),
+    confidence: real('confidence').notNull(),
+    /** When the source showed the value (not ingestion time): always set explicitly. */
+    observedAt: timestamp('observed_at', { withTimezone: true, mode: 'date' }).notNull(),
+    isCurrent: boolean('is_current').notNull().default(true),
+    model: text('model'),
+    promptVersion: text('prompt_version'),
+  },
+  (t) => [primaryKey({ name: 'field_values_pkey', columns: [t.id, t.observedAt] })],
 );

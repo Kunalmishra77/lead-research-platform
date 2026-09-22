@@ -146,6 +146,7 @@ jobs:
         run: uv sync --frozen
       - run: pnpm infra:bootstrap
       - run: pnpm db:migrate
+      - run: pnpm db:seed # global sources; the RLS suite reads them
       - name: DB suites (structure + RLS isolation)
         run: pnpm --filter @leadforge/db test
       - name: API suites (orgs, members, admin, system.ping round trip)

@@ -5,7 +5,7 @@ MVP (paid beta) = Phases 1-7. Effort in person-weeks (pw) assumes a 4-5 person t
 
 | # | Phase | Depends on | Effort | Status | File |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Foundation | - | 10 pw | in progress | phase-01-foundation.md |
+| 1 | Foundation | - | 10 pw | done (2026-09-22) | phase-01-foundation.md |
 | 2 | Search & research jobs | 1 | 10 pw | not started | phase-02-search.md |
 | 3 | Crawling & extraction | 2 | 14 pw | not started | phase-03-extraction.md |
 | 4 | Lead database, resolution, verification | 3 | 12 pw | not started | phase-04-lead-database.md |

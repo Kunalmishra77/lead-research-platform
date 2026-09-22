@@ -5,6 +5,22 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 ## Template
 
 ```
+### 2026-09-22 — Phase 1 — DONE (all acceptance criteria pass)
+- Done: the owner allowed `git push`; main is on GitHub. The first CI runs exposed three issues, all fixed:
+  - `astral-sh/setup-uv@v10` does not exist (no moving major tags after v7), so it is pinned to `v10.1.0`.
+  - CI never seeded the global sources, so `pnpm db:seed` now runs after migrate.
+  - The RLS suite started a "must be denied" insert before awaiting its positive control. On CI's fast local database the rejection arrived first and was reported as unhandled, so the insert is now started only when awaited. The denials themselves were always correct.
+  - Run 35704886598: all 5 jobs green (TS checks, web e2e, workers, live Supabase CLI + Redis suites incl. the `system.ping` round trip, security scan and audits).
+- Acceptance criteria (final):
+  - Fresh clone -> quick start < 15 min: PASS (~13 min).
+  - Signup -> org + workspace, login/logout, unverified email blocked: PASS, verified live in the browser 8/8.
+  - RLS isolation on every tenant table: PASS (89 tests, locally and in CI).
+  - `system.ping` visible live in the UI, crash recovery, DLQ after 5 failures: PASS (live UI plus ping.live in CI).
+  - CI green on main, gitleaks clean: PASS.
+- Decisions (link ADRs): none new.
+- Open issues / blockers carried to later phases: the tech debt list in the 2026-09-18 phase review entry, plus custom SMTP (needed before real users can sign up with any address) and a friendly error page when the API is unreachable.
+- Next step: /start-phase 2 (needs AI provider, Google Places and SERP keys; see plan).
+
 ### 2026-09-20 — Phase 1 — Task 1.7 verified live in the browser (publishable key received)
 - Done: with the owner's Supabase publishable key, I drove the real UI with Playwright against the running dev stack (web + API + Python worker + Redis + hosted Supabase). 8/8 checks pass: anonymous pages redirect to sign-in; sign-up posts to Supabase server-side; an unconfirmed account is refused with "Confirm your email address first"; the confirmation link (`token_hash` on our own domain) starts the session and lands on onboarding; creating the org gives a default workspace and the app shell; `system.ping` runs API -> Redis -> Python worker -> Postgres -> SSE with live progress ending `completed`; sign-out clears the session; the confirmed user signs in again. Screenshots are in the scratch folder.
 - Bugs found and fixed (only a live signed-in run could catch these):

@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { loadGeoSeeds, parentKind } from '../seeds/geo.ts';
-import { INDUSTRY_SEEDS } from '../seeds/industries.ts';
+import { GENERIC_GOOGLE_TYPES, INDUSTRY_SEEDS } from '../seeds/industries.ts';
 
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -44,6 +44,23 @@ describe('industry taxonomy seed', () => {
     expect(invalid).toEqual([]);
   });
 
+  it('never maps to catch-all types that would return every business in a tile', () => {
+    const generic = new Set<string>(GENERIC_GOOGLE_TYPES);
+    const offenders = INDUSTRY_SEEDS.filter((s) => s.googleTypes.some((t) => generic.has(t)));
+    expect(offenders.map((s) => s.slug)).toEqual([]);
+  });
+
+  it('each name and synonym points to exactly one category (unambiguous query expansion)', () => {
+    const owners = new Map<string, string[]>();
+    for (const s of INDUSTRY_SEEDS) {
+      for (const term of new Set([s.name, ...s.synonyms].map((t) => t.toLowerCase()))) {
+        owners.set(term, [...(owners.get(term) ?? []), s.slug]);
+      }
+    }
+    const ambiguous = [...owners].filter(([, slugs]) => slugs.length > 1);
+    expect(ambiguous).toEqual([]);
+  });
+
   it('covers India-first SMB categories', () => {
     const slugs = new Set(INDUSTRY_SEEDS.map((s) => s.slug));
     for (const slug of [
@@ -65,6 +82,12 @@ describe('geography seed', () => {
 
   it('records its source and licence', () => {
     expect(geo.license).toMatch(/OpenStreetMap contributors, ODbL/);
+  });
+
+  it('city slugs are state-qualified (same-named cities exist in different states)', () => {
+    for (const a of geo.areas.filter((x) => x.kind === 'city')) {
+      expect(a.slug.endsWith(`-${a.parent ?? ''}`), a.slug).toBe(true);
+    }
   });
 
   it('has India, 36 states/UTs and ~150 cities with unique keys', () => {
@@ -105,7 +128,7 @@ describe('geography seed', () => {
   });
 
   it('Delhi uses the NCT boundary', () => {
-    const delhi = byKey.get('city:delhi');
+    const delhi = byKey.get('city:delhi-delhi');
     expect(delhi?.bboxSource).toBe('boundary');
     expect(delhi?.aliases).toContain('New Delhi');
   });

@@ -69,7 +69,7 @@ const STATES: [string, 'state' | 'ut', CityEntry[], string[]?][] = [
     ['HR'],
   ],
   ['Himachal Pradesh', 'state', ['Shimla', 'Dharamshala', 'Manali', 'Solan'], ['HP']],
-  ['Jharkhand', 'state', ['Ranchi', 'Jamshedpur', 'Dhanbad', 'Bokaro Steel City'], []],
+  ['Jharkhand', 'state', ['Ranchi', 'Jamshedpur', 'Dhanbad', ['Bokaro', 'Bokaro Steel City']], []],
   [
     'Karnataka',
     'state',
@@ -215,8 +215,12 @@ interface NominatimResult {
   osm_type: 'node' | 'way' | 'relation';
   display_name: string;
   addresstype?: string;
+  address?: { state?: string; 'ISO3166-2-lvl4'?: string };
   extratags?: { population?: string };
 }
+
+/** Display name -> OSM search name, where OSM only knows the city by its corporation name. */
+const OSM_QUERY_NAME: Record<string, string> = { Nanded: 'Nanded-Waghala' };
 
 /** UTs that effectively are one city: use the UT boundary as the city box. */
 const CITY_IS_UT = new Set(['Delhi', 'Chandigarh']);
@@ -256,6 +260,7 @@ async function search(params: Record<string, string>, limit: number): Promise<No
     format: 'jsonv2',
     limit: String(limit),
     extratags: '1',
+    addressdetails: '1',
     countrycodes: 'in',
   })) {
     url.searchParams.set(k, v);
@@ -282,15 +287,20 @@ async function lookup(params: Record<string, string>): Promise<NominatimResult> 
   return hit;
 }
 
-/** Prefers a city-level boundary; otherwise the city point (the caller sizes a box around it). */
+/**
+ * Prefers a city-level boundary, otherwise the city point (the caller sizes a box around it).
+ * Only hits whose address is in the requested state are accepted, so a same-named town elsewhere
+ * (or a road/POI) can never be picked; an unmatched city fails the build loudly.
+ */
 async function lookupCity(name: string, state: string): Promise<NominatimResult> {
-  const hits = await search({ q: `${name}, ${state}, India` }, 5);
-  const boundary = hits.find(
-    (h) => h.osm_type === 'relation' && CITY_BOUNDARY_TYPES.has(h.addresstype ?? ''),
+  const hits = (await search({ q: `${name}, ${state}, India` }, 8)).filter(
+    (h) => h.address?.state?.toLowerCase() === state.toLowerCase(),
   );
-  const point = hits.find((h) => CITY_BOUNDARY_TYPES.has(h.addresstype ?? '')) ?? hits[0];
-  const hit = boundary ?? point;
-  if (!hit) throw new Error(`no result for ${name}, ${state}`);
+  const cityLevel = hits.filter((h) => CITY_BOUNDARY_TYPES.has(h.addresstype ?? ''));
+  const hit = cityLevel.find((h) => h.osm_type === 'relation') ?? cityLevel[0];
+  if (!hit) {
+    throw new Error(`no city-level result in ${state} for ${name}: fix the name or add it by hand`);
+  }
   return hit;
 }
 
@@ -343,6 +353,7 @@ function toSeed(
 }
 
 const out: GeoSeed[] = [];
+const failures: string[] = [];
 const india = await lookup({ country: 'India' });
 out.push(toSeed(india, 'country', 'India', null, ['Bharat']));
 for (const [state, , cities, stateAliases = []] of STATES) {
@@ -351,11 +362,23 @@ for (const [state, , cities, stateAliases = []] of STATES) {
   for (const entry of cities) {
     const [name, ...aliases] = typeof entry === 'string' ? [entry] : entry;
     // Delhi and Chandigarh are the whole UT: use the UT boundary rather than a city point.
-    const hit = CITY_IS_UT.has(name) ? stateHit : await lookupCity(name, state);
+    let hit: NominatimResult;
+    try {
+      hit = CITY_IS_UT.has(name) ? stateHit : await lookupCity(OSM_QUERY_NAME[name] ?? name, state);
+    } catch (err) {
+      failures.push(err instanceof Error ? err.message : String(err));
+      continue;
+    }
     const seed = toSeed(hit, 'city', name, slugify(state), aliases);
+    // State-qualified slug: several states have same-named cities (Aurangabad, Bilaspur, ...).
+    seed.slug = `${slugify(name)}-${slugify(state)}`;
     out.push(seed);
     console.log(`${state} / ${name}: ${seed.bboxSource} ${seed.bbox.join(',')}`);
   }
+}
+
+if (failures.length > 0) {
+  throw new Error(`unmatched cities (nothing written):\n${failures.join('\n')}`);
 }
 
 const file = resolve(import.meta.dirname, '..', 'seeds', 'data', 'geo-in.json');

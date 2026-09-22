@@ -30,7 +30,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "visakhapatnam",
+      "slug": "visakhapatnam-andhra-pradesh",
       "name": "Visakhapatnam",
       "parent": "andhra-pradesh",
       "aliases": [],
@@ -42,7 +42,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "vijayawada",
+      "slug": "vijayawada-andhra-pradesh",
       "name": "Vijayawada",
       "parent": "andhra-pradesh",
       "aliases": [],
@@ -54,7 +54,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "guntur",
+      "slug": "guntur-andhra-pradesh",
       "name": "Guntur",
       "parent": "andhra-pradesh",
       "aliases": [],
@@ -66,7 +66,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "nellore",
+      "slug": "nellore-andhra-pradesh",
       "name": "Nellore",
       "parent": "andhra-pradesh",
       "aliases": [],
@@ -78,7 +78,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "tirupati",
+      "slug": "tirupati-andhra-pradesh",
       "name": "Tirupati",
       "parent": "andhra-pradesh",
       "aliases": [],
@@ -90,7 +90,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "kurnool",
+      "slug": "kurnool-andhra-pradesh",
       "name": "Kurnool",
       "parent": "andhra-pradesh",
       "aliases": [],
@@ -102,7 +102,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "rajahmundry",
+      "slug": "rajahmundry-andhra-pradesh",
       "name": "Rajahmundry",
       "parent": "andhra-pradesh",
       "aliases": [],
@@ -114,7 +114,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "kakinada",
+      "slug": "kakinada-andhra-pradesh",
       "name": "Kakinada",
       "parent": "andhra-pradesh",
       "aliases": [],
@@ -126,7 +126,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "amaravati",
+      "slug": "amaravati-andhra-pradesh",
       "name": "Amaravati",
       "parent": "andhra-pradesh",
       "aliases": [],
@@ -150,7 +150,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "itanagar",
+      "slug": "itanagar-arunachal-pradesh",
       "name": "Itanagar",
       "parent": "arunachal-pradesh",
       "aliases": [],
@@ -174,7 +174,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "guwahati",
+      "slug": "guwahati-assam",
       "name": "Guwahati",
       "parent": "assam",
       "aliases": ["Gauhati"],
@@ -186,7 +186,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "dibrugarh",
+      "slug": "dibrugarh-assam",
       "name": "Dibrugarh",
       "parent": "assam",
       "aliases": [],
@@ -198,7 +198,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "silchar",
+      "slug": "silchar-assam",
       "name": "Silchar",
       "parent": "assam",
       "aliases": [],
@@ -210,7 +210,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "jorhat",
+      "slug": "jorhat-assam",
       "name": "Jorhat",
       "parent": "assam",
       "aliases": [],
@@ -234,7 +234,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "patna",
+      "slug": "patna-bihar",
       "name": "Patna",
       "parent": "bihar",
       "aliases": [],
@@ -246,7 +246,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "gaya",
+      "slug": "gaya-bihar",
       "name": "Gaya",
       "parent": "bihar",
       "aliases": [],
@@ -258,7 +258,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "bhagalpur",
+      "slug": "bhagalpur-bihar",
       "name": "Bhagalpur",
       "parent": "bihar",
       "aliases": [],
@@ -270,7 +270,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "muzaffarpur",
+      "slug": "muzaffarpur-bihar",
       "name": "Muzaffarpur",
       "parent": "bihar",
       "aliases": [],
@@ -282,7 +282,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "darbhanga",
+      "slug": "darbhanga-bihar",
       "name": "Darbhanga",
       "parent": "bihar",
       "aliases": [],
@@ -306,7 +306,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "raipur",
+      "slug": "raipur-chhattisgarh",
       "name": "Raipur",
       "parent": "chhattisgarh",
       "aliases": [],
@@ -318,7 +318,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "bhilai",
+      "slug": "bhilai-chhattisgarh",
       "name": "Bhilai",
       "parent": "chhattisgarh",
       "aliases": [],
@@ -330,7 +330,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "bilaspur",
+      "slug": "bilaspur-chhattisgarh",
       "name": "Bilaspur",
       "parent": "chhattisgarh",
       "aliases": [],
@@ -342,7 +342,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "korba",
+      "slug": "korba-chhattisgarh",
       "name": "Korba",
       "parent": "chhattisgarh",
       "aliases": [],
@@ -366,7 +366,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "panaji",
+      "slug": "panaji-goa",
       "name": "Panaji",
       "parent": "goa",
       "aliases": ["Panjim"],
@@ -378,7 +378,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "margao",
+      "slug": "margao-goa",
       "name": "Margao",
       "parent": "goa",
       "aliases": [],
@@ -390,7 +390,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "vasco-da-gama",
+      "slug": "vasco-da-gama-goa",
       "name": "Vasco da Gama",
       "parent": "goa",
       "aliases": [],
@@ -414,7 +414,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "ahmedabad",
+      "slug": "ahmedabad-gujarat",
       "name": "Ahmedabad",
       "parent": "gujarat",
       "aliases": [],
@@ -426,7 +426,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "surat",
+      "slug": "surat-gujarat",
       "name": "Surat",
       "parent": "gujarat",
       "aliases": [],
@@ -438,7 +438,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "vadodara",
+      "slug": "vadodara-gujarat",
       "name": "Vadodara",
       "parent": "gujarat",
       "aliases": ["Baroda"],
@@ -450,7 +450,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "rajkot",
+      "slug": "rajkot-gujarat",
       "name": "Rajkot",
       "parent": "gujarat",
       "aliases": [],
@@ -462,7 +462,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "bhavnagar",
+      "slug": "bhavnagar-gujarat",
       "name": "Bhavnagar",
       "parent": "gujarat",
       "aliases": [],
@@ -474,7 +474,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "jamnagar",
+      "slug": "jamnagar-gujarat",
       "name": "Jamnagar",
       "parent": "gujarat",
       "aliases": [],
@@ -486,7 +486,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "gandhinagar",
+      "slug": "gandhinagar-gujarat",
       "name": "Gandhinagar",
       "parent": "gujarat",
       "aliases": [],
@@ -498,7 +498,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "junagadh",
+      "slug": "junagadh-gujarat",
       "name": "Junagadh",
       "parent": "gujarat",
       "aliases": [],
@@ -510,7 +510,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "anand",
+      "slug": "anand-gujarat",
       "name": "Anand",
       "parent": "gujarat",
       "aliases": [],
@@ -534,7 +534,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "gurugram",
+      "slug": "gurugram-haryana",
       "name": "Gurugram",
       "parent": "haryana",
       "aliases": ["Gurgaon"],
@@ -546,7 +546,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "faridabad",
+      "slug": "faridabad-haryana",
       "name": "Faridabad",
       "parent": "haryana",
       "aliases": [],
@@ -558,7 +558,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "panipat",
+      "slug": "panipat-haryana",
       "name": "Panipat",
       "parent": "haryana",
       "aliases": [],
@@ -570,7 +570,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "ambala",
+      "slug": "ambala-haryana",
       "name": "Ambala",
       "parent": "haryana",
       "aliases": [],
@@ -582,7 +582,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "karnal",
+      "slug": "karnal-haryana",
       "name": "Karnal",
       "parent": "haryana",
       "aliases": [],
@@ -594,7 +594,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "hisar",
+      "slug": "hisar-haryana",
       "name": "Hisar",
       "parent": "haryana",
       "aliases": [],
@@ -606,7 +606,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "rohtak",
+      "slug": "rohtak-haryana",
       "name": "Rohtak",
       "parent": "haryana",
       "aliases": [],
@@ -618,7 +618,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "sonipat",
+      "slug": "sonipat-haryana",
       "name": "Sonipat",
       "parent": "haryana",
       "aliases": [],
@@ -642,7 +642,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "shimla",
+      "slug": "shimla-himachal-pradesh",
       "name": "Shimla",
       "parent": "himachal-pradesh",
       "aliases": [],
@@ -654,7 +654,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "dharamshala",
+      "slug": "dharamshala-himachal-pradesh",
       "name": "Dharamshala",
       "parent": "himachal-pradesh",
       "aliases": [],
@@ -666,7 +666,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "manali",
+      "slug": "manali-himachal-pradesh",
       "name": "Manali",
       "parent": "himachal-pradesh",
       "aliases": [],
@@ -678,7 +678,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "solan",
+      "slug": "solan-himachal-pradesh",
       "name": "Solan",
       "parent": "himachal-pradesh",
       "aliases": [],
@@ -702,7 +702,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "ranchi",
+      "slug": "ranchi-jharkhand",
       "name": "Ranchi",
       "parent": "jharkhand",
       "aliases": [],
@@ -714,7 +714,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "jamshedpur",
+      "slug": "jamshedpur-jharkhand",
       "name": "Jamshedpur",
       "parent": "jharkhand",
       "aliases": [],
@@ -726,7 +726,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "dhanbad",
+      "slug": "dhanbad-jharkhand",
       "name": "Dhanbad",
       "parent": "jharkhand",
       "aliases": [],
@@ -738,14 +738,14 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "bokaro-steel-city",
-      "name": "Bokaro Steel City",
+      "slug": "bokaro-jharkhand",
+      "name": "Bokaro",
       "parent": "jharkhand",
-      "aliases": [],
-      "bbox": [23.568128, 85.985843, 23.747791, 86.18199],
+      "aliases": ["Bokaro Steel City"],
+      "bbox": [23.564603, 86.047574, 23.744265, 86.243715],
       "bboxSource": "radius",
       "population": null,
-      "osm": "Bokaro Steel City, NH320, Bokaro, Chas, Bokaro, Jharkhand, 827011, India"
+      "osm": "Bokaro, Chas, Bokaro, Jharkhand, 827004, India"
     },
     {
       "kind": "state",
@@ -762,7 +762,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "bengaluru",
+      "slug": "bengaluru-karnataka",
       "name": "Bengaluru",
       "parent": "karnataka",
       "aliases": ["Bangalore"],
@@ -774,7 +774,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "mysuru",
+      "slug": "mysuru-karnataka",
       "name": "Mysuru",
       "parent": "karnataka",
       "aliases": ["Mysore"],
@@ -786,7 +786,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "mangaluru",
+      "slug": "mangaluru-karnataka",
       "name": "Mangaluru",
       "parent": "karnataka",
       "aliases": ["Mangalore"],
@@ -798,7 +798,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "hubballi",
+      "slug": "hubballi-karnataka",
       "name": "Hubballi",
       "parent": "karnataka",
       "aliases": [],
@@ -810,7 +810,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "belagavi",
+      "slug": "belagavi-karnataka",
       "name": "Belagavi",
       "parent": "karnataka",
       "aliases": ["Belgaum"],
@@ -822,7 +822,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "kalaburagi",
+      "slug": "kalaburagi-karnataka",
       "name": "Kalaburagi",
       "parent": "karnataka",
       "aliases": ["Gulbarga"],
@@ -834,7 +834,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "davanagere",
+      "slug": "davanagere-karnataka",
       "name": "Davanagere",
       "parent": "karnataka",
       "aliases": [],
@@ -846,7 +846,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "udupi",
+      "slug": "udupi-karnataka",
       "name": "Udupi",
       "parent": "karnataka",
       "aliases": [],
@@ -870,7 +870,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "thiruvananthapuram",
+      "slug": "thiruvananthapuram-kerala",
       "name": "Thiruvananthapuram",
       "parent": "kerala",
       "aliases": ["Trivandrum"],
@@ -882,7 +882,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "kochi",
+      "slug": "kochi-kerala",
       "name": "Kochi",
       "parent": "kerala",
       "aliases": ["Cochin", "Ernakulam"],
@@ -894,7 +894,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "kozhikode",
+      "slug": "kozhikode-kerala",
       "name": "Kozhikode",
       "parent": "kerala",
       "aliases": ["Calicut"],
@@ -906,7 +906,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "thrissur",
+      "slug": "thrissur-kerala",
       "name": "Thrissur",
       "parent": "kerala",
       "aliases": ["Trichur"],
@@ -918,7 +918,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "kollam",
+      "slug": "kollam-kerala",
       "name": "Kollam",
       "parent": "kerala",
       "aliases": [],
@@ -930,7 +930,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "kannur",
+      "slug": "kannur-kerala",
       "name": "Kannur",
       "parent": "kerala",
       "aliases": [],
@@ -954,7 +954,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "indore",
+      "slug": "indore-madhya-pradesh",
       "name": "Indore",
       "parent": "madhya-pradesh",
       "aliases": [],
@@ -966,7 +966,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "bhopal",
+      "slug": "bhopal-madhya-pradesh",
       "name": "Bhopal",
       "parent": "madhya-pradesh",
       "aliases": [],
@@ -978,7 +978,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "jabalpur",
+      "slug": "jabalpur-madhya-pradesh",
       "name": "Jabalpur",
       "parent": "madhya-pradesh",
       "aliases": [],
@@ -990,7 +990,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "gwalior",
+      "slug": "gwalior-madhya-pradesh",
       "name": "Gwalior",
       "parent": "madhya-pradesh",
       "aliases": [],
@@ -1002,7 +1002,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "ujjain",
+      "slug": "ujjain-madhya-pradesh",
       "name": "Ujjain",
       "parent": "madhya-pradesh",
       "aliases": [],
@@ -1014,7 +1014,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "sagar",
+      "slug": "sagar-madhya-pradesh",
       "name": "Sagar",
       "parent": "madhya-pradesh",
       "aliases": [],
@@ -1038,7 +1038,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "mumbai",
+      "slug": "mumbai-maharashtra",
       "name": "Mumbai",
       "parent": "maharashtra",
       "aliases": ["Bombay"],
@@ -1050,7 +1050,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "pune",
+      "slug": "pune-maharashtra",
       "name": "Pune",
       "parent": "maharashtra",
       "aliases": [],
@@ -1062,7 +1062,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "nagpur",
+      "slug": "nagpur-maharashtra",
       "name": "Nagpur",
       "parent": "maharashtra",
       "aliases": [],
@@ -1074,7 +1074,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "nashik",
+      "slug": "nashik-maharashtra",
       "name": "Nashik",
       "parent": "maharashtra",
       "aliases": [],
@@ -1086,7 +1086,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "thane",
+      "slug": "thane-maharashtra",
       "name": "Thane",
       "parent": "maharashtra",
       "aliases": [],
@@ -1098,7 +1098,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "chhatrapati-sambhajinagar",
+      "slug": "chhatrapati-sambhajinagar-maharashtra",
       "name": "Chhatrapati Sambhajinagar",
       "parent": "maharashtra",
       "aliases": ["Aurangabad"],
@@ -1110,7 +1110,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "solapur",
+      "slug": "solapur-maharashtra",
       "name": "Solapur",
       "parent": "maharashtra",
       "aliases": [],
@@ -1122,7 +1122,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "kolhapur",
+      "slug": "kolhapur-maharashtra",
       "name": "Kolhapur",
       "parent": "maharashtra",
       "aliases": [],
@@ -1134,7 +1134,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "navi-mumbai",
+      "slug": "navi-mumbai-maharashtra",
       "name": "Navi Mumbai",
       "parent": "maharashtra",
       "aliases": [],
@@ -1146,7 +1146,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "pimpri-chinchwad",
+      "slug": "pimpri-chinchwad-maharashtra",
       "name": "Pimpri-Chinchwad",
       "parent": "maharashtra",
       "aliases": [],
@@ -1158,7 +1158,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "amravati",
+      "slug": "amravati-maharashtra",
       "name": "Amravati",
       "parent": "maharashtra",
       "aliases": [],
@@ -1170,14 +1170,14 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "nanded",
+      "slug": "nanded-maharashtra",
       "name": "Nanded",
       "parent": "maharashtra",
       "aliases": [],
-      "bbox": [19.004442, 77.388202, 19.184104, 77.578324],
+      "bbox": [19.079504, 77.215909, 19.259166, 77.406117],
       "bboxSource": "radius",
-      "population": null,
-      "osm": "Nanded District, Maharashtra, India"
+      "population": 550400,
+      "osm": "Nanded, Nanded District, Maharashtra, 431600, India"
     },
     {
       "kind": "state",
@@ -1194,7 +1194,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "imphal",
+      "slug": "imphal-manipur",
       "name": "Imphal",
       "parent": "manipur",
       "aliases": [],
@@ -1218,7 +1218,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "shillong",
+      "slug": "shillong-meghalaya",
       "name": "Shillong",
       "parent": "meghalaya",
       "aliases": [],
@@ -1242,7 +1242,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "aizawl",
+      "slug": "aizawl-mizoram",
       "name": "Aizawl",
       "parent": "mizoram",
       "aliases": [],
@@ -1266,7 +1266,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "kohima",
+      "slug": "kohima-nagaland",
       "name": "Kohima",
       "parent": "nagaland",
       "aliases": [],
@@ -1278,7 +1278,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "dimapur",
+      "slug": "dimapur-nagaland",
       "name": "Dimapur",
       "parent": "nagaland",
       "aliases": [],
@@ -1302,7 +1302,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "bhubaneswar",
+      "slug": "bhubaneswar-odisha",
       "name": "Bhubaneswar",
       "parent": "odisha",
       "aliases": [],
@@ -1314,7 +1314,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "cuttack",
+      "slug": "cuttack-odisha",
       "name": "Cuttack",
       "parent": "odisha",
       "aliases": [],
@@ -1326,7 +1326,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "rourkela",
+      "slug": "rourkela-odisha",
       "name": "Rourkela",
       "parent": "odisha",
       "aliases": [],
@@ -1338,7 +1338,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "puri",
+      "slug": "puri-odisha",
       "name": "Puri",
       "parent": "odisha",
       "aliases": [],
@@ -1362,7 +1362,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "ludhiana",
+      "slug": "ludhiana-punjab",
       "name": "Ludhiana",
       "parent": "punjab",
       "aliases": [],
@@ -1374,7 +1374,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "amritsar",
+      "slug": "amritsar-punjab",
       "name": "Amritsar",
       "parent": "punjab",
       "aliases": [],
@@ -1386,7 +1386,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "jalandhar",
+      "slug": "jalandhar-punjab",
       "name": "Jalandhar",
       "parent": "punjab",
       "aliases": [],
@@ -1398,7 +1398,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "patiala",
+      "slug": "patiala-punjab",
       "name": "Patiala",
       "parent": "punjab",
       "aliases": [],
@@ -1410,7 +1410,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "bathinda",
+      "slug": "bathinda-punjab",
       "name": "Bathinda",
       "parent": "punjab",
       "aliases": [],
@@ -1422,7 +1422,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "mohali",
+      "slug": "mohali-punjab",
       "name": "Mohali",
       "parent": "punjab",
       "aliases": [],
@@ -1446,7 +1446,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "jaipur",
+      "slug": "jaipur-rajasthan",
       "name": "Jaipur",
       "parent": "rajasthan",
       "aliases": [],
@@ -1458,7 +1458,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "jodhpur",
+      "slug": "jodhpur-rajasthan",
       "name": "Jodhpur",
       "parent": "rajasthan",
       "aliases": [],
@@ -1470,7 +1470,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "kota",
+      "slug": "kota-rajasthan",
       "name": "Kota",
       "parent": "rajasthan",
       "aliases": [],
@@ -1482,7 +1482,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "udaipur",
+      "slug": "udaipur-rajasthan",
       "name": "Udaipur",
       "parent": "rajasthan",
       "aliases": [],
@@ -1494,7 +1494,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "ajmer",
+      "slug": "ajmer-rajasthan",
       "name": "Ajmer",
       "parent": "rajasthan",
       "aliases": [],
@@ -1506,7 +1506,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "bikaner",
+      "slug": "bikaner-rajasthan",
       "name": "Bikaner",
       "parent": "rajasthan",
       "aliases": [],
@@ -1518,7 +1518,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "alwar",
+      "slug": "alwar-rajasthan",
       "name": "Alwar",
       "parent": "rajasthan",
       "aliases": [],
@@ -1530,7 +1530,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "bhilwara",
+      "slug": "bhilwara-rajasthan",
       "name": "Bhilwara",
       "parent": "rajasthan",
       "aliases": [],
@@ -1554,7 +1554,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "gangtok",
+      "slug": "gangtok-sikkim",
       "name": "Gangtok",
       "parent": "sikkim",
       "aliases": [],
@@ -1578,7 +1578,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "chennai",
+      "slug": "chennai-tamil-nadu",
       "name": "Chennai",
       "parent": "tamil-nadu",
       "aliases": ["Madras"],
@@ -1590,7 +1590,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "coimbatore",
+      "slug": "coimbatore-tamil-nadu",
       "name": "Coimbatore",
       "parent": "tamil-nadu",
       "aliases": [],
@@ -1602,7 +1602,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "madurai",
+      "slug": "madurai-tamil-nadu",
       "name": "Madurai",
       "parent": "tamil-nadu",
       "aliases": [],
@@ -1614,19 +1614,19 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "tiruchirappalli",
+      "slug": "tiruchirappalli-tamil-nadu",
       "name": "Tiruchirappalli",
       "parent": "tamil-nadu",
       "aliases": ["Trichy"],
       "bbox": [10.7273005, 78.6461234, 10.8457612, 78.7426615],
       "bboxSource": "boundary",
       "population": 500000,
-      "osm": "Tiruchirappalli, Tamil Nadu, India"
+      "osm": "Tiruchirappalli, Tiruchchirāppalli, Tiruchirappalli, Tamil Nadu, India"
     },
     {
       "kind": "city",
       "country": "IN",
-      "slug": "salem",
+      "slug": "salem-tamil-nadu",
       "name": "Salem",
       "parent": "tamil-nadu",
       "aliases": [],
@@ -1638,7 +1638,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "tiruppur",
+      "slug": "tiruppur-tamil-nadu",
       "name": "Tiruppur",
       "parent": "tamil-nadu",
       "aliases": [],
@@ -1650,7 +1650,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "erode",
+      "slug": "erode-tamil-nadu",
       "name": "Erode",
       "parent": "tamil-nadu",
       "aliases": [],
@@ -1662,7 +1662,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "vellore",
+      "slug": "vellore-tamil-nadu",
       "name": "Vellore",
       "parent": "tamil-nadu",
       "aliases": [],
@@ -1674,7 +1674,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "thoothukudi",
+      "slug": "thoothukudi-tamil-nadu",
       "name": "Thoothukudi",
       "parent": "tamil-nadu",
       "aliases": ["Tuticorin"],
@@ -1686,7 +1686,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "tirunelveli",
+      "slug": "tirunelveli-tamil-nadu",
       "name": "Tirunelveli",
       "parent": "tamil-nadu",
       "aliases": [],
@@ -1710,7 +1710,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "hyderabad",
+      "slug": "hyderabad-telangana",
       "name": "Hyderabad",
       "parent": "telangana",
       "aliases": [],
@@ -1722,7 +1722,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "warangal",
+      "slug": "warangal-telangana",
       "name": "Warangal",
       "parent": "telangana",
       "aliases": [],
@@ -1734,7 +1734,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "karimnagar",
+      "slug": "karimnagar-telangana",
       "name": "Karimnagar",
       "parent": "telangana",
       "aliases": [],
@@ -1746,7 +1746,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "nizamabad",
+      "slug": "nizamabad-telangana",
       "name": "Nizamabad",
       "parent": "telangana",
       "aliases": [],
@@ -1758,7 +1758,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "secunderabad",
+      "slug": "secunderabad-telangana",
       "name": "Secunderabad",
       "parent": "telangana",
       "aliases": [],
@@ -1782,7 +1782,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "agartala",
+      "slug": "agartala-tripura",
       "name": "Agartala",
       "parent": "tripura",
       "aliases": [],
@@ -1806,7 +1806,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "lucknow",
+      "slug": "lucknow-uttar-pradesh",
       "name": "Lucknow",
       "parent": "uttar-pradesh",
       "aliases": [],
@@ -1818,7 +1818,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "kanpur",
+      "slug": "kanpur-uttar-pradesh",
       "name": "Kanpur",
       "parent": "uttar-pradesh",
       "aliases": [],
@@ -1830,7 +1830,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "ghaziabad",
+      "slug": "ghaziabad-uttar-pradesh",
       "name": "Ghaziabad",
       "parent": "uttar-pradesh",
       "aliases": [],
@@ -1842,7 +1842,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "agra",
+      "slug": "agra-uttar-pradesh",
       "name": "Agra",
       "parent": "uttar-pradesh",
       "aliases": [],
@@ -1854,7 +1854,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "varanasi",
+      "slug": "varanasi-uttar-pradesh",
       "name": "Varanasi",
       "parent": "uttar-pradesh",
       "aliases": ["Banaras", "Kashi"],
@@ -1866,7 +1866,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "meerut",
+      "slug": "meerut-uttar-pradesh",
       "name": "Meerut",
       "parent": "uttar-pradesh",
       "aliases": [],
@@ -1878,7 +1878,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "prayagraj",
+      "slug": "prayagraj-uttar-pradesh",
       "name": "Prayagraj",
       "parent": "uttar-pradesh",
       "aliases": ["Allahabad"],
@@ -1890,7 +1890,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "noida",
+      "slug": "noida-uttar-pradesh",
       "name": "Noida",
       "parent": "uttar-pradesh",
       "aliases": [],
@@ -1902,7 +1902,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "bareilly",
+      "slug": "bareilly-uttar-pradesh",
       "name": "Bareilly",
       "parent": "uttar-pradesh",
       "aliases": [],
@@ -1914,7 +1914,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "aligarh",
+      "slug": "aligarh-uttar-pradesh",
       "name": "Aligarh",
       "parent": "uttar-pradesh",
       "aliases": [],
@@ -1926,7 +1926,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "moradabad",
+      "slug": "moradabad-uttar-pradesh",
       "name": "Moradabad",
       "parent": "uttar-pradesh",
       "aliases": [],
@@ -1938,7 +1938,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "gorakhpur",
+      "slug": "gorakhpur-uttar-pradesh",
       "name": "Gorakhpur",
       "parent": "uttar-pradesh",
       "aliases": [],
@@ -1950,7 +1950,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "mathura",
+      "slug": "mathura-uttar-pradesh",
       "name": "Mathura",
       "parent": "uttar-pradesh",
       "aliases": [],
@@ -1962,7 +1962,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "greater-noida",
+      "slug": "greater-noida-uttar-pradesh",
       "name": "Greater Noida",
       "parent": "uttar-pradesh",
       "aliases": [],
@@ -1986,7 +1986,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "dehradun",
+      "slug": "dehradun-uttarakhand",
       "name": "Dehradun",
       "parent": "uttarakhand",
       "aliases": [],
@@ -1998,7 +1998,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "haridwar",
+      "slug": "haridwar-uttarakhand",
       "name": "Haridwar",
       "parent": "uttarakhand",
       "aliases": [],
@@ -2010,7 +2010,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "rishikesh",
+      "slug": "rishikesh-uttarakhand",
       "name": "Rishikesh",
       "parent": "uttarakhand",
       "aliases": [],
@@ -2022,7 +2022,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "haldwani",
+      "slug": "haldwani-uttarakhand",
       "name": "Haldwani",
       "parent": "uttarakhand",
       "aliases": [],
@@ -2034,7 +2034,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "nainital",
+      "slug": "nainital-uttarakhand",
       "name": "Nainital",
       "parent": "uttarakhand",
       "aliases": [],
@@ -2058,7 +2058,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "kolkata",
+      "slug": "kolkata-west-bengal",
       "name": "Kolkata",
       "parent": "west-bengal",
       "aliases": ["Calcutta"],
@@ -2070,7 +2070,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "howrah",
+      "slug": "howrah-west-bengal",
       "name": "Howrah",
       "parent": "west-bengal",
       "aliases": [],
@@ -2082,7 +2082,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "durgapur",
+      "slug": "durgapur-west-bengal",
       "name": "Durgapur",
       "parent": "west-bengal",
       "aliases": [],
@@ -2094,7 +2094,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "asansol",
+      "slug": "asansol-west-bengal",
       "name": "Asansol",
       "parent": "west-bengal",
       "aliases": [],
@@ -2106,7 +2106,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "siliguri",
+      "slug": "siliguri-west-bengal",
       "name": "Siliguri",
       "parent": "west-bengal",
       "aliases": [],
@@ -2130,7 +2130,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "sri-vijaya-puram",
+      "slug": "sri-vijaya-puram-andaman-and-nicobar-islands",
       "name": "Sri Vijaya Puram",
       "parent": "andaman-and-nicobar-islands",
       "aliases": ["Port Blair"],
@@ -2154,7 +2154,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "chandigarh",
+      "slug": "chandigarh-chandigarh",
       "name": "Chandigarh",
       "parent": "chandigarh",
       "aliases": [],
@@ -2178,7 +2178,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "daman",
+      "slug": "daman-dadra-and-nagar-haveli-and-daman-and-diu",
       "name": "Daman",
       "parent": "dadra-and-nagar-haveli-and-daman-and-diu",
       "aliases": [],
@@ -2190,7 +2190,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "silvassa",
+      "slug": "silvassa-dadra-and-nagar-haveli-and-daman-and-diu",
       "name": "Silvassa",
       "parent": "dadra-and-nagar-haveli-and-daman-and-diu",
       "aliases": [],
@@ -2214,7 +2214,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "delhi",
+      "slug": "delhi-delhi",
       "name": "Delhi",
       "parent": "delhi",
       "aliases": ["New Delhi", "NCT Delhi", "Dilli"],
@@ -2238,7 +2238,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "srinagar",
+      "slug": "srinagar-jammu-and-kashmir",
       "name": "Srinagar",
       "parent": "jammu-and-kashmir",
       "aliases": [],
@@ -2250,7 +2250,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "jammu",
+      "slug": "jammu-jammu-and-kashmir",
       "name": "Jammu",
       "parent": "jammu-and-kashmir",
       "aliases": [],
@@ -2274,7 +2274,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "leh",
+      "slug": "leh-ladakh",
       "name": "Leh",
       "parent": "ladakh",
       "aliases": [],
@@ -2298,7 +2298,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "kavaratti",
+      "slug": "kavaratti-lakshadweep",
       "name": "Kavaratti",
       "parent": "lakshadweep",
       "aliases": [],
@@ -2322,7 +2322,7 @@
     {
       "kind": "city",
       "country": "IN",
-      "slug": "puducherry",
+      "slug": "puducherry-puducherry",
       "name": "Puducherry",
       "parent": "puducherry",
       "aliases": ["Pondicherry", "Pondy"],

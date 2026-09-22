@@ -5,6 +5,17 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 ## Template
 
 ```
+### 2026-09-22 — Phase 2 — Task 2.1 spec v1, company graph schema, taxonomy and geography seeds
+- Done:
+  - **Schema** (migrations 0012/0013, ADR-0007): tenant tables `searches` and `research_tasks` (tree per job via a same-job parent FK); shared graph `companies`, `company_domains`, `company_locations`, `field_values` (monthly partitions, append-only except `is_current`), readable by both roles and writable by workers only; reference tables `industries` and `geo_areas`, read-only. Database guards: provenance columns NOT NULL, AI values need model and prompt version, AI can never store email/phone/WhatsApp, derivations from a fixed list, http(s) source URLs, canonical bare-host domains, E.164 phones, plain unique upsert keys (`google_place_id`, `primary_domain`).
+  - **Industry taxonomy**: 20 sectors and 319 India-first categories with Hindi/regional synonyms. Each category maps only to precise Google Places (New) Table A types (snapshot committed); 75 categories with no precise type are text-search only. Tests forbid catch-all types and ambiguous synonyms.
+  - **Geography**: India, 36 states/UTs and 157 cities, built once from OpenStreetMap Nominatim within its usage policy. Each city is verified to be in the requested state. The box is the city boundary where one exists (27), otherwise a population-sized radius box (130). City slugs are state-qualified. ODbL attribution added to the 2.12 UI checklist.
+  - **ResearchSpec v1** finalized: `FieldKey` catalogue (30 keys; `x` instead of `twitter`), taxonomy IDs must be slugs, social platforms enumerated, size limits on lists; generated TS keeps plain arrays.
+- Decisions (link ADRs): ADR-0007 (graph/reference tables, plain types now, PostGIS/citext/vector later). Uncommitted migrations were rolled back in the dev DB and regenerated rather than patched.
+- Tests/checks status: DB 114 live tests plus 12 seed data tests; contracts 39 TS / 29 Python; API 107; workers 36; repo lint, typecheck and contracts check green. Code reviews: schema CHANGES REQUESTED -> fixed (same-job task parents, plain unique keys, domain/country checks, cron guard, AI contact guard, cross-org FK and column-grant tests); seeds/spec CHANGES REQUESTED -> fixed (generic types removed, tuple types, state-qualified slugs, state-verified lookups, strict parent linking).
+- Open issues / blockers: the API must check `taxonomy_ids` exist in `app.industries` (task 2.4/2.6). New FieldKey values must be deployed to workers before producers use them. City populations from OSM are indicative only. Waiting on the owner for the Anthropic, Google Places and SERP keys (needed from task 2.2 onward for live runs).
+- Next step: task 2.5 credits ledger (key-free), then 2.6 research job API.
+
 ### 2026-09-22 — Phase 1 — DONE (all acceptance criteria pass)
 - Done: the owner allowed `git push`; main is on GitHub. The first CI runs exposed three issues, all fixed:
   - `astral-sh/setup-uv@v10` does not exist (no moving major tags after v7), so it is pinned to `v10.1.0`.

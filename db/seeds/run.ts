@@ -36,11 +36,15 @@ try {
         on conflict (slug) do update
           set name = excluded.name, synonyms = excluded.synonyms, google_types = excluded.google_types`;
     }
-    for (const i of INDUSTRY_SEEDS.filter((s) => s.parent)) {
-      await tx`
-        update app.industries c set parent_id = p.id
-        from app.industries p
-        where c.slug = ${i.slug} and p.slug = ${i.parent ?? ''}`;
+    for (const i of INDUSTRY_SEEDS) {
+      const linked = i.parent
+        ? await tx`
+            update app.industries c set parent_id = p.id
+            from app.industries p
+            where c.slug = ${i.slug} and p.slug = ${i.parent}`
+        : await tx`update app.industries set parent_id = null where slug = ${i.slug}`;
+      if (linked.count !== 1)
+        throw new Error(`industry ${i.slug}: parent ${String(i.parent)} not found`);
     }
 
     // Geography: upsert by (country, kind, slug); parents resolved by slug and parent kind.
@@ -58,13 +62,29 @@ try {
     }
     for (const a of geo.areas) {
       const kind = parentKind(a.kind);
-      if (!a.parent || !kind) continue;
-      await tx`
-        update app.geo_areas c set parent_id = p.id
-        from app.geo_areas p
-        where c.country = ${a.country} and c.kind = ${a.kind} and c.slug = ${a.slug}
-          and p.country = ${a.country} and p.kind = ${kind} and p.slug = ${a.parent}`;
+      const linked =
+        a.parent && kind
+          ? await tx`
+              update app.geo_areas c set parent_id = p.id
+              from app.geo_areas p
+              where c.country = ${a.country} and c.kind = ${a.kind} and c.slug = ${a.slug}
+                and p.country = ${a.country} and p.kind = ${kind} and p.slug = ${a.parent}`
+          : await tx`
+              update app.geo_areas set parent_id = null
+              where country = ${a.country} and kind = ${a.kind} and slug = ${a.slug}`;
+      if (linked.count !== 1)
+        throw new Error(`geo ${a.kind} ${a.slug}: parent ${String(a.parent)} not found`);
     }
+    // The seed owns geo_areas (nothing references them yet): drop areas no longer in the file,
+    // e.g. after a slug scheme change. Children first, so parent FKs never block the delete.
+    const keys = geo.areas.map((a) => `${a.country}|${a.kind}|${a.slug}`);
+    await tx`
+      delete from app.geo_areas
+      where country || '|' || kind || '|' || slug <> all(${keys}::text[])
+        and kind = 'city'`;
+    await tx`
+      delete from app.geo_areas
+      where country || '|' || kind || '|' || slug <> all(${keys}::text[])`;
   });
   const [counts] = await sql<{ sources: number; industries: number; geo: number }[]>`
     select (select count(*) from app.sources)::int as sources,

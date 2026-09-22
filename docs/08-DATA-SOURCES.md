@@ -59,7 +59,7 @@ website:        [google_places, serp, registry_matcher]
 phone:          [google_places, website]
 email:          [website, provider_waterfall]
 address:        [google_places, website, companies_house]
-socials:        [website, serp]
+instagram:      [website, serp]   # likewise facebook, linkedin, x, youtube, whatsapp (FieldKey per platform)
 technologies:   [tech_detector]
 employee_band:  [companies_house, provider_waterfall, firmographic_estimator]
 founded_year:   [companies_house, opencorporates, website]
@@ -70,5 +70,5 @@ people:         [website_team_page, companies_house_officers, provider_waterfall
 
 ## Reference data (seeded, not live sources)
 - **Industry taxonomy** (`db/seeds/industries.ts`): 20 sectors / 319 categories, India-first, mapped to Google Places (New) Table A types. The type list is snapshotted in `db/seeds/data/google-place-types-table-a.json` (source URL and retrieval date inside). A test fails if a mapping uses a type Google does not accept.
-- **Geography** (`db/seeds/data/geo-in.json`): India, 36 states/UTs and 157 cities with bounding boxes for Places tiling. Built once with `db/scripts/build-geo-seed.ts` from OpenStreetMap Nominatim, following its usage policy (1 request/s, identifying User-Agent). Each box records whether it is a city `boundary` or a population-sized `radius` box around the city point. **Attribution required: data (c) OpenStreetMap contributors, ODbL 1.0** — shown in-product wherever geography is displayed (e.g. location chips).
+- **Geography** (`db/seeds/data/geo-in.json`): India, 36 states/UTs and 157 cities with bounding boxes for Places tiling. Built once with `db/scripts/build-geo-seed.ts` from OpenStreetMap Nominatim, following its usage policy (1 request/s, identifying User-Agent). Each box records whether it is a city `boundary` or a population-sized `radius` box around the city point. City slugs are state-qualified (`pune-maharashtra`) because several states share city names. `population` comes from OSM tags and is indicative only (some values are stale placeholders): never rank or bill by it. **Attribution required: data (c) OpenStreetMap contributors, ODbL 1.0** — shown in-product wherever geography is displayed (e.g. location chips).
 

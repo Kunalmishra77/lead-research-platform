@@ -1,0 +1,105 @@
+{
+  "spec_version": 1,
+  "entity": "company",
+  "intent": "prospecting",
+  "filters": {
+    "industry": {
+      "include": ["restaurant"],
+      "exclude": [],
+      "taxonomy_ids": []
+    },
+    "location": {
+      "country": "IN",
+      "states": [],
+      "cities": [
+        "City 0",
+        "City 1",
+        "City 2",
+        "City 3",
+        "City 4",
+        "City 5",
+        "City 6",
+        "City 7",
+        "City 8",
+        "City 9",
+        "City 10",
+        "City 11",
+        "City 12",
+        "City 13",
+        "City 14",
+        "City 15",
+        "City 16",
+        "City 17",
+        "City 18",
+        "City 19",
+        "City 20",
+        "City 21",
+        "City 22",
+        "City 23",
+        "City 24",
+        "City 25",
+        "City 26",
+        "City 27",
+        "City 28",
+        "City 29",
+        "City 30",
+        "City 31",
+        "City 32",
+        "City 33",
+        "City 34",
+        "City 35",
+        "City 36",
+        "City 37",
+        "City 38",
+        "City 39",
+        "City 40",
+        "City 41",
+        "City 42",
+        "City 43",
+        "City 44",
+        "City 45",
+        "City 46",
+        "City 47",
+        "City 48",
+        "City 49",
+        "City 50"
+      ],
+      "radius_km": null,
+      "include_metro_area": true
+    },
+    "has_website": true,
+    "contact": {
+      "any_of": ["email", "phone"]
+    },
+    "social": {
+      "instagram": {
+        "required": true,
+        "active_within_days": 30
+      }
+    },
+    "min_confidence": 0.6
+  },
+  "keywords": {
+    "must": [],
+    "should": [],
+    "not": []
+  },
+  "fields": ["name", "website", "phone", "email", "instagram"],
+  "custom_columns": [],
+  "depth": "standard",
+  "limits": {
+    "max_results": 500,
+    "max_credits": 2000
+  },
+  "exclude": {
+    "lists": [],
+    "existing_leads": true
+  },
+  "feasibility": [
+    {
+      "filter": "social.instagram",
+      "mode": "post_filter",
+      "note": ""
+    }
+  ]
+}

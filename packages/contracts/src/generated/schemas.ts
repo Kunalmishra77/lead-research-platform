@@ -240,7 +240,7 @@ export const researchSpecSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://leadforge.dev/contracts/research-spec.schema.json",
   "title": "ResearchSpec",
-  "description": "Typed research request (docs/06 section 1). v1 skeleton; finalized in Phase 2 task 2.1.",
+  "description": "Typed research request (docs/06 section 1). v1: finalized in Phase 2 task 2.1. Additive changes only within v1.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -281,17 +281,19 @@ export const researchSpecSchema = {
     "fields": {
       "type": "array",
       "items": {
-        "type": "string"
+        "$ref": "#/$defs/FieldKey"
       },
       "minItems": 1,
+      "maxItems": 30,
       "uniqueItems": true,
-      "description": "Output field keys (field catalogue arrives in Phase 2). uniqueItems is enforced by the TS validator; specs are built and validated in the API."
+      "description": "Output fields. uniqueItems is enforced by the TS validator; specs are built and validated in the API."
     },
     "custom_columns": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/CustomColumn"
-      }
+      },
+      "maxItems": 10
     },
     "depth": {
       "type": "string",
@@ -323,14 +325,20 @@ export const researchSpecSchema = {
         "include": {
           "type": "array",
           "items": {
-            "type": "string"
-          }
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "maxItems": 50
         },
         "exclude": {
           "type": "array",
           "items": {
-            "type": "string"
-          }
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "maxItems": 50
         }
       }
     },
@@ -370,20 +378,30 @@ export const researchSpecSchema = {
             "include": {
               "type": "array",
               "items": {
-                "type": "string"
-              }
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "maxItems": 20
             },
             "exclude": {
               "type": "array",
               "items": {
-                "type": "string"
-              }
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "maxItems": 20
             },
             "taxonomy_ids": {
               "type": "array",
               "items": {
-                "type": "string"
-              }
+                "type": "string",
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                "maxLength": 64
+              },
+              "maxItems": 20,
+              "description": "Industry taxonomy slugs (app.industries.slug)."
             }
           }
         },
@@ -419,6 +437,16 @@ export const researchSpecSchema = {
         },
         "social": {
           "type": "object",
+          "propertyNames": {
+            "enum": [
+              "instagram",
+              "facebook",
+              "linkedin",
+              "x",
+              "youtube",
+              "whatsapp"
+            ]
+          },
           "additionalProperties": {
             "$ref": "#/$defs/SocialFilter"
           }
@@ -495,14 +523,20 @@ export const researchSpecSchema = {
         "states": {
           "type": "array",
           "items": {
-            "type": "string"
-          }
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "maxItems": 40
         },
         "cities": {
           "type": "array",
           "items": {
-            "type": "string"
-          }
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "maxItems": 50
         },
         "radius_km": {
           "type": [
@@ -541,20 +575,29 @@ export const researchSpecSchema = {
         "must": {
           "type": "array",
           "items": {
-            "type": "string"
-          }
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "maxItems": 20
         },
         "should": {
           "type": "array",
           "items": {
-            "type": "string"
-          }
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "maxItems": 20
         },
         "not": {
           "type": "array",
           "items": {
-            "type": "string"
-          }
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "maxItems": 20
         }
       }
     },
@@ -601,11 +644,12 @@ export const researchSpecSchema = {
         "max_results": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 100000
+          "maximum": 10000
         },
         "max_credits": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 1,
+          "maximum": 1000000
         }
       }
     },
@@ -650,6 +694,43 @@ export const researchSpecSchema = {
           "type": "string"
         }
       }
+    },
+    "FieldKey": {
+      "title": "FieldKey",
+      "type": "string",
+      "enum": [
+        "name",
+        "category",
+        "industry",
+        "description",
+        "website",
+        "phone",
+        "email",
+        "whatsapp",
+        "contact_form",
+        "address",
+        "city",
+        "state",
+        "country",
+        "postal_code",
+        "geo",
+        "google_maps_url",
+        "rating",
+        "review_count",
+        "business_status",
+        "opening_hours",
+        "instagram",
+        "facebook",
+        "linkedin",
+        "x",
+        "youtube",
+        "employee_band",
+        "founded_year",
+        "technologies",
+        "hiring",
+        "people"
+      ],
+      "description": "Output field catalogue (one key per social platform; X = formerly Twitter). Which connectors can fill each field lives in the planner capability map (docs/08). Adding a key is additive for producers but deploy consumers (workers) first: they reject unknown keys."
     }
   }
 } as const;

@@ -1,9 +1,14 @@
 /**
  * Industry taxonomy seed (Phase 2 task 2.1): sectors -> categories, India-first.
- * `googleTypes` must be Places API (New) Table A types (checked by db/test/seeds.test.ts against
- * seeds/data/google-place-types-table-a.json). Categories without a matching Google type are
- * discovered through text queries built from `name` + `synonyms` instead.
+ *
+ * `googleTypes` are Places API (New) Table A types that are safe to pass as a Text Search
+ * `includedType` next to a text query built from `name` + `synonyms` (checked against
+ * seeds/data/google-place-types-table-a.json by db/test/seeds.test.ts). Catch-all types such as
+ * `service`, `store` or `manufacturer` are never used: as filters they return every business in a
+ * tile. Categories with no precise type have `[]` and are discovered by text query only.
+ *
  * Slugs are stable identifiers used in ResearchSpec `industry.taxonomy_ids`: never rename one.
+ * A synonym belongs to exactly one category (tested), so query expansion stays unambiguous.
  */
 export interface IndustrySeed {
   slug: string;
@@ -12,6 +17,16 @@ export interface IndustrySeed {
   synonyms: string[];
   googleTypes: string[];
 }
+
+/** Types too broad to use as a search filter; never mapped (tested). */
+export const GENERIC_GOOGLE_TYPES = [
+  'service',
+  'store',
+  'manufacturer',
+  'corporate_office',
+  'consultant',
+  'supplier',
+] as const;
 
 type Category = [slug: string, name: string, googleTypes: string[], synonyms?: string[]];
 
@@ -113,7 +128,7 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
         ['catering_service'],
         ['caterers', 'wedding caterers'],
       ],
-      ['bar', 'Bar', ['bar', 'cocktail_bar'], ['lounge']],
+      ['bar', 'Bar', ['bar', 'cocktail_bar']],
       ['pub', 'Pub & Brewpub', ['pub', 'brewpub', 'gastropub'], ['microbrewery']],
       ['lounge', 'Lounge & Hookah Bar', ['lounge_bar', 'hookah_bar']],
       ['night-club', 'Night Club', ['night_club'], ['club', 'discotheque']],
@@ -170,12 +185,7 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
         ['clothing_store'],
         ['saree emporium', 'ethnic wear', 'lehenga shop'],
       ],
-      [
-        'fabric-shop',
-        'Fabric & Textile Shop',
-        ['store'],
-        ['cloth shop', 'kapda dukan', 'textile shop'],
-      ],
+      ['fabric-shop', 'Fabric & Textile Shop', [], ['cloth shop', 'kapda dukan', 'textile shop']],
       ['tailor', 'Tailor & Boutique', ['tailor'], ['boutique', 'darzi', 'stitching centre']],
       ['footwear-store', 'Footwear Store', ['shoe_store'], ['shoe shop', 'chappal store']],
       [
@@ -184,7 +194,7 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
         ['jewelry_store'],
         ['jewellers', 'sunar', 'gold shop', 'imitation jewellery'],
       ],
-      ['watch-store', 'Watch & Accessories Store', ['store'], ['watch shop']],
+      ['watch-store', 'Watch & Accessories Store', [], ['watch shop']],
       [
         'electronics-store',
         'Electronics Store',
@@ -220,15 +230,10 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
       ],
       ['mattress-store', 'Mattress Store', ['furniture_store'], ['mattress showroom']],
       ['book-store', 'Book Store', ['book_store'], ['book depot', 'bookshop']],
-      [
-        'stationery-store',
-        'Stationery Store',
-        ['store'],
-        ['stationery shop', 'xerox and stationery'],
-      ],
+      ['stationery-store', 'Stationery Store', [], ['stationery shop', 'xerox and stationery']],
       ['gift-shop', 'Gift Shop', ['gift_shop'], ['gift gallery', 'novelty store']],
       ['toy-store', 'Toy Store', ['toy_store']],
-      ['optical-store', 'Optical Store', ['store'], ['opticians', 'spectacles shop', 'eyewear']],
+      ['optical-store', 'Optical Store', [], ['opticians', 'spectacles shop', 'eyewear']],
       [
         'cosmetics-store',
         'Cosmetics & Beauty Store',
@@ -264,19 +269,14 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
         ['discount_store', 'thrift_store'],
         ['99 store', 'value store'],
       ],
-      [
-        'pooja-store',
-        'Pooja & Religious Items Store',
-        ['store'],
-        ['pooja samagri', 'religious store'],
-      ],
+      ['pooja-store', 'Pooja & Religious Items Store', [], ['pooja samagri', 'religious store']],
       [
         'handicrafts-store',
         'Handicrafts & Handloom Store',
-        ['gift_shop', 'store'],
+        ['gift_shop'],
         ['handloom', 'khadi bhandar', 'emporium'],
       ],
-      ['music-instruments-store', 'Musical Instruments Store', ['store'], ['music shop']],
+      ['music-instruments-store', 'Musical Instruments Store', [], ['music shop']],
       ['tea-coffee-store', 'Tea & Coffee Store', ['tea_store'], ['tea merchant', 'chai patti']],
       [
         'dry-fruits-store',
@@ -284,7 +284,7 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
         ['food_store'],
         ['dry fruit shop', 'masala store', 'spices'],
       ],
-      ['bag-luggage-store', 'Bags & Luggage Store', ['store'], ['luggage shop']],
+      ['bag-luggage-store', 'Bags & Luggage Store', [], ['luggage shop']],
       [
         'gas-station',
         'Petrol Pump',
@@ -378,13 +378,13 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
       [
         'home-healthcare',
         'Home Healthcare & Nursing',
-        ['service'],
+        [],
         ['home nursing', 'caretaker service', 'elder care'],
       ],
       [
         'medical-equipment-supplier',
         'Medical Equipment Supplier',
-        ['supplier'],
+        [],
         ['surgical store', 'medical devices'],
       ],
       ['foot-care', 'Foot Care', ['foot_care'], ['podiatrist']],
@@ -533,7 +533,7 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
       [
         'study-abroad-consultant',
         'Study Abroad Consultant',
-        ['consultant'],
+        [],
         ['overseas education', 'education consultant'],
       ],
       ['library', 'Library & Study Centre', ['library'], ['reading room', 'self study centre']],
@@ -554,13 +554,13 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
       [
         'company-secretary',
         'Company Secretary & Compliance',
-        ['consultant'],
+        [],
         ['cs firm', 'company registration', 'compliance services'],
       ],
       [
         'business-consultant',
         'Business Consultant',
-        ['consultant'],
+        [],
         ['management consultant', 'business advisory'],
       ],
       [
@@ -582,12 +582,12 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
         ['employment_agency'],
         ['placement agency', 'manpower agency', 'hr consultant'],
       ],
-      ['architect', 'Architect', ['consultant'], ['architecture firm']],
+      ['architect', 'Architect', [], ['architecture firm']],
       [
         'interior-designer',
         'Interior Designer',
-        ['consultant'],
-        ['interior design firm', 'interior decorator', 'modular kitchen'],
+        [],
+        ['interior design firm', 'interior decorator'],
       ],
       [
         'real-estate-agent',
@@ -604,20 +604,15 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
       [
         'financial-advisor',
         'Financial Advisor',
-        ['consultant'],
+        [],
         ['wealth management', 'mutual fund distributor', 'investment advisor'],
       ],
-      [
-        'event-planner',
-        'Event Management Company',
-        ['service'],
-        ['event management', 'event organiser'],
-      ],
-      ['wedding-planner', 'Wedding Planner', ['service'], ['wedding management', 'shaadi planner']],
+      ['event-planner', 'Event Management Company', [], ['event management', 'event organiser']],
+      ['wedding-planner', 'Wedding Planner', [], ['wedding management', 'shaadi planner']],
       [
         'photographer',
         'Photographer & Studio',
-        ['service'],
+        [],
         ['photo studio', 'wedding photographer', 'photography'],
       ],
       [
@@ -629,25 +624,25 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
       [
         'printing-press',
         'Printing Press & Print Shop',
-        ['service'],
+        [],
         ['printers', 'offset printing', 'flex printing', 'xerox'],
       ],
-      ['translation-services', 'Translation Services', ['service'], ['translator']],
+      ['translation-services', 'Translation Services', [], ['translator']],
       [
         'astrologer',
         'Astrologer',
         ['astrologer', 'psychic'],
         ['jyotish', 'vastu consultant', 'numerologist'],
       ],
-      ['detective-agency', 'Detective Agency', ['service'], ['private investigator']],
-      ['security-agency', 'Security Agency', ['service'], ['security guards', 'security services']],
+      ['detective-agency', 'Detective Agency', [], ['private investigator']],
+      ['security-agency', 'Security Agency', [], ['security guards', 'security services']],
       [
         'coworking-space',
         'Coworking Space',
         ['coworking_space', 'business_center'],
         ['shared office', 'business centre'],
       ],
-      ['corporate-office', 'Corporate Office', ['corporate_office']],
+      ['corporate-office', 'Corporate Office', []],
     ],
   },
   {
@@ -657,53 +652,33 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
       [
         'software-company',
         'Software Company',
-        ['corporate_office'],
+        [],
         ['software development', 'it company', 'software house'],
       ],
-      [
-        'saas-company',
-        'SaaS Company',
-        ['corporate_office'],
-        ['saas', 'software as a service', 'b2b software'],
-      ],
+      ['saas-company', 'SaaS Company', [], ['saas', 'software as a service', 'b2b software']],
       [
         'it-services',
         'IT Services & Consulting',
-        ['consultant'],
+        [],
         ['it consulting', 'it solutions', 'managed services'],
       ],
       [
         'web-design-agency',
         'Web Design & Development',
-        ['service'],
+        [],
         ['website design', 'web development company'],
       ],
-      ['app-development', 'Mobile App Development', ['service'], ['app developers']],
+      ['app-development', 'Mobile App Development', [], ['app developers']],
       [
         'ai-company',
         'AI & Data Company',
-        ['corporate_office'],
+        [],
         ['artificial intelligence', 'machine learning', 'data analytics'],
       ],
-      [
-        'cybersecurity-company',
-        'Cybersecurity Company',
-        ['corporate_office'],
-        ['information security'],
-      ],
-      [
-        'fintech-company',
-        'Fintech Company',
-        ['corporate_office'],
-        ['payments company', 'fintech startup'],
-      ],
-      ['edtech-company', 'Edtech Company', ['corporate_office'], ['online learning', 'e-learning']],
-      [
-        'ecommerce-company',
-        'E-commerce Company',
-        ['corporate_office'],
-        ['online store', 'd2c brand'],
-      ],
+      ['cybersecurity-company', 'Cybersecurity Company', [], ['information security']],
+      ['fintech-company', 'Fintech Company', [], ['payments company', 'fintech startup']],
+      ['edtech-company', 'Edtech Company', [], ['online learning', 'e-learning']],
+      ['ecommerce-company', 'E-commerce Company', [], ['online store', 'd2c brand']],
       [
         'internet-service-provider',
         'Internet Service Provider',
@@ -723,12 +698,7 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
         ['cell_phone_store'],
         ['mobile repairing', 'phone repair'],
       ],
-      [
-        'cctv-installer',
-        'CCTV & Security Systems',
-        ['service'],
-        ['cctv dealer', 'security systems'],
-      ],
+      ['cctv-installer', 'CCTV & Security Systems', [], ['cctv dealer', 'security systems']],
       ['cyber-cafe', 'Cyber Cafe', ['internet_cafe'], ['internet cafe', 'csc centre']],
     ],
   },
@@ -740,10 +710,10 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
       [
         'nbfc',
         'NBFC & Lending Company',
-        ['corporate_office'],
+        [],
         ['non banking financial company', 'loan company', 'finance company'],
       ],
-      ['microfinance', 'Microfinance Institution', ['corporate_office'], ['mfi']],
+      ['microfinance', 'Microfinance Institution', [], ['mfi']],
       [
         'cooperative-bank',
         'Cooperative Bank & Credit Society',
@@ -751,19 +721,9 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
         ['credit cooperative', 'sahakari bank'],
       ],
       ['gold-loan', 'Gold Loan Company', ['bank'], ['gold finance']],
-      [
-        'stock-broker',
-        'Stock Broker',
-        ['consultant'],
-        ['share broker', 'trading company', 'demat'],
-      ],
-      [
-        'loan-agent',
-        'Loan Agent / DSA',
-        ['consultant'],
-        ['loan consultant', 'home loan agent', 'dsa'],
-      ],
-      ['money-exchange', 'Money Exchange & Remittance', ['service'], ['forex', 'money transfer']],
+      ['stock-broker', 'Stock Broker', [], ['share broker', 'trading company', 'demat']],
+      ['loan-agent', 'Loan Agent / DSA', [], ['loan consultant', 'home loan agent', 'dsa']],
+      ['money-exchange', 'Money Exchange & Remittance', [], ['forex', 'money transfer']],
       [
         'insurance-company',
         'Insurance Company',
@@ -779,19 +739,19 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
       ['plumber', 'Plumber', ['plumber'], ['plumbing services']],
       ['electrician', 'Electrician', ['electrician'], ['electrical services', 'wiring']],
       ['painter', 'Painting Contractor', ['painter'], ['house painting', 'painters']],
-      ['carpenter', 'Carpenter', ['service'], ['carpentry', 'furniture repair']],
-      ['pest-control', 'Pest Control', ['service'], ['termite control', 'fumigation']],
-      ['ac-repair', 'AC Repair & Service', ['service'], ['ac service', 'air conditioner repair']],
+      ['carpenter', 'Carpenter', [], ['carpentry', 'furniture repair']],
+      ['pest-control', 'Pest Control', [], ['termite control', 'fumigation']],
+      ['ac-repair', 'AC Repair & Service', [], ['ac service', 'air conditioner repair']],
       [
         'appliance-repair',
         'Home Appliance Repair',
-        ['service'],
+        [],
         ['washing machine repair', 'fridge repair', 'ro service'],
       ],
       [
         'cleaning-service',
         'Cleaning Service',
-        ['service'],
+        [],
         ['deep cleaning', 'housekeeping', 'sofa cleaning'],
       ],
       ['packers-movers', 'Packers & Movers', ['moving_company'], ['movers', 'relocation services']],
@@ -803,19 +763,9 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
         ['roofing_contractor'],
         ['waterproofing contractor'],
       ],
-      ['water-purifier-dealer', 'Water Purifier Dealer', ['store'], ['ro dealer', 'water filter']],
-      [
-        'solar-installer',
-        'Solar Installer',
-        ['service'],
-        ['solar panels', 'rooftop solar', 'solar dealer'],
-      ],
-      [
-        'gardener',
-        'Gardening & Landscaping',
-        ['garden_center', 'service'],
-        ['landscaping', 'mali'],
-      ],
+      ['water-purifier-dealer', 'Water Purifier Dealer', [], ['ro dealer', 'water filter']],
+      ['solar-installer', 'Solar Installer', [], ['solar panels', 'rooftop solar', 'solar dealer']],
+      ['gardener', 'Gardening & Landscaping', ['garden_center'], ['landscaping', 'mali']],
       [
         'maid-service',
         'Maid & Domestic Help Agency',
@@ -831,33 +781,18 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
       [
         'builder-developer',
         'Builder & Developer',
-        ['corporate_office'],
+        [],
         ['real estate developer', 'builders', 'construction company'],
       ],
-      [
-        'civil-contractor',
-        'Civil Contractor',
-        ['service'],
-        ['construction contractor', 'thekedar'],
-      ],
+      ['civil-contractor', 'Civil Contractor', [], ['construction contractor', 'thekedar']],
       [
         'building-materials',
         'Building Materials Supplier',
-        ['building_materials_store', 'supplier'],
+        ['building_materials_store'],
         ['cement dealer', 'steel dealer', 'sand supplier', 'bricks'],
       ],
-      [
-        'glass-aluminium',
-        'Glass & Aluminium Work',
-        ['service'],
-        ['aluminium fabricator', 'glass work'],
-      ],
-      [
-        'fabricator',
-        'Steel & Iron Fabricator',
-        ['manufacturer'],
-        ['welding works', 'grill fabrication'],
-      ],
+      ['glass-aluminium', 'Glass & Aluminium Work', [], ['aluminium fabricator', 'glass work']],
+      ['fabricator', 'Steel & Iron Fabricator', [], ['welding works', 'grill fabrication']],
       [
         'modular-kitchen',
         'Modular Kitchen & Wardrobe',
@@ -876,8 +811,8 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
         ['real_estate_agency'],
         ['facility management'],
       ],
-      ['surveyor', 'Surveyor & Valuer', ['consultant'], ['land surveyor', 'property valuer']],
-      ['storage-warehouse', 'Storage & Self Storage', ['storage'], ['self storage', 'godown']],
+      ['surveyor', 'Surveyor & Valuer', [], ['land surveyor', 'property valuer']],
+      ['storage-warehouse', 'Storage & Self Storage', ['storage'], ['self storage']],
     ],
   },
   {
@@ -923,7 +858,7 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
         'taxi-service',
         'Taxi & Cab Service',
         ['taxi_service', 'chauffeur_service'],
-        ['cab service', 'tours and travels'],
+        ['cab service'],
       ],
       [
         'ev-charging',
@@ -990,12 +925,7 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
       ['comedy-club', 'Comedy Club', ['comedy_club']],
       ['karaoke', 'Karaoke', ['karaoke']],
       ['kids-play-area', 'Kids Play Area', ['indoor_playground', 'playground'], ['soft play']],
-      [
-        'recording-studio',
-        'Recording & Music Studio',
-        ['service'],
-        ['music studio', 'dubbing studio'],
-      ],
+      ['recording-studio', 'Recording & Music Studio', [], ['music studio', 'dubbing studio']],
       ['zoo', 'Zoo & Wildlife Park', ['zoo', 'wildlife_park', 'aquarium']],
       ['casino', 'Casino', ['casino']],
     ],
@@ -1004,107 +934,87 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
     slug: 'manufacturing-and-industrial',
     name: 'Manufacturing & Industrial',
     categories: [
-      [
-        'manufacturer',
-        'Manufacturer',
-        ['manufacturer'],
-        ['factory', 'manufacturing unit', 'industries'],
-      ],
+      ['manufacturer', 'Manufacturer', [], ['factory', 'manufacturing unit', 'industries']],
       [
         'garment-manufacturer',
         'Garment Manufacturer',
-        ['manufacturer'],
+        [],
         ['apparel manufacturer', 'garment factory'],
       ],
-      [
-        'textile-mill',
-        'Textile Mill',
-        ['manufacturer'],
-        ['spinning mill', 'weaving', 'power loom'],
-      ],
+      ['textile-mill', 'Textile Mill', [], ['spinning mill', 'weaving', 'power loom']],
       [
         'food-processing',
         'Food Processing Unit',
-        ['manufacturer'],
+        [],
         ['food manufacturer', 'masala manufacturer', 'packaged food'],
       ],
       [
         'pharma-manufacturer',
         'Pharmaceutical Manufacturer',
-        ['manufacturer'],
+        [],
         ['pharma company', 'drug manufacturer'],
       ],
       [
         'chemical-manufacturer',
         'Chemical Manufacturer',
-        ['manufacturer'],
+        [],
         ['chemical company', 'dyes and chemicals'],
       ],
       [
         'plastic-manufacturer',
         'Plastic & Polymer Manufacturer',
-        ['manufacturer'],
+        [],
         ['plastic products', 'moulding'],
       ],
       [
         'packaging-manufacturer',
         'Packaging Manufacturer',
-        ['manufacturer'],
+        [],
         ['corrugated boxes', 'packaging material'],
       ],
       [
         'machinery-manufacturer',
         'Machinery & Equipment Manufacturer',
-        ['manufacturer'],
+        [],
         ['machine tools', 'industrial machinery'],
       ],
       [
         'electrical-equipment',
         'Electrical Equipment Manufacturer',
-        ['manufacturer'],
+        [],
         ['switchgear', 'cables and wires', 'transformers'],
       ],
-      [
-        'auto-components',
-        'Auto Components Manufacturer',
-        ['manufacturer'],
-        ['auto parts manufacturer'],
-      ],
-      ['furniture-manufacturer', 'Furniture Manufacturer', ['manufacturer'], ['furniture factory']],
-      ['metal-works', 'Metal Works & Foundry', ['manufacturer'], ['foundry', 'forging', 'casting']],
-      [
-        'handicrafts-manufacturer',
-        'Handicrafts Manufacturer',
-        ['manufacturer'],
-        ['handicraft exporters'],
-      ],
+      ['auto-components', 'Auto Components Manufacturer', [], ['auto parts manufacturer']],
+      ['furniture-manufacturer', 'Furniture Manufacturer', [], ['furniture factory']],
+      ['metal-works', 'Metal Works & Foundry', [], ['foundry', 'forging', 'casting']],
+      ['handicrafts-manufacturer', 'Handicrafts Manufacturer', [], ['handicraft exporters']],
       [
         'cosmetics-manufacturer',
         'Cosmetics Manufacturer',
-        ['manufacturer'],
+        [],
         ['personal care manufacturer', 'third party manufacturing'],
       ],
-      ['paper-manufacturer', 'Paper & Printing Products', ['manufacturer'], ['paper mill']],
+      ['paper-manufacturer', 'Paper & Printing Products', [], ['paper mill']],
       [
         'chocolate-factory',
         'Confectionery Manufacturer',
-        ['chocolate_factory', 'manufacturer'],
+        ['chocolate_factory'],
         ['biscuit factory'],
       ],
       [
         'wholesaler',
         'Wholesaler & Distributor',
-        ['wholesaler', 'supplier', 'warehouse_store'],
+        ['wholesaler', 'warehouse_store'],
         ['distributor', 'wholesale dealer', 'stockist', 'c&f agent'],
       ],
       ['exporter', 'Exporter & Importer', ['wholesaler'], ['export house', 'importers']],
       [
         'industrial-supplier',
         'Industrial Supplier',
-        ['supplier'],
+        [],
         ['industrial supplies', 'bearings', 'hydraulics'],
       ],
-      ['scrap-dealer', 'Scrap Dealer & Recycler', ['supplier'], ['kabadi', 'recycling', 'e-waste']],
+      ['scrap-dealer', 'Scrap Dealer & Recycler', [], ['kabadi', 'recycling', 'e-waste']],
     ],
   },
   {
@@ -1152,7 +1062,7 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
       [
         'agri-inputs',
         'Seeds, Fertilizer & Pesticides',
-        ['store'],
+        [],
         ['krishi kendra', 'fertilizer shop', 'seed store'],
       ],
       [
@@ -1222,12 +1132,7 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
     slug: 'energy-and-utilities',
     name: 'Energy & Utilities',
     categories: [
-      [
-        'lpg-agency',
-        'LPG Gas Agency',
-        ['service'],
-        ['gas agency', 'indane', 'hp gas', 'bharat gas'],
-      ],
+      ['lpg-agency', 'LPG Gas Agency', [], ['gas agency', 'indane', 'hp gas', 'bharat gas']],
       [
         'electrical-contractor',
         'Electrical Contractor',
@@ -1237,19 +1142,14 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
       [
         'water-supplier',
         'Water Supplier',
-        ['supplier'],
+        [],
         ['water tanker', 'mineral water supplier', 'water can'],
       ],
-      [
-        'renewable-energy',
-        'Renewable Energy Company',
-        ['corporate_office'],
-        ['solar company', 'wind energy'],
-      ],
+      ['renewable-energy', 'Renewable Energy Company', [], ['solar company', 'wind energy']],
       [
         'generator-dealer',
         'Generator & Inverter Dealer',
-        ['store'],
+        [],
         ['inverter battery', 'genset dealer'],
       ],
     ],

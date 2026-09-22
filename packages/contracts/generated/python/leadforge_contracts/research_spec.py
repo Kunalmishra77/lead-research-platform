@@ -6,15 +6,23 @@ from typing import Annotated, Literal
 from uuid import UUID
 
 from leadforge_contracts._wire import WireModel
-from pydantic import ConfigDict, Field, StrictBool, StrictInt, StrictStr
+from pydantic import ConfigDict, Field, RootModel, StrictBool, StrictInt, StrictStr
+
+
+class IncludeItem(RootModel[StrictStr]):
+    root: Annotated[StrictStr, Field(max_length=100, min_length=1)]
+
+
+class ExcludeItem(RootModel[StrictStr]):
+    root: Annotated[StrictStr, Field(max_length=100, min_length=1)]
 
 
 class IncludeExclude(WireModel):
     model_config = ConfigDict(
         extra="forbid",
     )
-    include: list[StrictStr] | None = None
-    exclude: list[StrictStr] | None = None
+    include: Annotated[list[IncludeItem] | None, Field(max_length=50)] = None
+    exclude: Annotated[list[ExcludeItem] | None, Field(max_length=50)] = None
 
 
 class IntRange(WireModel):
@@ -26,13 +34,22 @@ class IntRange(WireModel):
     allow_estimate: StrictBool | None = None
 
 
+class TaxonomyId(RootModel[StrictStr]):
+    root: Annotated[StrictStr, Field(max_length=64, pattern="^[a-z0-9]+(-[a-z0-9]+)*$")]
+
+
 class Industry(WireModel):
     model_config = ConfigDict(
         extra="forbid",
     )
-    include: list[StrictStr] | None = None
-    exclude: list[StrictStr] | None = None
-    taxonomy_ids: list[StrictStr] | None = None
+    include: Annotated[list[IncludeItem] | None, Field(max_length=20)] = None
+    exclude: Annotated[list[ExcludeItem] | None, Field(max_length=20)] = None
+    taxonomy_ids: Annotated[
+        list[TaxonomyId] | None,
+        Field(
+            description="Industry taxonomy slugs (app.industries.slug).", max_length=20
+        ),
+    ] = None
 
 
 class Contact(WireModel):
@@ -65,6 +82,14 @@ class Rating(WireModel):
     min_reviews: Annotated[StrictInt | None, Field(ge=0)] = None
 
 
+class State(RootModel[StrictStr]):
+    root: Annotated[StrictStr, Field(max_length=100, min_length=1)]
+
+
+class City(RootModel[StrictStr]):
+    root: Annotated[StrictStr, Field(max_length=100, min_length=1)]
+
+
 class Location(WireModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -72,8 +97,8 @@ class Location(WireModel):
     country: Annotated[
         StrictStr | None, Field(description="ISO-3166 alpha-2", pattern="^[A-Z]{2}$")
     ] = None
-    states: list[StrictStr] | None = None
-    cities: list[StrictStr] | None = None
+    states: Annotated[list[State] | None, Field(max_length=40)] = None
+    cities: Annotated[list[City] | None, Field(max_length=50)] = None
     radius_km: Annotated[float | None, Field(gt=0.0)] = None
     include_metro_area: StrictBool | None = None
 
@@ -86,13 +111,25 @@ class SocialFilter(WireModel):
     active_within_days: Annotated[StrictInt | None, Field(ge=1)] = None
 
 
+class MustItem(RootModel[StrictStr]):
+    root: Annotated[StrictStr, Field(max_length=100, min_length=1)]
+
+
+class ShouldItem(RootModel[StrictStr]):
+    root: Annotated[StrictStr, Field(max_length=100, min_length=1)]
+
+
+class NotItem(RootModel[StrictStr]):
+    root: Annotated[StrictStr, Field(max_length=100, min_length=1)]
+
+
 class Keywords(WireModel):
     model_config = ConfigDict(
         extra="forbid",
     )
-    must: list[StrictStr] | None = None
-    should: list[StrictStr] | None = None
-    not_: Annotated[list[StrictStr] | None, Field(alias="not")] = None
+    must: Annotated[list[MustItem] | None, Field(max_length=20)] = None
+    should: Annotated[list[ShouldItem] | None, Field(max_length=20)] = None
+    not_: Annotated[list[NotItem] | None, Field(alias="not", max_length=20)] = None
 
 
 class CustomColumn(WireModel):
@@ -108,8 +145,8 @@ class Limits(WireModel):
     model_config = ConfigDict(
         extra="forbid",
     )
-    max_results: Annotated[StrictInt, Field(ge=1, le=100000)]
-    max_credits: Annotated[StrictInt, Field(ge=1)]
+    max_results: Annotated[StrictInt, Field(ge=1, le=10000)]
+    max_credits: Annotated[StrictInt, Field(ge=1, le=1000000)]
 
 
 class Exclude(WireModel):
@@ -138,7 +175,9 @@ class Filters(WireModel):
     employee_count: IntRange | None = None
     has_website: StrictBool | None = None
     contact: Contact | None = None
-    social: dict[str, SocialFilter] | None = None
+    social: dict[Literal["instagram", "facebook", "linkedin", "x", "youtube", "whatsapp"], SocialFilter] | None = (
+        None
+    )
     technologies: IncludeExclude | None = None
     hiring: Hiring | None = None
     funding: Funding | None = None
@@ -148,7 +187,7 @@ class Filters(WireModel):
 
 class ResearchSpec(WireModel):
     """
-    Typed research request (docs/06 section 1). v1 skeleton; finalized in Phase 2 task 2.1.
+    Typed research request (docs/06 section 1). v1: finalized in Phase 2 task 2.1. Additive changes only within v1.
     """
 
     model_config = ConfigDict(
@@ -160,13 +199,14 @@ class ResearchSpec(WireModel):
     filters: Filters
     keywords: Keywords | None = None
     fields: Annotated[
-        list[StrictStr],
+        list[Literal["name", "category", "industry", "description", "website", "phone", "email", "whatsapp", "contact_form", "address", "city", "state", "country", "postal_code", "geo", "google_maps_url", "rating", "review_count", "business_status", "opening_hours", "instagram", "facebook", "linkedin", "x", "youtube", "employee_band", "founded_year", "technologies", "hiring", "people"]],
         Field(
-            description="Output field keys (field catalogue arrives in Phase 2). uniqueItems is enforced by the TS validator; specs are built and validated in the API.",
+            description="Output fields. uniqueItems is enforced by the TS validator; specs are built and validated in the API.",
+            max_length=30,
             min_length=1,
         ),
     ]
-    custom_columns: list[CustomColumn] | None = None
+    custom_columns: Annotated[list[CustomColumn] | None, Field(max_length=10)] = None
     depth: Literal["quick", "standard", "deep"]
     limits: Limits
     exclude: Exclude | None = None

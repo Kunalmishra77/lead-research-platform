@@ -76,6 +76,9 @@ async function renderTs(files: SchemaFile[]): Promise<Map<string, string>> {
       bannerComment: `/* ${HEADER} */`,
       additionalProperties: false,
       unreachableDefinitions: true,
+      // Keep arrays as T[]: size limits are enforced by the Ajv/Pydantic validators, and tuple
+      // unions ([] | [T] | [T, T] ...) cannot be built up with push in editors (task 2.1 review).
+      ignoreMinAndMaxItems: true,
       format: true,
     });
     out.set(`${f.base}.ts`, ts);

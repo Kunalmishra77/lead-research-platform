@@ -240,17 +240,18 @@ describe.skipIf(!live)('RLS isolation between organizations', () => {
       async (table) => {
         const [grant] = await owner<{ can: boolean }[]>`
           select has_table_privilege(${role}, ${`app.${table}`}, 'insert') as can`;
-        const attempt = withTenant(db(), ctx(), (tx) =>
-          tx.execute(sql.raw(insertFor(table, b, user(), a.user))),
-        );
+        // Started only when awaited: a rejection nobody is listening for yet is reported as an
+        // unhandled error (seen in CI, where the local database answers faster than the control).
+        const attempt = () =>
+          withTenant(db(), ctx(), (tx) => tx.execute(sql.raw(insertFor(table, b, user(), a.user))));
         if (grant?.can === true) {
           // Positive control: the same statement for the own org works.
           await inRolledBack(db(), ctx(), (tx) =>
             tx.execute(sql.raw(insertFor(table, a, user(), b.user))),
           );
-          await expect(attempt, table).toFailWith(RLS);
+          await expect(attempt(), table).toFailWith(RLS);
         } else {
-          await expect(attempt, table).toFailWith(DENIED);
+          await expect(attempt(), table).toFailWith(DENIED);
         }
       },
     );

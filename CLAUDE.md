@@ -64,7 +64,7 @@ pnpm db:seed                 # idempotent seeds (sources)
 pnpm contracts:gen           # regenerate TS + Python types from JSON Schemas
 pnpm contracts:check         # fail if generated contracts are stale (CI)
 cd services/workers && uv sync && uv run pytest && uv run ruff check . && uv run mypy
-cd services/workers && uv run python -m app.main   # workers (WORKER_POOLS=system,...)
+cd services/workers && WORKER_POOLS=system,interactive uv run python -m app.main   # workers; `interactive` answers POST /app/research/parse (ADR-0005)
 # REDIS_TEST_URL=redis://127.0.0.1:6379/15 uv run pytest   -> same suite on real Redis (db flushed)
 pnpm redis:start             # local Redis (separate terminal, keep running)
 pnpm infra:bootstrap         # schema app, extensions, app roles (idempotent)

@@ -34,7 +34,7 @@ class BaseConnector(ABC):
 | Source | Data | Method | Auth | Class | Phase |
 | --- | --- | --- | --- | --- | --- |
 | Google Places API (New) | name, category, address, geo, phone, website, hours, rating, review count, business status | Text Search / Nearby / Place Details with field masks | API key + billing | green | 2 |
-| SERP API (one vendor) | URLs for websites, social profiles, directory pages, news | Vendor API | API key | green | 2 |
+| SERP API (serper.dev, ADR-0006) | URLs for websites, social profiles, directory pages, news | Vendor API | API key | green | 2 |
 | Company websites | description, services, contacts, socials, team, careers, locations, tech | Own crawler | none | amber (robots-respecting) | 3 |
 | Tech detection | technologies | Passive analysis of fetched pages + DNS | none | green | 3 |
 | DNS (MX/TXT) | email provider, verification | DNS queries | none | green | 3 |

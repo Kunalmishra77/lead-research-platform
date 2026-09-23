@@ -176,6 +176,55 @@ async def test_a_bot_challenge_page_behind_a_200_is_restricted_not_parsed() -> N
 
 
 @respx.mock
+async def test_an_api_quoting_the_words_of_a_block_is_not_a_block() -> None:
+    # The markers are read from HTML because that is where a challenge page puts them. A JSON API
+    # body is other people's prose quoted back at us: a search result whose snippet says "complete
+    # the captcha to continue" is a result, not a wall. Scanning it marks a good response
+    # access_restricted, which the pipeline never retries and which stops the target for good.
+    body = {"organic": [{"snippet": "Please complete the captcha to continue. Subscribe to read."}]}
+    respx.get(URL).mock(
+        return_value=httpx.Response(200, headers={"content-type": "application/json"}, json=body)
+    )
+    async with make_client() as client:
+        result = await client.get(URL, cost=FREE)
+
+    assert result.status_code == 200
+    assert json.loads(result.content) == body
+
+
+@respx.mock
+async def test_a_json_api_that_says_it_is_blocking_us_is_still_a_block() -> None:
+    # Dropping the body for JSON entirely would have disabled the interstitial markers too, and
+    # "unusual traffic from your network" is precisely how the Google-family APIs say it. Only
+    # the ambiguous markers are dropped for JSON; this one is not ambiguous.
+    respx.get(URL).mock(
+        return_value=httpx.Response(
+            200,
+            headers={"content-type": "application/json"},
+            json={"error": {"message": "We have detected unusual traffic from your network."}},
+        )
+    )
+    async with make_client() as client:
+        with pytest.raises(AccessRestrictedError) as err:
+            await client.get(URL, cost=FREE)
+    assert "bot_challenge" in str(err.value)
+
+
+@respx.mock
+async def test_a_block_dressed_as_json_is_still_caught_by_its_status() -> None:
+    # Not scanning the body is safe only because status and headers are still read. A vendor that
+    # returns 403 with a JSON explanation is blocked whatever the content type says.
+    respx.get(URL).mock(
+        return_value=httpx.Response(
+            403, headers={"content-type": "application/json"}, json={"message": "forbidden"}
+        )
+    )
+    async with make_client() as client:
+        with pytest.raises(AccessRestrictedError):
+            await client.get(URL, cost=FREE)
+
+
+@respx.mock
 async def test_a_redirect_loop_counts_as_a_block_not_a_transient_failure() -> None:
     # A consent or login wall often shows up as an endless bounce; retrying it is pointless.
     respx.get(URL).mock(return_value=httpx.Response(302, headers={"location": URL}))

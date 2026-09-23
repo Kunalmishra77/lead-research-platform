@@ -1,0 +1,15 @@
+{
+  "searchParameters": {
+    "q": "\"Example Dental Studio\" Pune",
+    "type": "search"
+  },
+  "organic": [
+    {
+      "title": "Example Dental Studio - subscribe to continue reading",
+      "link": "https://example-dental.test/",
+      "snippet": "Subscribe to continue reading this article. Please complete the captcha to continue.",
+      "position": 1
+    }
+  ],
+  "credits": 1
+}

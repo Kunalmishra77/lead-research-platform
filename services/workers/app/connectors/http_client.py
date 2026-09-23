@@ -174,8 +174,17 @@ class ConnectorHttpClient:
                 last = TransientError(f"{type(exc).__name__}: {exc}")
             else:
                 span.set_attribute("http.response.status_code", response.status_code)
+                # A JSON API body carries snippets and descriptions other people wrote, and
+                # scanning those for "captcha" or "subscribe to continue" turns a good result
+                # into a false compliance verdict that is never retried. So the ambiguous
+                # markers are dropped for JSON -- but only those. A vendor that answers 200
+                # with {"error": "unusual traffic from your network"} is still blocking us,
+                # and that is precisely the shape the Google-family APIs use to say so.
                 blocked = restriction_reason(
-                    response.status_code, response.headers, response.content
+                    response.status_code,
+                    response.headers,
+                    response.content,
+                    weak_markers=not _is_json(response),
                 )
                 if blocked:
                     # Never retry and never evade: the source told us to stop (docs/08).
@@ -232,6 +241,10 @@ class ConnectorHttpClient:
             unit_key=call_unit_key(self._source_key, str(request.url), request.content or None),
             cost_micros=cost.cost_micros,
         )
+
+
+def _is_json(response: httpx.Response) -> bool:
+    return "json" in response.headers.get("content-type", "").lower()
 
 
 def _decoded_headers(headers: httpx.Headers) -> httpx.Headers:

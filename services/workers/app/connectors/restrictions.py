@@ -70,11 +70,20 @@ SMALL_BODY_BYTES = 8 * 1024
 
 
 def restriction_reason(
-    status: int, headers: Mapping[str, str], body: bytes | None = None
+    status: int,
+    headers: Mapping[str, str],
+    body: bytes | None = None,
+    *,
+    weak_markers: bool = True,
 ) -> str | None:
     """Returns why the response counts as restricted, or None when it is a normal response.
 
     Restricted means: stop and report, never retry and never work around it.
+
+    `weak_markers=False` keeps the interstitial checks but drops the ambiguous ones, for bodies
+    where the words are quoted rather than addressed to us — a JSON API returning search snippets
+    is the case it was added for. Strong markers still apply there, because "automated queries"
+    and "unusual traffic from your network" are exactly how a JSON API says it is blocking us.
     """
     lower = {k.lower(): v for k, v in headers.items()}
     challenged = next((h for h in _CHALLENGE_HEADERS if h in lower), None)
@@ -90,7 +99,7 @@ def restriction_reason(
     for name, pattern in _STRONG_MARKERS:
         if pattern.search(text):
             return name
-    if _is_suspicious(status, len(body)):
+    if weak_markers and _is_suspicious(status, len(body)):
         for name, pattern in _WEAK_MARKERS:
             if pattern.search(text):
                 return name

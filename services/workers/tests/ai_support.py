@@ -74,6 +74,12 @@ def settings(**overrides: Any) -> Settings:
         "S3_ACCESS_KEY_ID": "test",
         "S3_SECRET_ACCESS_KEY": "test",
         "OPENAI_API_KEY": "sk-test-not-a-real-key",
+        # Explicitly absent, not merely unset: pydantic-settings reads os.environ whatever
+        # `_env_file` says, so a developer who has sourced .env would otherwise hand real keys
+        # to tests that are about what happens when a key is missing.
+        "GOOGLE_PLACES_API_KEY": None,
+        "GOOGLE_PLACES_ENABLED": False,
+        "SERPER_API_KEY": None,
     }
     values.update(overrides)
     # Never read the developer's real .env: these tests must not depend on a machine.

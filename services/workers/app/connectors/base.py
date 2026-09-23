@@ -40,6 +40,9 @@ class BaseConnector(ABC):
     cost_per_call_micros: ClassVar[int] = 0
     #: Meter name for usage events; defaults to `api_<key>`.
     meter: ClassVar[str] = ""
+    #: Whether this source can find businesses that were not already known. False for a source
+    #: that only answers questions about one you name (docs/08 capability map).
+    discovers: ClassVar[bool] = True
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)

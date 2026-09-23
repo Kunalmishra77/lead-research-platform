@@ -1,0 +1,31 @@
+{
+  "searchParameters": {
+    "q": "\"Example Dental Studio\" Pune",
+    "gl": "in",
+    "hl": "en",
+    "type": "search",
+    "num": 10,
+    "engine": "google"
+  },
+  "organic": [
+    {
+      "title": "Example Dental Studio | Dentist in Pune",
+      "link": "https://example-dental.test/",
+      "snippet": "Example Dental Studio in Pune offers...",
+      "position": 1
+    },
+    {
+      "title": "Example Dental Studio - Book Appointment",
+      "link": "https://www.practo.com/pune/clinic/example-dental-studio",
+      "snippet": "Book an appointment online...",
+      "position": 2
+    },
+    {
+      "title": "Example Dental Studio | Facebook",
+      "link": "https://www.facebook.com/exampledentalstudio/",
+      "snippet": "Example Dental Studio, Pune.",
+      "position": 3
+    }
+  ],
+  "credits": 1
+}

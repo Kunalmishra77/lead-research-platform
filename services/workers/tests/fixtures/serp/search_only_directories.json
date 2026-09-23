@@ -1,0 +1,28 @@
+{
+  "searchParameters": {
+    "q": "\"Second Example Clinic\" Pune",
+    "gl": "in",
+    "type": "search"
+  },
+  "organic": [
+    {
+      "title": "Second Example Clinic - Pune | magicpin",
+      "link": "https://magicpin.in/Pune/Shivaji-Nagar/Clinic/Second-Example/",
+      "snippet": "Get directions and offers...",
+      "position": 1
+    },
+    {
+      "title": "Second Example Clinic | KiviHealth",
+      "link": "https://kivihealth.com/secondexample",
+      "snippet": "Book online consultation...",
+      "position": 2
+    },
+    {
+      "title": "Second Example Clinic - Justdial",
+      "link": "https://www.justdial.com/Pune/Second-Example-Clinic",
+      "snippet": "Phone numbers, address...",
+      "position": 3
+    }
+  ],
+  "credits": 1
+}

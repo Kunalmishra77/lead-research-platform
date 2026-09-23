@@ -1,0 +1,22 @@
+{
+  "searchParameters": {
+    "q": "\"Third Example Orthodontics\" Pune",
+    "gl": "in",
+    "type": "search"
+  },
+  "knowledgeGraph": {
+    "title": "Third Example Orthodontics",
+    "type": "Dental clinic",
+    "website": "https://www.justdial.com/Pune/Third-Example-Orthodontics",
+    "description": "Orthodontic practice in Pune."
+  },
+  "organic": [
+    {
+      "title": "Third Example Orthodontics",
+      "link": "https://third-example.test/",
+      "snippet": "Braces and aligners in Pune.",
+      "position": 1
+    }
+  ],
+  "credits": 1
+}

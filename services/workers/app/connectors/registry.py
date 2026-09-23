@@ -39,11 +39,16 @@ class ConnectorRegistry:
     def keys(self) -> list[str]:
         return sorted(self._by_key)
 
-    def providing(self, field: str, *, legal_approved: bool = False) -> list[BaseConnector]:
+    def providing(
+        self, field: str, *, legal_approved: bool = False, for_discovery: bool = False
+    ) -> list[BaseConnector]:
         """Connectors that may fill `field`, cheapest call first (yield stats arrive in 2.10).
 
         Red sources are left out unless legal review has approved them (docs/08 source policy),
-        so the planner cannot reach for one by accident.
+        so the planner cannot reach for one by accident. `for_discovery` additionally excludes
+        sources that can only answer about a business someone already named: they are cheaper,
+        so a plain cheapest-first sort would otherwise put them ahead of the sources that can
+        actually find anything.
         """
         return sorted(
             (
@@ -51,6 +56,7 @@ class ConnectorRegistry:
                 for c in self._by_key.values()
                 if field in c.fields_provided
                 and c.usable_in_production(legal_approved=legal_approved)
+                and (c.discovers or not for_discovery)
             ),
             key=lambda c: (c.cost_per_call_micros, c.key),
         )

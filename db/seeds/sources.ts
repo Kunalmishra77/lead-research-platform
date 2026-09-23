@@ -26,7 +26,7 @@ export const SOURCE_SEEDS: SourceSeed[] = [
   },
   {
     key: 'serp',
-    name: 'SERP API (vendor TBD, Phase 2)',
+    name: 'SERP API (serper.dev, ADR-0006)',
     type: 'api',
     tosClass: 'green',
     defaultTtlDays: 14,

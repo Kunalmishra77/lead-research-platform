@@ -12,6 +12,7 @@ from app.config import Settings
 from app.connectors.google_places import GooglePlacesConnector, PlaceSearchCache
 from app.connectors.http_client import ConnectorHttpClient
 from app.connectors.registry import ConnectorRegistry
+from app.connectors.serp import SerpConnector
 from app.metering.usage import UsageRecorder
 
 #: Honest, with a contact URL, as docs/08 requires of every request we make.
@@ -55,6 +56,19 @@ def build_connectors(
             "google_places is configured but disabled; set GOOGLE_PLACES_ENABLED once the "
             "30-day sweeper is in place (ADR-0011)"
         )
+
+    if settings.SERPER_API_KEY:
+        serp_client = ConnectorHttpClient(
+            source_key=SerpConnector.key,
+            rate_limit=SerpConnector.rate_limit,
+            user_agent=USER_AGENT,
+            usage=usage,
+            log=logger.bind(source=SerpConnector.key),
+        )
+        clients.append(serp_client)
+        registry.register(SerpConnector(serp_client, settings.SERPER_API_KEY))
+    else:
+        logger.warning("SERPER_API_KEY is not set; serp is not available")
 
     return registry, clients
 

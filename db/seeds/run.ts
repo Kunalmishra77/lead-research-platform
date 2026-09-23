@@ -22,11 +22,13 @@ try {
     for (const s of SOURCE_SEEDS) {
       // Policy flags (enabled, legal_approved) are admin decisions and never overwritten by seeds.
       await tx`
-        insert into app.sources (id, key, name, type, tos_class, default_ttl_days)
-        values (${uuidv7()}, ${s.key}, ${s.name}, ${s.type}, ${s.tosClass}, ${s.defaultTtlDays})
+        insert into app.sources (id, key, name, type, tos_class, default_ttl_days, retention_days)
+        values (${uuidv7()}, ${s.key}, ${s.name}, ${s.type}, ${s.tosClass}, ${s.defaultTtlDays},
+                ${s.retentionDays ?? null})
         on conflict (key) do update
           set name = excluded.name, type = excluded.type, tos_class = excluded.tos_class,
-              default_ttl_days = excluded.default_ttl_days`;
+              default_ttl_days = excluded.default_ttl_days,
+              retention_days = excluded.retention_days`;
     }
 
     for (const r of CREDIT_RATE_SEEDS) {

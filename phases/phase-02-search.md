@@ -18,7 +18,7 @@ docs/00, 05 (research endpoints, SSE, credits), 06 sections 1-3, 07 (gateway, sp
 - [ ] 2.9 SERP connector (choose vendor after a small cost/quality test; record in ADR)
 - [ ] 2.10 Planner v1: intent templates, capability map, `query_expand` task, task DAG in research_tasks, per-task budgets
 - [ ] 2.11 Discovery executor: run tasks (honour the cancel flag, ADR-0008), upsert candidate companies + locations + field_values with provenance, progress events, stop on budget/limits
-- [ ] 2.8a Value expiry sweeper: delete `field_values` past `observed_at + sources.default_ttl_days`, scheduled; required before `GOOGLE_PLACES_ENABLED` may be turned on (ADR-0011)
+- [x] 2.8a Value expiry sweeper: delete `field_values` past `observed_at + sources.retention_days` (a new column: retention is not freshness), batched, hourly via pg_cron; unblocks `GOOGLE_PLACES_ENABLED` (ADR-0011)
 - [ ] 2.12 Web: New Research page (prompt box, examples, SpecChips edit, feasibility badges, depth selector, estimate, run); Research job page (stage progress, counters, credits, streaming basic table); history page; OpenStreetMap attribution ("(c) OpenStreetMap contributors") wherever seeded geography is shown (ODbL, docs/08); Google attribution wherever a Google Places value is shown (ADR-0011)
 - [ ] 2.13 Admin: jobs list with status and task DAG view; connector health counters
 

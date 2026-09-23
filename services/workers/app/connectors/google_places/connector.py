@@ -136,8 +136,9 @@ class GooglePlacesConnector(BaseConnector):
             "opening_hours",
         }
     )
-    #: Places content may be kept for 30 days and no longer (ADR-0011). Place IDs are exempt and
-    #: are held separately, in the cache and on the source link.
+    #: Freshness: after 30 days a Places value is worth re-checking. The deletion obligation is
+    #: `sources.retention_days` (also 30), enforced by `app.sweep_expired_field_values`, because
+    #: "stale" and "must be gone" are different things (ADR-0011).
     default_ttl_days: ClassVar[int] = 30
     #: Conservative: Google's per-project quota is not published, so this stays well under any
     #: documented ceiling until the real number is read from the Cloud Console (README).

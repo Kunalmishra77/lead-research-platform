@@ -69,9 +69,9 @@ This is the part that shapes the connector. ADR-0011 has the decision; the rules
   permitted under the Maps Service Specific Terms."
 - **Attribution** is required wherever Places content is shown to a user, visible and unmodified.
 
-So: `default_ttl_days = 30`, a sweeper deletes values past `observed_at + 30 days`, place IDs
-live on as the external id on each candidate, the search cache expires itself on the same clock,
-and the UI credits Google wherever this data appears.
+So: `retention_days = 30` on the source row and a sweeper that deletes on it, `default_ttl_days
+= 30` for freshness, place IDs living on as the external id on each candidate, a search cache
+that expires itself on the same clock, and Google credited wherever this data appears.
 
 ## ToS class
 
@@ -95,14 +95,19 @@ full is split into quarters and searched again (twice at most, to bound the spen
 900 matching businesses is therefore found; a single city-wide query would have quietly returned
 60 of them.
 
-## Before this runs against real data
+## Turning it on
 
-`GOOGLE_PLACES_ENABLED` defaults to **false**, and the connector is not registered without it.
-Places content must be deleted 30 days after it is observed, and the sweeper that does the
-deleting does not exist yet (ADR-0011). A key on its own must not start storing perishable
-content, so the switch stays off until it does.
+`GOOGLE_PLACES_ENABLED` defaults to **false** and the connector is not registered without it.
+Set it deliberately: this source writes content that must be deleted on a clock, and that should
+be someone's decision rather than a side effect of setting a key.
 
-The in-memory search cache needs no sweeper: its Redis keys expire on the same 30-day clock.
+What keeps the clock:
+
+- `app.sweep_expired_field_values` (migration 0017) deletes values past
+  `observed_at + sources.retention_days`, hourly via pg_cron. `google_places` is seeded with
+  `retention_days = 30`.
+- The search cache needs no sweeper: its Redis keys expire on the same 30-day clock.
+- Raw Places bodies must never be written to `raw_documents`/S3, which nothing sweeps.
 
 ## Fixtures
 

@@ -16,7 +16,15 @@ export const sources = app.table(
     legalApproved: boolean('legal_approved').notNull().default(false),
     reliability: jsonb('reliability').notNull().default({}),
     costPerCallMicros: bigint('cost_per_call_micros', { mode: 'number' }).notNull().default(0),
+    /** How long a value stays fresh before it is worth re-checking. Not a deletion clock. */
     defaultTtlDays: integer('default_ttl_days').notNull().default(30),
+    /**
+     * How long a value from this source may be kept at all, in days, when the provider's terms
+     * put a limit on it (e.g. Google Places, ADR-0011). Null means no obligation to delete.
+     * `app.sweep_expired_field_values` deletes on this, never on `default_ttl_days`: the two
+     * mean different things, and deleting on freshness would destroy a customer's own import.
+     */
+    retentionDays: integer('retention_days'),
     enabled: boolean('enabled').notNull().default(false),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

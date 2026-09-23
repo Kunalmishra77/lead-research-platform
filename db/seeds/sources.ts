@@ -4,7 +4,13 @@ export interface SourceSeed {
   name: string;
   type: 'api' | 'crawl' | 'registry' | 'provider' | 'user';
   tosClass: 'green' | 'amber' | 'red';
+  /** Freshness: when a value is worth re-checking. */
   defaultTtlDays: number;
+  /**
+   * Retention: when a value must be deleted because the provider's terms say so. Only set it
+   * where a licence actually requires it; everything else is ours to keep.
+   */
+  retentionDays?: number;
 }
 
 export const SOURCE_SEEDS: SourceSeed[] = [
@@ -14,6 +20,9 @@ export const SOURCE_SEEDS: SourceSeed[] = [
     type: 'api',
     tosClass: 'green',
     defaultTtlDays: 30,
+    // Google's terms allow 30 days and then require deletion (ADR-0011). This is the only
+    // source in the list with a deletion obligation, which is why the column exists.
+    retentionDays: 30,
   },
   {
     key: 'serp',

@@ -120,6 +120,13 @@
       "when": 1790143474781,
       "tag": "0016_research_history_index",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790167165692,
+      "tag": "0017_value_retention_sweeper",
+      "breakpoints": true
     }
   ]
 }

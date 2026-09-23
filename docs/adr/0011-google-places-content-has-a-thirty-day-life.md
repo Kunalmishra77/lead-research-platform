@@ -45,13 +45,18 @@ Content under the no-caching rule.
 Option 2, chosen by the product owner. Places-derived values are stored, and are treated as
 perishable:
 
-- `sources.default_ttl_days = 30` for `google_places`. The connector declares the same, and
-  nothing derived from Places may be given a longer life.
+- `sources.retention_days = 30` for `google_places`, and the sweeper deletes on that. It is a
+  separate column from `default_ttl_days` on purpose: freshness says when a value is worth
+  re-checking, retention says when it must be gone. Deleting on freshness would have thrown away
+  a customer's own CSV import after a year and our own crawl of a company website after a month,
+  neither of which anyone is obliged to delete. `retention_days IS NULL` means "ours to keep",
+  and Places is the only source in the seed that has a value there.
 - Place IDs are the exception and are stored indefinitely, as the external id on the company's
   source link — they are what makes a refresh cheap and a duplicate avoidable.
-- A sweeper deletes (not merely hides) `field_values` from a source once
-  `observed_at + sources.default_ttl_days` has passed. Deriving the deadline from `observed_at`
-  means no schema change; the sweeper is required before this data reaches production.
+- `app.sweep_expired_field_values` deletes (not merely hides) values past
+  `observed_at + sources.retention_days`, in bounded batches, hourly via pg_cron. Hourly rather
+  than daily because a job that only runs at 03:00 turns a 30-day limit into "30 days plus
+  however long since the last run". It is maintenance, so no application role may execute it.
 - Anything shown to a user that came from Places carries Google attribution (docs/09).
 - Fixtures in this repo carry the API's **shape** with synthetic values. Committing real Places
   content to git would itself be storage beyond the permitted window, in a place no sweeper can
@@ -62,8 +67,9 @@ perishable:
 - A lead delivered from Places alone is worth less after 30 days, which is the honest position:
   the durable record comes from the company's own website once Phase 3 crawls it, and a Places
   value should be replaced by a crawled one wherever both exist.
-- The sweeper is now a shipping requirement, not a nicety. Until it exists, this source must not
-  run against real customer data.
+- The sweeper exists (task 2.8a, migration 0017), so `GOOGLE_PLACES_ENABLED` may now be turned
+  on. It stays off by default: switching on a source that writes perishable data should be a
+  decision someone makes, not a side effect of setting a key.
 - Exports copy values outside our deletion reach. Phase 7 has to decide what an export of
   Places-derived data means; the options are to exclude it, to mark it, or to re-verify before
   exporting.

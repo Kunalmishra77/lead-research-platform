@@ -24,9 +24,22 @@ class CallContext:
     research_job_id: str | None
     trace_id: str
     log: structlog.stdlib.BoundLogger
-    #: Ceiling on what this whole job may spend internally, in micros (0 = uncapped).
+    #: Ceiling on what this whole request may spend internally, in micros (0 = uncapped).
     #: It is a total, not a remainder: callers must not decrement it as spending happens.
     cost_cap_micros: int = 0
+    #: What the cap accumulates against. A research job for job work; the envelope's own id for
+    #: work with no job behind it, so a parse is capped too and its retries share one counter.
+    spend_id: str = ""
+
+    def __post_init__(self) -> None:
+        if self.cost_cap_micros > 0 and not self.budget_key:
+            # Otherwise the cap silently does nothing, which is how a parse came to be
+            # uncapped in the first place.
+            raise InvalidInputError("a capped call needs something to accumulate against")
+
+    @property
+    def budget_key(self) -> str:
+        return self.research_job_id or self.spend_id
 
     @classmethod
     def from_job(cls, ctx: "JobContext") -> "CallContext":
@@ -41,4 +54,5 @@ class CallContext:
             trace_id=envelope.trace_id,
             log=ctx.log,
             cost_cap_micros=envelope.budget.cost_cap_micros,
+            spend_id=str(envelope.job_id),
         )

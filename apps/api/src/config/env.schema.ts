@@ -47,6 +47,18 @@ export const envSchema = z
       .string()
       .regex(/^[a-z][a-z0-9_]{1,40}$/)
       .default('discovery'),
+    /** Stream pool for synchronous, user-facing worker calls (ADR-0005: the parse endpoint). */
+    JOBS_INTERACTIVE_POOL: z
+      .string()
+      .regex(/^[a-z][a-z0-9_]{1,40}$/)
+      .default('interactive'),
+    /** How long the parse endpoint waits for a worker before giving up (ADR-0005). */
+    PARSE_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(60_000).default(20_000),
+    /** What one parse may spend on models, in micros. A parse reserves no credits. */
+    PARSE_COST_CAP_MICROS: z.coerce.number().int().min(0).default(50_000),
+    /** Parses per org per minute. Parsing costs us tokens but no credits, so it needs its own
+     * limit; without one it is an unmetered way to spend our money (ADR-0005). */
+    PARSE_RATE_PER_MINUTE: z.coerce.number().int().min(1).max(600).default(30),
     /** Internal spend cap per reserved credit (docs/11: cost is tracked, never shown to users). */
     COST_CAP_MICROS_PER_CREDIT: z.coerce.number().int().min(0).default(20_000),
     PROGRESS_STREAM_MAX_MS: z.coerce.number().int().min(1_000).max(3_600_000).default(600_000),

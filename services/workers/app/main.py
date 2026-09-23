@@ -9,6 +9,7 @@ import sys
 
 from redis.asyncio import Redis
 
+from app.ai.factory import build_gateway
 from app.config import Settings, get_settings
 from app.db.engine import create_engine
 from app.db.job_runs import SqlJobRunsRepo
@@ -42,7 +43,14 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
         str(settings.REDIS_URL), socket_connect_timeout=5, health_check_interval=30
     )
     engine = create_engine(settings)
-    registry = build_registry(job_runs=SqlJobRunsRepo(engine))
+    gateway = None
+    if settings.OPENAI_API_KEY:
+        gateway = build_gateway(redis=redis, settings=settings, engine=engine, log=log)
+    else:
+        # The process still runs: only the pools whose jobs need a model are left unhandled,
+        # and the consumer reports that per job rather than failing at startup (ADR-0009).
+        log.warning("OPENAI_API_KEY is not set; ai handlers are not registered")
+    registry = build_registry(job_runs=SqlJobRunsRepo(engine), gateway=gateway)
     name = settings.WORKER_NAME or f"{socket.gethostname()}-{os.getpid()}"
     consumers = [
         StreamConsumer(

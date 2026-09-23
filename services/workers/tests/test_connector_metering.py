@@ -162,19 +162,47 @@ async def test_a_repeated_unit_key_writes_no_second_event(
     assert len(conn.executed) == 1  # the claim lost; no usage_events row follows
 
 
-async def test_usage_without_a_job_is_refused_rather_than_dropped(
+async def test_usage_without_a_job_is_still_recorded_against_the_org(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    conn = FakeConnection()
+    seen = patch_tenant_transaction(monkeypatch, conn)
+    recorder = SqlUsageRecorder(engine=None)  # type: ignore[arg-type]
+
+    recorded = await recorder.record(
+        org_id=ORG,
+        research_job_id=None,
+        meter="ai",
+        unit_key="ai:parse:one",
+        cost_micros=4000,
+        org_level=True,
+    )
+
+    # A parse happens before any job exists (ADR-0005). The spend is the org's either way, so
+    # it is booked; only the usage_unit_keys dedupe row, whose key needs a job, is skipped.
+    assert recorded is True
+    assert seen == [ORG]
+    assert len(conn.executed) == 1
+    sql, params = conn.executed[0]
+    assert "insert into app.usage_events" in sql
+    assert params["org"] == ORG
+    assert params["cost"] == 4000
+
+
+async def test_usage_without_an_org_is_refused_rather_than_dropped(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     conn = FakeConnection()
     patch_tenant_transaction(monkeypatch, conn)
     recorder = SqlUsageRecorder(engine=None)  # type: ignore[arg-type]
 
-    with pytest.raises(InvalidInputError, match="no research job"):
+    # Without an org there is nobody to attribute the spend to, and RLS has no context to set.
+    with pytest.raises(InvalidInputError, match="no org"):
         await recorder.record(
-            org_id=ORG,
+            org_id="",
             research_job_id=None,
-            meter="api_example_source",
-            unit_key="example_source:orphan",
+            meter="ai",
+            unit_key="ai:orphan",
             cost_micros=4000,
         )
     assert conn.executed == []
@@ -186,3 +214,23 @@ async def test_a_paid_call_through_a_client_without_a_recorder_is_refused() -> N
     async with make_client(usage=None) as client:
         with pytest.raises(InvalidInputError, match="no usage recorder"):
             await client.get(URL, cost=COST, ctx=make_ctx())
+
+
+async def test_a_connector_without_a_job_is_still_refused(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    conn = FakeConnection()
+    patch_tenant_transaction(monkeypatch, conn)
+    recorder = SqlUsageRecorder(engine=None)  # type: ignore[arg-type]
+
+    # A connector's unit key is deterministic so that a retry dedupes. Without a job there is
+    # no dedupe row, so the same call could be charged twice: the org-level path is not for it.
+    with pytest.raises(InvalidInputError, match="no research job"):
+        await recorder.record(
+            org_id=ORG,
+            research_job_id=None,
+            meter="api_example_source",
+            unit_key=call_unit_key("example_source", URL),
+            cost_micros=4000,
+        )
+    assert conn.executed == []

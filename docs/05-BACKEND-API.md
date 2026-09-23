@@ -35,7 +35,7 @@
 | GET | /app/me | Current user, memberships, active workspace | 1 |
 | POST | /app/orgs | Create org + default workspace | 1 |
 | POST | /app/workspaces/:id/invites | Invite member | 1 |
-| POST | /app/research/parse | NL text -> ResearchSpec + feasibility + credit estimate (sync call to AI gateway via workers RPC-over-stream with 20 s timeout, or API-side LLM call through a shared gateway client; decide in ADR) | 2 |
+| POST | /app/research/parse | NL text -> ResearchSpec + feasibility + credit estimate. Worker RPC over Redis Streams with a 20 s timeout (ADR-0005); needs `research.run`, rate limited per org, reserves no credits. | 2 |
 | POST | /app/research | Create search + research job (reserve credits) | 2 |
 | GET | /app/research/:id | Job status, progress, credits | 2 |
 | GET | /app/research/:id/events | SSE progress stream | 2 |

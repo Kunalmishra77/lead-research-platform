@@ -43,10 +43,12 @@ class RecordingUsage:
         cost_micros: int,
         units: int = 1,
         credits: int = 0,
+        org_level: bool = False,
     ) -> bool:
         self.calls.append(
             {
                 "org_id": org_id,
+                "org_level": org_level,
                 "research_job_id": research_job_id,
                 "meter": meter,
                 "unit_key": unit_key,

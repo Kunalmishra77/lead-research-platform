@@ -2,10 +2,12 @@
 
 from . import job_envelope
 from . import progress_event
+from . import research_parse_reply
 from . import research_spec
 
 __all__ = [
     "job_envelope",
     "progress_event",
+    "research_parse_reply",
     "research_spec",
 ]

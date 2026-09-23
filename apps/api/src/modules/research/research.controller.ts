@@ -22,9 +22,12 @@ import { streamProgress, TERMINAL_STATUSES } from '../../common/sse/progress-str
 import { APP_CONFIG } from '../../config/config.module';
 import type { AppConfig } from '../../config/env.schema';
 import type { AuthUser, TenantInfo } from '../auth/auth.types';
+import type { ParseResultView } from './parse.service';
+import { ParseService } from './parse.service';
 import {
   CreateResearchDto,
   JobIdParamDto,
+  ParseResearchDto,
   type ResearchJobView,
   ResearchListQueryDto,
   type ResearchPage,
@@ -38,6 +41,7 @@ import { ResearchService } from './research.service';
 export class ResearchController {
   constructor(
     private readonly research: ResearchService,
+    private readonly parser: ParseService,
     private readonly idempotency: IdempotencyService,
     private readonly hub: ProgressHub,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
@@ -73,6 +77,26 @@ export class ResearchController {
           traceId: request.id,
         }),
     );
+  }
+
+  /**
+   * Reads a sentence into a spec the user can correct before anything is spent (ADR-0005).
+   * Charges no credits, but does cost model tokens, so it is rate limited per workspace and
+   * needs the same permission as running a search.
+   */
+  @Post('parse')
+  @HttpCode(200)
+  @RequirePermission('research.run')
+  parse(
+    @CurrentUser() user: AuthUser,
+    @CurrentTenant() tenant: TenantInfo,
+    @Body() body: ParseResearchDto,
+    @Req() request: FastifyRequest,
+  ): Promise<ParseResultView> {
+    return this.parser.parse(tenant, user, {
+      rawQuery: body.rawQuery,
+      traceId: request.id,
+    });
   }
 
   /** History of the active workspace, newest first. Viewers may read it. */

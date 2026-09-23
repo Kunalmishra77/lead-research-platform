@@ -17,9 +17,12 @@ from app.jobs.errors import BudgetExhaustedError
 from app.metering.context import CallContext
 from app.metering.usage import UsageRecorder
 
-#: Reserved-then-reconciled model spend for one job, in micros.
+#: Reserved-then-reconciled model spend for one request, in micros.
 SPEND_KEY = "ai:spend:{job_id}"
+#: A research job runs for hours and may be retried for days.
 SPEND_TTL_S = 7 * 24 * 3600
+#: A parse is over in seconds; keeping one key per parse for a week is just litter.
+UNJOBBED_SPEND_TTL_S = 300
 
 #: Meter name for model spend in `usage_events` (docs/07).
 AI_METER = "ai"
@@ -65,19 +68,24 @@ def estimate_micros(model: str, prompt_chars: int, max_output_tokens: int) -> in
 
 
 class JobSpend:
-    """The per-job model budget (`budget.cost_cap_micros` from the job envelope)."""
+    """The per-request model budget (`budget.cost_cap_micros` from the job envelope).
+
+    Keyed on the research job where there is one, and on the envelope's own id where there is
+    not, so a parse is capped like anything else and its retries share one counter rather than
+    each getting a fresh allowance.
+    """
 
     def __init__(self, redis: Redis, ctx: CallContext) -> None:
         self._redis = redis
         self._ctx = ctx
-        self._key = SPEND_KEY.format(job_id=ctx.research_job_id)
+        self._key = SPEND_KEY.format(job_id=ctx.budget_key)
 
     async def reserve(self, micros: int, accrual: Accrual) -> None:
         """Claims `micros` against the cap before the call, so parallel calls cannot all pass.
 
         Raises `BudgetExhaustedError` when the claim would exceed the cap, releasing it first.
         """
-        if self._ctx.research_job_id is None:
+        if not self._ctx.budget_key:
             return
         total = await self._incr(micros)
         accrual.reserved_micros += micros
@@ -87,14 +95,14 @@ class JobSpend:
             raise BudgetExhaustedError(f"job would spend {total} of {cap} micros on models")
 
     async def release(self, micros: int, accrual: Accrual) -> None:
-        if self._ctx.research_job_id is None or micros == 0:
+        if not self._ctx.budget_key or micros == 0:
             return
         await self._incr(-micros)
         accrual.reserved_micros -= micros
 
     async def settle(self, accrual: Accrual) -> None:
         """Replaces what is still reserved with what was actually spent."""
-        if self._ctx.research_job_id is None:
+        if not self._ctx.budget_key:
             return
         delta = accrual.cost_micros - accrual.reserved_micros
         if delta:
@@ -107,7 +115,8 @@ class JobSpend:
 
     async def _incr(self, micros: int) -> int:
         total = int(await self._redis.incrby(self._key, micros))
-        await self._redis.expire(self._key, SPEND_TTL_S)
+        ttl = SPEND_TTL_S if self._ctx.research_job_id else UNJOBBED_SPEND_TTL_S
+        await self._redis.expire(self._key, ttl)
         return total
 
 
@@ -131,7 +140,7 @@ async def record_usage(
     log: structlog.stdlib.BoundLogger,
 ) -> None:
     """Books what this call cost."""
-    if accrual.cost_micros <= 0 or ctx.research_job_id is None:
+    if accrual.cost_micros <= 0:
         return
     recorded = await usage.record(
         org_id=ctx.org_id,
@@ -140,6 +149,9 @@ async def record_usage(
         unit_key=unit_key,
         cost_micros=accrual.cost_micros,
         units=accrual.tokens,
+        # Safe here, and only here: `call_unit_key` ends in a uuid7, so each paid call is its
+        # own row whether or not the dedupe table is involved.
+        org_level=ctx.research_job_id is None,
     )
     if not recorded:
         # Unexpected now that every paid call carries its own key: it would mean real spend is

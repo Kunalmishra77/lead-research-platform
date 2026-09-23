@@ -3,8 +3,14 @@ import ajvFormats from 'ajv-formats';
 
 import type { JobEnvelope } from './generated/job-envelope.js';
 import type { ProgressEvent } from './generated/progress-event.js';
+import type { ResearchParseReply } from './generated/research-parse-reply.js';
 import type { ResearchSpec } from './generated/research-spec.js';
-import { jobEnvelopeSchema, progressEventSchema, researchSpecSchema } from './generated/schemas.js';
+import {
+  jobEnvelopeSchema,
+  progressEventSchema,
+  researchParseReplySchema,
+  researchSpecSchema,
+} from './generated/schemas.js';
 
 export type ValidationResult<T> = { ok: true; value: T } | { ok: false; errors: string[] };
 
@@ -25,3 +31,4 @@ function validator<T>(schema: object): (data: unknown) => ValidationResult<T> {
 export const validateJobEnvelope = validator<JobEnvelope>(jobEnvelopeSchema);
 export const validateProgressEvent = validator<ProgressEvent>(progressEventSchema);
 export const validateResearchSpec = validator<ResearchSpec>(researchSpecSchema);
+export const validateResearchParseReply = validator<ResearchParseReply>(researchParseReplySchema);

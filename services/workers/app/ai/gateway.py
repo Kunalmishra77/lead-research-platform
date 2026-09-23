@@ -72,9 +72,10 @@ class AiGateway:
         prompt_version: int | None = None,
     ) -> AiResult:
         """Runs one task and returns output that has been validated against the task's schema."""
-        if ctx.research_job_id is None:
-            # Refused before anything is spent: a model call is never free (docs/11).
-            raise InvalidInputError(f"ai task {task} has no research job to meter against")
+        if not ctx.org_id:
+            # Refused before anything is spent: a model call is never free (docs/11). A job is
+            # not required — a parse runs before one exists (ADR-0005) — but an org always is.
+            raise InvalidInputError(f"ai task {task} has no org to meter against")
 
         config, prompt, schema = resolve_task(
             task, prompt_version, prompts=self._prompts, schemas=self._schemas

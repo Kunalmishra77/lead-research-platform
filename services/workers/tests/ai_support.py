@@ -42,13 +42,23 @@ def fixture_schema(task: str) -> dict[str, Any]:
     return load_schema(task, root=SCHEMA_ROOT)
 
 
-def make_ctx(*, research_job_id: str | None = JOB, cost_cap_micros: int = 0) -> CallContext:
+#: Stands in for the envelope's own job id, which is what caps work that has no research job.
+ENVELOPE = "33333333-3333-7333-8333-333333333333"
+
+
+def make_ctx(
+    *,
+    research_job_id: str | None = JOB,
+    cost_cap_micros: int = 0,
+    spend_id: str = ENVELOPE,
+) -> CallContext:
     return CallContext(
         org_id=ORG,
         research_job_id=research_job_id,
         trace_id="0af7651916cd43dd8448eb211c80319c",
         log=structlog.get_logger("test"),
         cost_cap_micros=cost_cap_micros,
+        spend_id=spend_id,
     )
 
 

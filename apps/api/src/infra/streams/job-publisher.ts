@@ -12,6 +12,11 @@ export function streamFor(pool: string): string {
   return `jobs:${pool}`;
 }
 
+/** Must match `services/workers/app/main.py`, which names its consumer groups the same way. */
+export function groupFor(pool: string): string {
+  return `workers:${pool}`;
+}
+
 /** Throws (500, invalid_input) for an envelope the workers would reject: a programming error. */
 export function assertValidEnvelope(envelope: JobEnvelope): void {
   const result = validateJobEnvelope(envelope);

@@ -23,6 +23,12 @@ export const CreateResearchSchema = z.object({
 });
 export class CreateResearchDto extends createZodDto(CreateResearchSchema) {}
 
+export const ParseResearchSchema = z.object({
+  /** What the user typed. The spec comes back from the parse; nothing is charged for it. */
+  rawQuery: z.string().trim().min(1).max(2000),
+});
+export class ParseResearchDto extends createZodDto(ParseResearchSchema) {}
+
 export const JobIdParamSchema = z.object({ id: z.uuid() });
 export class JobIdParamDto extends createZodDto(JobIdParamSchema) {}
 

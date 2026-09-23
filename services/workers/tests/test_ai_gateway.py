@@ -8,6 +8,7 @@ cost cap and metering.
 import asyncio
 import json
 import re
+from dataclasses import replace
 from typing import Any
 
 import pytest
@@ -25,6 +26,7 @@ from app.jobs.errors import (
 )
 from app.metering.context import CallContext
 from tests.ai_support import (
+    ENVELOPE,
     JOB,
     MODEL_MEDIUM,
     MODEL_SMALL,
@@ -278,15 +280,33 @@ async def test_a_second_paid_call_is_a_second_row(redis: Redis) -> None:
     assert booked == spent == first.cost_micros + second.cost_micros
 
 
-async def test_an_unattributed_model_call_is_refused_before_it_is_made(redis: Redis) -> None:
+async def test_a_call_with_no_org_is_refused_before_it_is_made(redis: Redis) -> None:
     provider = ScriptedProvider(answer())
     gateway = make_gateway(redis, provider, usage=RecordingUsage())
+    orphan = replace(make_ctx(), org_id="")
 
-    with pytest.raises(InvalidInputError, match="no research job"):
-        await gateway.run(TASK, PAYLOAD, make_ctx(research_job_id=None))
+    with pytest.raises(InvalidInputError, match="no org"):
+        await gateway.run(TASK, PAYLOAD, orphan)
 
     # Refused before the provider is reached, so nothing is spent off the books.
     assert provider.calls == []
+
+
+async def test_a_call_with_no_job_is_metered_against_the_org(redis: Redis) -> None:
+    provider = ScriptedProvider(answer())
+    usage = RecordingUsage()
+    gateway = make_gateway(redis, provider, usage=usage)
+
+    # A parse runs before any research job exists (ADR-0005), and still costs money.
+    result = await gateway.run(TASK, PAYLOAD, make_ctx(research_job_id=None))
+
+    assert result.data == VALID
+    assert len(usage.calls) == 1
+    assert usage.calls[0]["org_id"] == ORG
+    assert usage.calls[0]["research_job_id"] is None
+    assert usage.calls[0]["cost_micros"] > 0
+    # With no research job the cap still applies, against the envelope's own id.
+    assert int(await redis.get(SPEND_KEY.format(job_id=ENVELOPE)) or 0) == result.cost_micros
 
 
 async def test_an_unknown_task_fails_fast_rather_than_looking_transient(redis: Redis) -> None:

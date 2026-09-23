@@ -65,6 +65,8 @@ export const researchJobs = app.table(
     errorClass: errorClass('error_class'),
     startedAt: timestamp('started_at', { withTimezone: true, mode: 'date' }),
     finishedAt: timestamp('finished_at', { withTimezone: true, mode: 'date' }),
+    /** Set by app.credit_settle when the reservation was returned (docs/11). */
+    settledAt: timestamp('settled_at', { withTimezone: true, mode: 'date' }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

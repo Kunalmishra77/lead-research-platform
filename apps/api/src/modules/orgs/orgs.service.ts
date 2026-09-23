@@ -25,13 +25,20 @@ export class OrgsService {
 
   /** Creates org + default workspace + owner membership through app.bootstrap_org (audited). */
   async create(user: AuthUser, name: string, slug?: string): Promise<CreatedOrg> {
-    const ids = { org: uuidv7(), workspace: uuidv7(), membership: uuidv7(), audit: uuidv7() };
+    const ids = {
+      org: uuidv7(),
+      workspace: uuidv7(),
+      membership: uuidv7(),
+      audit: uuidv7(),
+      grant: uuidv7(),
+    };
     const finalSlug = slug ?? slugFromName(name);
     try {
       await withUser(this.db, user.userId, (tx) =>
         tx.execute(sql`select app.bootstrap_org(
           ${user.userId}::uuid, ${ids.org}::uuid, ${name}, ${finalSlug},
-          ${ids.workspace}::uuid, ${DEFAULT_WORKSPACE_NAME}, ${ids.membership}::uuid, ${ids.audit}::uuid)`),
+          ${ids.workspace}::uuid, ${DEFAULT_WORKSPACE_NAME}, ${ids.membership}::uuid, ${ids.audit}::uuid,
+          ${ids.grant}::uuid)`),
       );
     } catch (err) {
       throw mapBootstrapError(err);

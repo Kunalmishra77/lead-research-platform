@@ -43,3 +43,12 @@ Top-up: 1,000 credits = INR 999 (valid 12 months). Extra seat INR 499 / USD 7. A
 - International: Stripe Billing + Checkout.
 - Webhooks verify signatures, are idempotent (store provider event id), and grant credits via ledger.
 - Plan entitlements in `plans` config: seats, credit allowance, automation frequency, integrations allowed, API rate limit, export row limit.
+
+## Implemented (task 2.5)
+Rates and plan allowances live in `app.credit_rates` and `app.plans` (seeded from this file; `organizations.plan` has an FK to `app.plans`, so an unknown plan fails loudly). Three SECURITY DEFINER functions own every balance change, because `app_api` can write neither `credit_ledger` nor `credits_balance` nor the job's credit columns:
+- `app.credit_reserve(job, amount, ledger_id)` — locks the org row, refuses with SQLSTATE `LF402` (API: 402 `credits.insufficient`) when the balance is short, and is idempotent per job.
+- `app.credit_settle(job, consume_id, release_id)` — books delivered usage of that job **in that org**, capped by the reservation, and returns the remainder once (`research_jobs.settled_at`). Calling it again only books usage that is not booked yet, so a late `usage_events` row is still charged and never charged twice.
+- The reservation is always read from the append-only ledger, never from a column an app role could write.
+
+`app.bootstrap_org` grants the plan's `signup_credits` through the ledger at signup. The API side is `apps/api/src/modules/credits` (rate cache, estimate, reserve, settle, balance).
+

@@ -5,6 +5,13 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 ## Template
 
 ```
+### 2026-09-23 — Phase 2 — Task 2.5 credits: rates, reserve, consume, release
+- Done: `app.credit_rates` and `app.plans` as seeded data (migration 0014) plus the ledger operations (0015). `app.credit_reserve` locks the org row, answers `LF402` -> 402 when the balance is short and is idempotent per job. `app.credit_settle` books usage of that job in that org, capped by the reservation, releases the remainder once (`research_jobs.settled_at`) and books later usage incrementally. `app.bootstrap_org` (now with a `p_grant_id`) grants the plan's signup credits. API module `apps/api/src/modules/credits`: rate cache, estimate, reserve, settle, balance, typed errors.
+- Decisions (link ADRs): the reservation is derived from the append-only ledger, never from a job column; `research_jobs` UPDATE is now column-granted (API: status/error_class/finished_at; worker: + progress/started_at), so no app role can touch credit columns; `organizations.plan` gains an FK to `app.plans`.
+- Tests/checks status: DB 140 (12 credit tests incl. tampered reservation, concurrent reserves, late usage, ledger-equals-balance invariant), API 114 (live credits + estimator unit tests), repo lint/typecheck/format green.
+- Open issues / blockers: no reaper for reservations of abandoned jobs (a job that never settles keeps credits held) - to handle with the job lifecycle in 2.6; `usage_events.credits` is still trusted from the worker rather than derived from the rate card; monthly plan renewals arrive in Phase 7. Waiting on the owner for the Anthropic, Google Places and SERP keys.
+- Next step: task 2.6 research job lifecycle API (create with reservation, status, cancel, SSE, history).
+
 ### 2026-09-22 — Phase 2 — Task 2.1 spec v1, company graph schema, taxonomy and geography seeds
 - Done:
   - **Schema** (migrations 0012/0013, ADR-0007): tenant tables `searches` and `research_tasks` (tree per job via a same-job parent FK); shared graph `companies`, `company_domains`, `company_locations`, `field_values` (monthly partitions, append-only except `is_current`), readable by both roles and writable by workers only; reference tables `industries` and `geo_areas`, read-only. Database guards: provenance columns NOT NULL, AI values need model and prompt version, AI can never store email/phone/WhatsApp, derivations from a fixed list, http(s) source URLs, canonical bare-host domains, E.164 phones, plain unique upsert keys (`google_place_id`, `primary_domain`).

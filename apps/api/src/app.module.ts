@@ -15,6 +15,7 @@ import { StreamsModule } from './infra/streams/streams.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CreditsModule } from './modules/credits/credits.module';
 import { DevModule } from './modules/dev/dev.module';
 import { HealthModule } from './modules/health/health.module';
 import { MembersModule } from './modules/members/members.module';
@@ -60,6 +61,7 @@ import { OrgsModule } from './modules/orgs/orgs.module';
     OrgsModule,
     MembersModule,
     AdminModule,
+    CreditsModule,
     DevModule,
   ],
   providers: [

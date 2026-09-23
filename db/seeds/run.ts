@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import postgres from 'postgres';
 import { uuidv7 } from 'uuidv7';
 
+import { CREDIT_RATE_SEEDS, PLAN_SEEDS } from './billing.ts';
 import { loadGeoSeeds, parentKind } from './geo.ts';
 import { INDUSTRY_SEEDS } from './industries.ts';
 import { SOURCE_SEEDS } from './sources.ts';
@@ -27,6 +28,26 @@ try {
           set name = excluded.name, type = excluded.type, tos_class = excluded.tos_class,
               default_ttl_days = excluded.default_ttl_days`;
     }
+
+    for (const r of CREDIT_RATE_SEEDS) {
+      await tx`
+        insert into app.credit_rates (meter, credits_per_unit, unit, description)
+        values (${r.meter}, ${r.creditsPerUnit}, ${r.unit}, ${r.description})
+        on conflict (meter) do update
+          set credits_per_unit = excluded.credits_per_unit, unit = excluded.unit,
+              description = excluded.description`;
+    }
+    for (const p of PLAN_SEEDS) {
+      await tx`
+        insert into app.plans (plan, name, signup_credits, monthly_credits, seats)
+        values (${p.plan}, ${p.name}, ${p.signupCredits}, ${p.monthlyCredits}, ${p.seats})
+        on conflict (plan) do update
+          set name = excluded.name, signup_credits = excluded.signup_credits,
+              monthly_credits = excluded.monthly_credits, seats = excluded.seats`;
+    }
+
+    // The seed owns the rate card: a meter removed here must not keep billing.
+    await tx`delete from app.credit_rates where meter <> all(${CREDIT_RATE_SEEDS.map((r) => r.meter)}::text[])`;
 
     // Industries: upsert by slug, then link parents by slug (parents are listed before children).
     for (const i of INDUSTRY_SEEDS) {
@@ -86,12 +107,17 @@ try {
       delete from app.geo_areas
       where country || '|' || kind || '|' || slug <> all(${keys}::text[])`;
   });
-  const [counts] = await sql<{ sources: number; industries: number; geo: number }[]>`
+  const [counts] = await sql<
+    { sources: number; industries: number; geo: number; rates: number; plans: number }[]
+  >`
     select (select count(*) from app.sources)::int as sources,
            (select count(*) from app.industries)::int as industries,
-           (select count(*) from app.geo_areas)::int as geo`;
+           (select count(*) from app.geo_areas)::int as geo,
+           (select count(*) from app.credit_rates)::int as rates,
+           (select count(*) from app.plans)::int as plans`;
   console.log(
-    `seed: ${String(counts?.sources)} sources, ${String(counts?.industries)} industries, ${String(counts?.geo)} geo areas`,
+    `seed: ${String(counts?.sources)} sources, ${String(counts?.industries)} industries, ` +
+      `${String(counts?.geo)} geo areas, ${String(counts?.rates)} credit rates, ${String(counts?.plans)} plans`,
   );
 } finally {
   await sql.end();

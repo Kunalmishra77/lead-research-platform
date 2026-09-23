@@ -8,6 +8,8 @@
  * the role may write, is paired with a positive control on its own org, so an unrelated error
  * (syntax, constraint, revoked grant) cannot make a test pass.
  */
+import './helpers/to-fail-with.ts';
+
 import postgres from 'postgres';
 import { uuidv7 } from 'uuidv7';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -20,39 +22,6 @@ import {
   withTenant,
   withUser,
 } from '../src/index.ts';
-
-/** Drizzle wraps driver errors ("Failed query: ..."); assertions look at the root cause. */
-function rootMessage(err: unknown): string {
-  let e: unknown = err;
-  while (e instanceof Error && e.cause !== undefined) e = e.cause;
-  return e instanceof Error ? e.message : String(e);
-}
-
-expect.extend({
-  async toFailWith(received: Promise<unknown>, pattern: RegExp) {
-    try {
-      await received;
-    } catch (err) {
-      const message = rootMessage(err);
-      return {
-        pass: pattern.test(message),
-        message: () => `expected failure matching ${String(pattern)}, got: ${message}`,
-      };
-    }
-    return {
-      pass: false,
-      message: () => `expected failure matching ${String(pattern)}, but it succeeded`,
-    };
-  },
-});
-
-declare module 'vitest' {
-  // Must repeat Vitest 5's exact type parameters to merge.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface Matchers<R extends void | Promise<void> = void | Promise<void>, T = unknown> {
-    toFailWith(pattern: RegExp): Promise<void>;
-  }
-}
 
 const RLS = /row-level security/;
 const DENIED = /permission denied/;
@@ -100,7 +69,7 @@ const GLOBAL_TABLES = ['sources'] as const;
 /** Shared company graph: both roles read, only app_worker writes (ADR-0007). */
 const GRAPH_TABLES = ['companies', 'company_domains', 'company_locations', 'field_values'] as const;
 /** Seeded reference data: read-only for both app roles. */
-const REFERENCE_TABLES = ['industries', 'geo_areas'] as const;
+const REFERENCE_TABLES = ['industries', 'geo_areas', 'credit_rates', 'plans'] as const;
 
 interface Org {
   user: string;
@@ -296,12 +265,15 @@ describe.skipIf(!live)('RLS isolation between organizations', () => {
           memberships: `user_id = '${a.user}'`,
           research_jobs: `id = '${a.job}'`,
         }[table];
+        // research_jobs: org_id is not even grantable to the app roles (migration 0015), so the
+        // statement is refused before RLS sees it.
+        const expected = table === 'research_jobs' ? DENIED : RLS;
         await expect(
           withTenant(db(), ctx(), (tx) =>
             tx.execute(sql.raw(`update app.${table} set org_id = '${b.org}' where ${where}`)),
           ),
           table,
-        ).toFailWith(RLS);
+        ).toFailWith(expected);
       },
     );
 
@@ -547,7 +519,7 @@ describe.skipIf(!live)('RLS isolation between organizations', () => {
     await expect(
       withUser(api, a.user, (tx) =>
         tx.execute(sql`select app.bootstrap_org(${b.user}::uuid, ${uuidv7()}::uuid, 'x', ${`x-${uuidv7().slice(-8)}`},
-          ${uuidv7()}::uuid, 'x', ${uuidv7()}::uuid, ${uuidv7()}::uuid)`),
+          ${uuidv7()}::uuid, 'x', ${uuidv7()}::uuid, ${uuidv7()}::uuid, ${uuidv7()}::uuid)`),
       ),
     ).toFailWith(/caller does not match/);
   });

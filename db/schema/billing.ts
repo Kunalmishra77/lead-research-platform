@@ -1,7 +1,16 @@
 import { sql } from 'drizzle-orm';
-import { bigint, check, foreignKey, index, primaryKey, text, uuid } from 'drizzle-orm/pg-core';
+import {
+  bigint,
+  check,
+  foreignKey,
+  index,
+  integer,
+  primaryKey,
+  text,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
-import { app, createdAt } from './common.ts';
+import { app, createdAt, updatedAt } from './common.ts';
 import { creditReason } from './enums.ts';
 import { researchJobs } from './research.ts';
 import { organizations } from './tenancy.ts';
@@ -55,5 +64,40 @@ export const usageUnitKeys = app.table(
       columns: [t.researchJobId, t.orgId],
       foreignColumns: [researchJobs.id, researchJobs.orgId],
     }).onDelete('cascade'),
+  ],
+);
+
+/** Credit price per metered unit (docs/11). Seeded data, read-only for both app roles. */
+export const creditRates = app.table(
+  'credit_rates',
+  {
+    meter: text('meter').primaryKey(),
+    creditsPerUnit: integer('credits_per_unit').notNull(),
+    unit: text('unit').notNull(),
+    description: text('description').notNull(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    check('credit_rates_meter_format', sql`${t.meter} ~ '^[a-z][a-z0-9_]{1,63}$'`),
+    check('credit_rates_nonnegative', sql`${t.creditsPerUnit} >= 0`),
+  ],
+);
+
+/** Plan allowances (docs/11). Phase 2 reads `signup_credits`; billing arrives in Phase 7. */
+export const plans = app.table(
+  'plans',
+  {
+    plan: text('plan').primaryKey(),
+    name: text('name').notNull(),
+    signupCredits: integer('signup_credits').notNull().default(0),
+    monthlyCredits: integer('monthly_credits').notNull().default(0),
+    seats: integer('seats').notNull().default(1),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    check(
+      'plans_nonnegative',
+      sql`${t.signupCredits} >= 0 and ${t.monthlyCredits} >= 0 and ${t.seats} >= 1`,
+    ),
   ],
 );

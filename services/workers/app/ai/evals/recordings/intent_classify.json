@@ -1,0 +1,293 @@
+{
+  "answers": {
+    "ic-001": {
+      "confidence": 0.98,
+      "intent": "local_business",
+      "reason": "\"Restaurants in Delhi\" is a named place plus a business category, and \"with a website\" is an extra filter."
+    },
+    "ic-002": {
+      "confidence": 0.99,
+      "intent": "local_business",
+      "reason": "It names a business type (gyms) and a specific place (Koramangala, Bangalore) that can be searched on a map."
+    },
+    "ic-003": {
+      "confidence": 0.99,
+      "intent": "local_business",
+      "reason": "The query names a business type (hardware shops) and a place (Pune), which is a map-searchable local business request."
+    },
+    "ic-004": {
+      "confidence": 0.99,
+      "intent": "local_business",
+      "reason": "The request names a business type, dental clinics, and a named place, Jaipur."
+    },
+    "ic-005": {
+      "confidence": 0.98,
+      "intent": "local_business",
+      "reason": "It asks for chartered accountants in Nagpur, which is a business category tied to a named place."
+    },
+    "ic-006": {
+      "confidence": 0.99,
+      "intent": "local_business",
+      "reason": "\"wedding photographers\" is a business category and \"in Udaipur\" names a place."
+    },
+    "ic-007": {
+      "confidence": 0.99,
+      "intent": "local_business",
+      "reason": "It names a business category (coaching centres for NEET) and a specific place (Kota), which can be searched on a map."
+    },
+    "ic-008": {
+      "confidence": 0.98,
+      "intent": "local_business",
+      "reason": "It names a business type, car service centres, and a specific place, Andheri East, which can be searched on a map."
+    },
+    "ic-009": {
+      "confidence": 0.98,
+      "intent": "local_business",
+      "reason": "It asks for cafes in the named place Indiranagar, which is a map-searchable local business query."
+    },
+    "ic-010": {
+      "confidence": 0.98,
+      "intent": "local_business",
+      "reason": "It names a business category, \"interior designers,\" in specific places, Gurgaon and Noida."
+    },
+    "ic-011": {
+      "confidence": 0.98,
+      "intent": "local_business",
+      "reason": "\"Mumbai me saree shops\" names a business type and a place, so it can be searched as local businesses."
+    },
+    "ic-012": {
+      "confidence": 0.98,
+      "intent": "local_business",
+      "reason": "It asks for kirana stores in Lucknow, which is a named place plus a business type, and the review filter does not change that."
+    },
+    "ic-013": {
+      "confidence": 0.98,
+      "intent": "local_business",
+      "reason": "\u201cpathology labs\u201d is a business type and \u201cacross Kerala\u201d names a geographic area that can be searched on a map."
+    },
+    "ic-014": {
+      "confidence": 0.99,
+      "intent": "local_business",
+      "reason": "The query names a business type, \"furniture manufacturers,\" and a named place, \"Jodhpur,\" which makes it a local business search."
+    },
+    "ic-015": {
+      "confidence": 0.99,
+      "intent": "local_business",
+      "reason": "\"pet clinics in Chennai\" names a business category and a specific place, so it is a map-searchable local business request."
+    },
+    "ic-016": {
+      "confidence": 0.98,
+      "intent": "local_business",
+      "reason": "\"physiotherapy centres in Ahmedabad\" is a named place plus business type, and \"have websites\" is just an extra filter."
+    },
+    "ic-017": {
+      "confidence": 0.98,
+      "intent": "local_business",
+      "reason": "It asks for bakeries in a named place, Shivaji Nagar, which is a map-searchable local business query."
+    },
+    "ic-018": {
+      "confidence": 0.98,
+      "intent": "local_business",
+      "reason": "\"travel agencies in Kochi\" names a business category and a place, which is a local business search."
+    },
+    "ic-019": {
+      "confidence": 0.99,
+      "intent": "local_business",
+      "reason": "The query names a business type, plumbers, and a specific place, Thane, which is a map-searchable local business request."
+    },
+    "ic-020": {
+      "confidence": 0.99,
+      "intent": "local_business",
+      "reason": "The query names a business category ('boutique hotels') and a place ('Goa'), which can be searched on a map."
+    },
+    "ic-021": {
+      "confidence": 0.98,
+      "intent": "local_business",
+      "reason": "\"CBSE schools\" is a business category and \"in Bhopal\" names a specific place."
+    },
+    "ic-022": {
+      "confidence": 0.99,
+      "intent": "local_business",
+      "reason": "\"solar panel installers\" is a local business category and \"in Coimbatore\" gives a named place to search."
+    },
+    "ic-023": {
+      "confidence": 0.99,
+      "intent": "local_business",
+      "reason": "The query asks for event management companies in a named place, Hyderabad, which is a local business search."
+    },
+    "ic-024": {
+      "confidence": 0.98,
+      "intent": "company_list",
+      "reason": "\"Series A\" filters by funding stage, and \"fintech startups in India\" is a company list rather than a local business search."
+    },
+    "ic-025": {
+      "confidence": 0.98,
+      "intent": "company_list",
+      "reason": "\"D2C skincare brands\" is a business category selected by business model and shipping reach, not a local place-based search."
+    },
+    "ic-026": {
+      "confidence": 0.95,
+      "intent": "company_list",
+      "reason": "The query targets manufacturers by technology used (SAP) and industry (automotive), which is not a map-based local business search."
+    },
+    "ic-027": {
+      "confidence": 0.98,
+      "intent": "company_list",
+      "reason": "It asks for IT companies filtered by employee count, which is a company-list criterion rather than a plain local business search."
+    },
+    "ic-028": {
+      "confidence": 0.98,
+      "intent": "company_list",
+      "reason": "The query targets SaaS companies by a funding-stage/time filter, which is not a map-searchable local business request."
+    },
+    "ic-029": {
+      "confidence": 0.98,
+      "intent": "company_list",
+      "reason": "The query asks for export houses dealing in textiles with no named place, so it is a company list rather than a local business search."
+    },
+    "ic-030": {
+      "confidence": 0.96,
+      "intent": "company_list",
+      "reason": "The request targets companies filtered by a technology used (Shopify) and an industry, which a map search cannot answer."
+    },
+    "ic-031": {
+      "confidence": 0.94,
+      "intent": "company_list",
+      "reason": "\u201clogistics companies\u201d is a business category, and \u201coperating in North India\u201d is a broad region rather than a specific map-searchable place."
+    },
+    "ic-032": {
+      "confidence": 0.98,
+      "intent": "company_list",
+      "reason": "The query targets startups by founding date ('founded after 2020'), which is a company attribute rather than a local place-based business search."
+    },
+    "ic-033": {
+      "confidence": 0.96,
+      "intent": "company_list",
+      "reason": "\"NBFCs\" is a type of company, and \"registered in Maharashtra\" is a regulatory/location filter rather than a local map-search business listing."
+    },
+    "ic-034": {
+      "confidence": 0.96,
+      "intent": "company_list",
+      "reason": "It asks for agencies identified by service type and client niche, with no named place for a map search."
+    },
+    "ic-035": {
+      "confidence": 0.98,
+      "intent": "company_list",
+      "reason": "\"mid-size\" selects companies by size, which a map search cannot answer."
+    },
+    "ic-036": {
+      "confidence": 0.97,
+      "intent": "people",
+      "reason": "The request targets individuals in a role (\u201cheads of HR\u201d) at companies, not the businesses themselves."
+    },
+    "ic-037": {
+      "confidence": 0.99,
+      "intent": "people",
+      "reason": "It asks for founders of startups in Delhi NCR, which is a request for individuals rather than the businesses themselves."
+    },
+    "ic-038": {
+      "confidence": 0.97,
+      "intent": "people",
+      "reason": "The request targets CTOs, which are individuals in companies, not the companies themselves."
+    },
+    "ic-039": {
+      "confidence": 0.97,
+      "intent": "people",
+      "reason": "The query asks for procurement managers, which are individuals in textile mills in Surat."
+    },
+    "ic-040": {
+      "confidence": 0.98,
+      "intent": "people",
+      "reason": "\"marketing heads\" asks for individuals in a role at D2C brands, not the businesses themselves."
+    },
+    "ic-041": {
+      "confidence": 0.98,
+      "intent": "people",
+      "reason": "The request asks for the owners of gyms in Pune, which is a search for individuals in a role rather than the businesses themselves."
+    },
+    "ic-042": {
+      "confidence": 0.98,
+      "intent": "people",
+      "reason": "The query asks for decision makers in companies, which targets individuals in roles rather than businesses."
+    },
+    "ic-043": {
+      "confidence": 0.99,
+      "intent": "other",
+      "reason": "The query asks for today\u2019s weather in Mumbai, which is not a lead-research request about businesses or people."
+    },
+    "ic-044": {
+      "confidence": 0.99,
+      "intent": "other",
+      "reason": "The query asks how a tool works, which is not a lead-research request for businesses or people."
+    },
+    "ic-045": {
+      "confidence": 0.99,
+      "intent": "other",
+      "reason": "The query is just \"leads\" with no business type, place, or selection criteria, so it is too vague to act on."
+    },
+    "ic-046": {
+      "confidence": 0.99,
+      "intent": "other",
+      "reason": "The request is too vague and does not name a business type, place, company list criteria, or people to find."
+    },
+    "ic-047": {
+      "confidence": 0.99,
+      "intent": "other",
+      "reason": "\"write me a cold email template\" is a drafting request, not a lead-research request about businesses or people."
+    },
+    "ic-048": {
+      "confidence": 0.99,
+      "intent": "other",
+      "reason": "The query \"asdfgh\" is just gibberish and does not specify any business, people, or place to research."
+    },
+    "ic-049": {
+      "confidence": 0.99,
+      "intent": "other",
+      "reason": "The request is to scrape LinkedIn profiles, which is a social network profile-harvesting request rather than a lead search."
+    },
+    "ic-050": {
+      "confidence": 0.99,
+      "intent": "other",
+      "reason": "The query is just \"business\", which is too vague to identify a lead source or target type."
+    },
+    "ic-051": {
+      "confidence": 0.99,
+      "intent": "other",
+      "reason": "The query is an instruction to the assistant, not a lead-research request."
+    },
+    "ic-052": {
+      "confidence": 0.99,
+      "intent": "local_business",
+      "reason": "The query asks for restaurants in Delhi, which is a named place plus a business category."
+    },
+    "ic-053": {
+      "confidence": 0.99,
+      "intent": "local_business",
+      "reason": "The query asks for a business category, coffee shops, in a named place, Seattle."
+    },
+    "ic-054": {
+      "confidence": 0.96,
+      "intent": "company_list",
+      "reason": "\"more than 20 partners\" is a company attribute, so this is not answerable by a simple map search for law firms in London."
+    },
+    "ic-055": {
+      "confidence": 0.99,
+      "intent": "local_business",
+      "reason": "The query names a business type, dentists, and a specific place, Dubai Marina, which is a map-searchable local business request."
+    },
+    "ic-056": {
+      "confidence": 0.98,
+      "intent": "company_list",
+      "reason": "The request targets companies in Germany filtered by a technology they use (Salesforce), which is a company-list criterion rather than a local business map search."
+    }
+  },
+  "meta": {
+    "cases": 56,
+    "cost_micros": 15925,
+    "field_accuracy": 1.0,
+    "model": "gpt-5.4-mini-2026-03-17",
+    "pass_rate": 1.0,
+    "prompt_version": "intent_classify@v5",
+    "recorded_at": "2026-09-23T08:59:56+00:00"
+  }
+}

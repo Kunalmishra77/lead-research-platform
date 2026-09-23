@@ -9,7 +9,7 @@ docs/00, 05 (research endpoints, SSE, credits), 06 sections 1-3, 07 (gateway, sp
 ## Tasks
 - [x] 2.1 Finalize `research-spec.schema.json` v1 + industry taxonomy seed (top ~300 categories incl. Indian SMB categories) + geo seed (Indian states/cities with bounding boxes; extendable)
 - [x] 2.2 AI gateway v1 in workers: provider adapter(s), task routing config, JSON-schema output, validation + one repair retry, response cache, metering to usage_events
-- [ ] 2.3 `spec_parse` + `intent_classify` prompts, schemas, 50-case eval set each, eval runner
+- [x] 2.3 `spec_parse` + `intent_classify` prompts, schemas, 50-case eval set each, eval runner
 - [ ] 2.4 Parse endpoint path (`POST /app/research/parse`): request -> worker RPC over stream with reply key and 20 s timeout (or ADR alternative) -> spec + feasibility + estimate
 - [x] 2.5 Credit estimation service and ledger operations: grant (signup bonus), reserve, consume, release; 402 handling
 - [x] 2.6 Research job lifecycle: create search + job (reserve), statuses, cancel, SSE progress, history endpoint

@@ -1,0 +1,1959 @@
+{
+  "answers": {
+    "sp-001": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": true,
+      "industry_terms": [
+        "restaurant"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Delhi"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-002": {
+      "ambiguities": [],
+      "confidence": 0.99,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "dental clinic"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Pune"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-003": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "cafe"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Indiranagar",
+          "Bangalore"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": 50,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-004": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [
+        "phone",
+        "email"
+      ],
+      "has_website": null,
+      "industry_terms": [
+        "gym"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Mumbai",
+          "Pune"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-005": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": false,
+      "industry_terms": [
+        "hardware shop"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Jaipur"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-006": {
+      "ambiguities": [],
+      "confidence": 0.99,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "kirana store"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [],
+        "country": "IN",
+        "radius_km": null,
+        "states": [
+          "Uttar Pradesh"
+        ]
+      },
+      "max_results": 200,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-007": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "vegetarian restaurant"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Ahmedabad"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-008": {
+      "ambiguities": [],
+      "confidence": 0.97,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "restaurant"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Chennai"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-009": {
+      "ambiguities": [],
+      "confidence": 0.95,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "car service centre"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Andheri"
+        ],
+        "country": null,
+        "radius_km": 10,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-010": {
+      "ambiguities": [],
+      "confidence": 0.95,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "coworking"
+      ],
+      "intent": "market_map",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Bangalore"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-011": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "pharmacy"
+      ],
+      "intent": "market_map",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Kolkata"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-012": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [],
+      "intent": "competitor_scan",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Bangalore"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": {
+        "name": "Chai Point",
+        "website": null
+      },
+      "unsupported": []
+    },
+    "sp-013": {
+      "ambiguities": [],
+      "confidence": 0.88,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [],
+      "intent": "competitor_scan",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [],
+        "country": null,
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": {
+        "name": "Zomato",
+        "website": null
+      },
+      "unsupported": []
+    },
+    "sp-014": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [],
+      "intent": "single_company",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [],
+        "country": null,
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": {
+        "name": "Infosys",
+        "website": null
+      },
+      "unsupported": []
+    },
+    "sp-015": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [],
+      "intent": "single_company",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [],
+        "country": null,
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": {
+        "name": "Freshworks",
+        "website": null
+      },
+      "unsupported": []
+    },
+    "sp-016": {
+      "ambiguities": [
+        "Which Hyderabad do you mean?"
+      ],
+      "confidence": 0.89,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "it company"
+      ],
+      "intent": "hiring_signal",
+      "keywords": {
+        "must": [
+          "react developer"
+        ],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Hyderabad"
+        ],
+        "country": null,
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-017": {
+      "ambiguities": [],
+      "confidence": 0.95,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "startup"
+      ],
+      "intent": "hiring_signal",
+      "keywords": {
+        "must": [
+          "sales"
+        ],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Bangalore"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-018": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": 50,
+        "lte": 200
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "it company"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Bangalore"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-019": {
+      "ambiguities": [],
+      "confidence": 0.96,
+      "depth": null,
+      "employee_count": {
+        "gte": 101,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "manufacturer"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Coimbatore"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-020": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": "quick",
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "boutique hotel"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [],
+        "country": "IN",
+        "radius_km": null,
+        "states": [
+          "Goa"
+        ]
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-021": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": "deep",
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "solar installer"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [],
+        "country": "IN",
+        "radius_km": null,
+        "states": [
+          "Gujarat"
+        ]
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-022": {
+      "ambiguities": [],
+      "confidence": 0.97,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": true,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "wedding photographer"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Udaipur"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-023": {
+      "ambiguities": [],
+      "confidence": 0.97,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [
+        "website",
+        "address"
+      ],
+      "has_website": null,
+      "industry_terms": [
+        "cbse school"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Bhopal"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-024": {
+      "ambiguities": [],
+      "confidence": 0.93,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "coaching centre"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [
+          "neet preparation"
+        ],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Kota"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-025": {
+      "ambiguities": [],
+      "confidence": 0.97,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "restaurant"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [
+          "korean food"
+        ],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Delhi"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-026": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "saree shop"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Mumbai"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-027": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "gym"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Pune"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-028": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": true,
+      "industry_terms": [
+        "physiotherapy clinic"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Navi Mumbai",
+          "Thane"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-029": {
+      "ambiguities": [
+        "Which Kochi do you mean?"
+      ],
+      "confidence": 0.84,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "travel agency"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Kochi"
+        ],
+        "country": null,
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-030": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "coffee shop"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Seattle"
+        ],
+        "country": "US",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-031": {
+      "ambiguities": [
+        "Which Springfield do you mean?"
+      ],
+      "confidence": 0.78,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "restaurant"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Springfield"
+        ],
+        "country": null,
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-032": {
+      "ambiguities": [],
+      "confidence": 0.97,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "law firm"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "London",
+          "Dubai"
+        ],
+        "country": null,
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-033": {
+      "ambiguities": [],
+      "confidence": 0.97,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "furniture manufacturer"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [
+          "export"
+        ],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Jodhpur"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-034": {
+      "ambiguities": [],
+      "confidence": 0.94,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "pathology lab"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [],
+        "country": "IN",
+        "radius_km": null,
+        "states": [
+          "Kerala"
+        ]
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": [
+        "more than 4 star rating"
+      ]
+    },
+    "sp-035": {
+      "ambiguities": [
+        "Which Hyderabad do you mean?"
+      ],
+      "confidence": 0.87,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "event management company"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Hyderabad"
+        ],
+        "country": null,
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": 100,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-036": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "interior designer"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Gurgaon"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": [
+        "not the big chains"
+      ]
+    },
+    "sp-037": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "bakery"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Shivaji Nagar",
+          "Pune"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-038": {
+      "ambiguities": [],
+      "confidence": 0.92,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "skincare brand"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [
+          "d2c",
+          "shopify"
+        ],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-039": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [
+        "name",
+        "instagram"
+      ],
+      "has_website": null,
+      "industry_terms": [
+        "pet clinic"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Chennai"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-040": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "chartered accountant"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Nagpur"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-041": {
+      "ambiguities": [],
+      "confidence": 0.96,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "electrician"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Delhi NCR"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": 1000,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-042": {
+      "ambiguities": [
+        "Which location should I search in?"
+      ],
+      "confidence": 0.32,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "plumber"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [],
+        "country": null,
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-043": {
+      "ambiguities": [
+        "What kind of businesses do you want leads for?",
+        "Which location should I search?"
+      ],
+      "confidence": 0.08,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [],
+        "country": null,
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-044": {
+      "ambiguities": [],
+      "confidence": 0.97,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [
+        "email"
+      ],
+      "has_website": null,
+      "industry_terms": [
+        "textile exporter"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Surat"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": 300,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-045": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "hospital"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Delhi",
+          "Mumbai",
+          "Bangalore",
+          "Chennai",
+          "Kolkata"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-046": {
+      "ambiguities": [
+        "Which Whitefield do you mean?"
+      ],
+      "confidence": 0.74,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "organic grocery store"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Whitefield"
+        ],
+        "country": null,
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-047": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "paediatric dental clinic"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Mumbai"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-048": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "logistics company"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [],
+        "country": "IN",
+        "radius_km": null,
+        "states": [
+          "Maharashtra",
+          "Gujarat"
+        ]
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-049": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "digital marketing agency"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [
+          "restaurants"
+        ],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Bangalore"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-050": {
+      "ambiguities": [],
+      "confidence": 0.96,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [
+        "website"
+      ],
+      "has_website": true,
+      "industry_terms": [
+        "hotel"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Jaipur"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": 25,
+      "seed_company": null,
+      "unsupported": [
+        "5 star"
+      ]
+    },
+    "sp-051": {
+      "ambiguities": [
+        "Which Hyderabad do you mean?"
+      ],
+      "confidence": 0.84,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "gym"
+      ],
+      "intent": "market_map",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Hyderabad"
+        ],
+        "country": null,
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-052": {
+      "ambiguities": [],
+      "confidence": 0.96,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "coaching centre"
+      ],
+      "intent": "market_map",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Kota"
+        ],
+        "country": null,
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-053": {
+      "ambiguities": [
+        "Which location should I search in?"
+      ],
+      "confidence": 0.84,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [],
+      "intent": "competitor_scan",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [],
+        "country": null,
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": {
+        "name": "Lenskart",
+        "website": null
+      },
+      "unsupported": []
+    },
+    "sp-054": {
+      "ambiguities": [],
+      "confidence": 0.97,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [],
+      "intent": "competitor_scan",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Delhi"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": {
+        "name": "Blue Tokai Coffee",
+        "website": null
+      },
+      "unsupported": []
+    },
+    "sp-055": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [],
+      "intent": "single_company",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [],
+        "country": null,
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": {
+        "name": "Tata Elxsi",
+        "website": null
+      },
+      "unsupported": []
+    },
+    "sp-056": {
+      "ambiguities": [],
+      "confidence": 0.96,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "manufacturer"
+      ],
+      "intent": "hiring_signal",
+      "keywords": {
+        "must": [
+          "cnc operator"
+        ],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Pune"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-057": {
+      "ambiguities": [],
+      "confidence": 0.95,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "agency"
+      ],
+      "intent": "hiring_signal",
+      "keywords": {
+        "must": [
+          "content writer"
+        ],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Mumbai"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-058": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "cafe"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Pune"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    },
+    "sp-059": {
+      "ambiguities": [],
+      "confidence": 0.98,
+      "depth": null,
+      "employee_count": {
+        "gte": null,
+        "lte": null
+      },
+      "exclude_existing": false,
+      "fields": [],
+      "has_website": null,
+      "industry_terms": [
+        "restaurant"
+      ],
+      "intent": "prospecting",
+      "keywords": {
+        "must": [],
+        "not": [
+          "fast food"
+        ],
+        "should": []
+      },
+      "location": {
+        "cities": [
+          "Delhi"
+        ],
+        "country": "IN",
+        "radius_km": null,
+        "states": []
+      },
+      "max_results": null,
+      "seed_company": null,
+      "unsupported": []
+    }
+  },
+  "meta": {
+    "cases": 59,
+    "cost_micros": 66885,
+    "field_accuracy": 1.0,
+    "model": "gpt-5.4-mini-2026-03-17",
+    "pass_rate": 1.0,
+    "prompt_version": "spec_parse@v4",
+    "recorded_at": "2026-09-23T09:03:49+00:00"
+  }
+}

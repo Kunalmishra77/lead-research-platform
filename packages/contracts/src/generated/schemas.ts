@@ -272,6 +272,9 @@ export const researchSpecSchema = {
         "single_company"
       ]
     },
+    "seed_company": {
+      "$ref": "#/$defs/SeedCompany"
+    },
     "filters": {
       "$ref": "#/$defs/Filters"
     },
@@ -731,6 +734,26 @@ export const researchSpecSchema = {
         "people"
       ],
       "description": "Output field catalogue (one key per social platform; X = formerly Twitter). Which connectors can fill each field lives in the planner capability map (docs/08). Adding a key is additive for producers but deploy consumers (workers) first: they reject unknown keys."
+    },
+    "SeedCompany": {
+      "title": "SeedCompany",
+      "description": "The company a request is about: the one to profile for a single_company run, or the one to find competitors of. Without it a competitor_scan has nothing to compare against.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "website": {
+          "type": "string",
+          "maxLength": 300
+        }
+      }
     }
   }
 } as const;

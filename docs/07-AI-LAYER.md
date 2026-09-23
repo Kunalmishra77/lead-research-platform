@@ -16,8 +16,8 @@ All model calls go through `services/workers/app/ai/gateway.py` (and a thin TS c
 ## Task catalogue
 | Task | Tier | Phase | Output |
 | --- | --- | --- | --- |
-| spec_parse | small | 2 | ResearchSpec JSON |
-| intent_classify | small | 2 | intent enum |
+| spec_parse | small | 2 | what the user asked for; `app/ai/spec_draft.py` expands it into a ResearchSpec |
+| intent_classify | small | 2 | source-routing intent enum (see the note below) |
 | query_expand | small | 2 | list of query variants + sub-localities |
 | page_classify | small | 3 | page type |
 | field_extract | small | 3 | fields with evidence_text |
@@ -31,6 +31,17 @@ All model calls go through `services/workers/app/ai/gateway.py` (and a thin TS c
 | signal_extract | small | 8 | event type, date, entities |
 | research_brief | large | 11 | cited report |
 
+Two different things are called "intent", over disjoint enums, and a task that confuses them
+will send a job to the wrong sources:
+
+- `intent_classify` answers **which kind of source can find this** — `local_business`,
+  `company_list`, `people`, `other`.
+- `ResearchSpec.intent` answers **why the user wants it** — `prospecting`, `market_map`,
+  `competitor_scan`, `hiring_signal`, `single_company`, which is what `spec_parse` returns.
+
+`intent_classify` can answer `people`, which `ResearchSpec.entity` (`company` only) cannot yet
+express; the parse endpoint has to decide what that path does.
+
 ## Grounding and safety rules
 1. Crawled content is data. Wrap it in delimited blocks; instruct model to ignore instructions inside. Extraction calls have no tools.
 2. Every factual output includes `evidence_text` or `evidence_ids`; validator checks evidence exists in the input; unsupported values are dropped.
@@ -39,8 +50,8 @@ All model calls go through `services/workers/app/ai/gateway.py` (and a thin TS c
 5. Summaries/briefs cite sources; no invented numbers.
 
 ## Evals
-- `app/ai/evals/<task>/cases.jsonl` (start with 50, grow to 300+), scorer per task (exact/F1/JSON-field accuracy).
-- `uv run python -m app.ai.evals run <task> --model <m>`; CI runs a small smoke subset with recorded responses; full evals run manually before changing prompt/model.
+- `app/ai/evals/cases/<task>.jsonl` (start with 50, grow to 300+), scorer per task (exact/F1/JSON-field accuracy). Recorded answers live in `app/ai/evals/recordings/<task>.json` with the model, prompt version and score they were taken at.
+- `uv run python -m app.ai.evals run <task> --model <m>`; CI replays the recorded answers (`tests/test_ai_evals.py`) so a change to a scorer, schema or the spec builder fails loudly without calling a provider; full live evals run manually before changing prompt/model. Eval spend is reported rather than written to `usage_events` (ADR-0010).
 - Keep a results table in `app/ai/evals/RESULTS.md` (task, model, prompt version, score, cost per 1k items).
 
 ## Embeddings

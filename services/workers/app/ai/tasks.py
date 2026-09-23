@@ -21,6 +21,10 @@ def resolve_task(
 ) -> tuple[TaskConfig, Prompt, dict[str, Any]]:
     """Returns the task's config, prompt and output schema, or fails fast."""
     try:
-        return task_config(task), prompts(task, prompt_version), schemas(task)
+        config = task_config(task)
+        # An explicit argument wins (that is how a new version is trialled); otherwise the
+        # adopted version from the config, never simply the newest file on disk.
+        version = prompt_version if prompt_version is not None else config.prompt_version
+        return config, prompts(task, version), schemas(task)
     except (LookupError, ValueError) as exc:
         raise InvalidInputError(f"ai task {task} is not usable: {exc}") from exc

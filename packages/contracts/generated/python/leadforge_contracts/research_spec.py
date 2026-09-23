@@ -166,6 +166,18 @@ class Feasibility(WireModel):
     note: StrictStr | None = None
 
 
+class SeedCompany(WireModel):
+    """
+    The company a request is about: the one to profile for a single_company run, or the one to find competitors of. Without it a competitor_scan has nothing to compare against.
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    name: Annotated[StrictStr, Field(max_length=200, min_length=1)]
+    website: Annotated[StrictStr | None, Field(max_length=300)] = None
+
+
 class Filters(WireModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -196,6 +208,7 @@ class ResearchSpec(WireModel):
     spec_version: Literal[1]
     entity: Literal["company"]
     intent: Literal["prospecting", "market_map", "competitor_scan", "hiring_signal", "single_company"]
+    seed_company: SeedCompany | None = None
     filters: Filters
     keywords: Keywords | None = None
     fields: Annotated[

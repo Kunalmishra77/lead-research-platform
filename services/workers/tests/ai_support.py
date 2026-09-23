@@ -6,7 +6,7 @@ from typing import Any
 
 import structlog
 
-from app.ai.prompt_registry import load_prompt
+from app.ai.prompt_registry import available_versions, load_prompt
 from app.ai.schemas import load_schema
 from app.ai.types import Prompt, ProviderResult, TokenUsage
 from app.config import Settings
@@ -26,7 +26,16 @@ VALID: dict[str, Any] = {"intent": "local_business", "confidence": 0.98}
 
 
 def fixture_prompt(task: str, version: int | None = None) -> Prompt:
-    return load_prompt(task, version, root=PROMPT_ROOT)
+    """Fixture prompts, deliberately independent of whichever version production has adopted.
+
+    These tests are about what the gateway does with a prompt, not about which prompt is live,
+    so a version the fixtures do not have falls back to the newest fixture rather than failing.
+    """
+    available = available_versions(task, PROMPT_ROOT)
+    if not available:
+        raise LookupError(f"no fixture prompts for {task}")
+    chosen = version if version in available else available[-1]
+    return load_prompt(task, chosen, root=PROMPT_ROOT)
 
 
 def fixture_schema(task: str) -> dict[str, Any]:

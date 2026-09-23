@@ -85,12 +85,32 @@ class TaskConfig:
     #: Pinned rather than left to a server default: reasoning tokens come out of
     #: `max_output_tokens`, so a change of default could truncate every answer.
     reasoning_effort: ReasoningEffort = "none"
+    #: The prompt version in use. Pinned, not "whichever file has the highest number": adding a
+    #: prompt must be a deliberate adoption backed by an eval run, never an accident of naming.
+    prompt_version: int | None = None
 
 
 #: A task appears here only once its prompt and schema ship, so `TASKS` can never promise a
-#: task the gateway cannot run. `spec_parse` and `query_expand` arrive with task 2.3.
+#: task the gateway cannot run. `query_expand` arrives with the planner (task 2.10).
 TASKS: Final[dict[str, TaskConfig]] = {
-    "intent_classify": TaskConfig(tier="small", max_output_tokens=1024, cache_ttl_s=7 * 24 * 3600),
+    "intent_classify": TaskConfig(
+        tier="small",
+        max_output_tokens=1024,
+        # An intent does not change for the same words, so this may be cached for a week.
+        cache_ttl_s=7 * 24 * 3600,
+        prompt_version=5,
+    ),
+    # The user sees a parse and corrects it before anything is spent, so it is worth a little
+    # thinking; the budget covers reasoning tokens as well as the answer.
+    "spec_parse": TaskConfig(
+        tier="small",
+        max_output_tokens=4096,
+        # Shorter than intent_classify: a parse depends on the field catalogue and the defaults
+        # around it, which change more often than the meaning of a sentence does.
+        cache_ttl_s=24 * 3600,
+        reasoning_effort="medium",
+        prompt_version=4,
+    ),
 }
 
 

@@ -45,6 +45,7 @@ export interface ResearchSpec {
   spec_version: 1;
   entity: "company";
   intent: "prospecting" | "market_map" | "competitor_scan" | "hiring_signal" | "single_company";
+  seed_company?: SeedCompany;
   filters: Filters;
   keywords?: Keywords;
   /**
@@ -62,6 +63,16 @@ export interface ResearchSpec {
   limits: Limits;
   exclude?: Exclude;
   feasibility?: Feasibility[];
+}
+/**
+ * The company a request is about: the one to profile for a single_company run, or the one to find competitors of. Without it a competitor_scan has nothing to compare against.
+ *
+ * This interface was referenced by `ResearchSpec`'s JSON-Schema
+ * via the `definition` "SeedCompany".
+ */
+export interface SeedCompany {
+  name: string;
+  website?: string;
 }
 /**
  * This interface was referenced by `ResearchSpec`'s JSON-Schema

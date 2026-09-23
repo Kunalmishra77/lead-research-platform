@@ -1,0 +1,280 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "spec_parse",
+  "description": "What a model may read out of a plain-language lead request. Deliberately narrower than ResearchSpec: everything here is something the user actually said. Defaults, limits and credit policy are added deterministically afterwards (app/ai/spec_draft.py), so the model never invents them.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "intent",
+    "seed_company",
+    "industry_terms",
+    "location",
+    "employee_count",
+    "has_website",
+    "keywords",
+    "fields",
+    "depth",
+    "max_results",
+    "exclude_existing",
+    "unsupported",
+    "ambiguities",
+    "confidence"
+  ],
+  "properties": {
+    "intent": {
+      "description": "Why the user wants these leads.",
+      "type": "string",
+      "enum": [
+        "prospecting",
+        "market_map",
+        "competitor_scan",
+        "hiring_signal",
+        "single_company"
+      ]
+    },
+    "seed_company": {
+      "description": "The business the request is about: the one to profile, or the one to find competitors of. Null when the request names no particular company.",
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "website"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "website": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 300
+        }
+      }
+    },
+    "industry_terms": {
+      "description": "The business types asked for, in the user's own words, lowercased and singular where natural ('restaurant', 'dental clinic'). Empty when no business type was named.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "maxItems": 12
+    },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "country",
+        "states",
+        "cities",
+        "radius_km"
+      ],
+      "properties": {
+        "country": {
+          "description": "ISO-3166 alpha-2, uppercase. Null unless the country is named or unmistakable from the places named.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[A-Z]{2}$"
+        },
+        "states": {
+          "description": "State or region names exactly as the user wrote them.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "maxItems": 20
+        },
+        "cities": {
+          "description": "City, town or locality names exactly as the user wrote them.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "maxItems": 40
+        },
+        "radius_km": {
+          "description": "Only when the user gave a distance, e.g. 'within 10 km of Andheri'.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0,
+          "maximum": 500
+        }
+      }
+    },
+    "employee_count": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gte",
+        "lte"
+      ],
+      "properties": {
+        "gte": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "lte": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "has_website": {
+      "description": "True when the user asked only for businesses with a website, false when only for ones without, null when they did not say.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "keywords": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "must",
+        "should",
+        "not"
+      ],
+      "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "maxItems": 10
+        },
+        "should": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "maxItems": 10
+        },
+        "not": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "maxItems": 10
+        }
+      }
+    },
+    "fields": {
+      "description": "Columns the user asked for. Only what they named; the planner adds the defaults for the intent.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "name",
+          "category",
+          "industry",
+          "description",
+          "website",
+          "phone",
+          "email",
+          "whatsapp",
+          "contact_form",
+          "address",
+          "city",
+          "state",
+          "country",
+          "postal_code",
+          "geo",
+          "google_maps_url",
+          "rating",
+          "review_count",
+          "business_status",
+          "opening_hours",
+          "instagram",
+          "facebook",
+          "linkedin",
+          "x",
+          "youtube",
+          "employee_band",
+          "founded_year",
+          "technologies",
+          "hiring",
+          "people"
+        ]
+      },
+      "maxItems": 30
+    },
+    "depth": {
+      "description": "How hard to look. Null unless the user signalled it ('just a quick list', 'go deep').",
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "quick",
+        "standard",
+        "deep",
+        null
+      ]
+    },
+    "max_results": {
+      "description": "Only when the user gave a number, e.g. 'top 50 cafes'.",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1,
+      "maximum": 10000
+    },
+    "exclude_existing": {
+      "description": "True when the user asked to skip leads they already have.",
+      "type": "boolean"
+    },
+    "unsupported": {
+      "description": "Constraints the user stated that no field here can carry, in their own words (a star rating, a technology, a hiring signal). The user is told these are not applied rather than being charged for results that ignore them.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 160
+      },
+      "maxItems": 8
+    },
+    "ambiguities": {
+      "description": "Short questions to put to the user where the request is genuinely unclear. Empty when it is clear enough to run.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 160
+      },
+      "maxItems": 5
+    },
+    "confidence": {
+      "description": "How well this reading matches the request, 0 to 1. Be honest: a vague request deserves a low number and the user will be asked instead of being charged.",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  }
+}

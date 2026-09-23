@@ -52,6 +52,14 @@ class Settings(BaseSettings):
     #: Turns the response cache off entirely (docs/07 caching); per-task TTLs still apply.
     AI_CACHE_ENABLED: bool = True
 
+    # Data sources (docs/08). A connector without its key is simply not registered, so a
+    # worker missing one still runs every other source.
+    GOOGLE_PLACES_API_KEY: str | None = None
+    #: Off until the 30-day sweeper exists: Places content must be deleted on a clock, and a key
+    #: on its own must not start storing it (ADR-0011).
+    GOOGLE_PLACES_ENABLED: bool = False
+    SERPER_API_KEY: str | None = None
+
     #: Comma-separated pools this process consumes, e.g. "system,crawl_http" (streams jobs:<pool>).
     WORKER_POOLS: str = "system"
     #: Consumer name inside the group; defaults to host + pid at runtime.
@@ -73,6 +81,8 @@ class Settings(BaseSettings):
         "AI_MODEL_SMALL",
         "AI_MODEL_MEDIUM",
         "AI_MODEL_LARGE",
+        "GOOGLE_PLACES_API_KEY",
+        "SERPER_API_KEY",
         mode="before",
     )
     @classmethod

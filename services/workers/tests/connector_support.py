@@ -15,12 +15,14 @@ JOB = "22222222-2222-7222-8222-222222222222"
 USER_AGENT = "LeadForgeBot/1.0 (+https://leadforge.example/bot)"
 
 
-def make_ctx(*, research_job_id: str | None = JOB) -> CallContext:
+def make_ctx(*, research_job_id: str | None = JOB, cost_cap_micros: int = 0) -> CallContext:
     return CallContext(
         org_id=ORG,
         research_job_id=research_job_id,
         trace_id="0af7651916cd43dd8448eb211c80319c",
         log=structlog.get_logger("test"),
+        cost_cap_micros=cost_cap_micros,
+        spend_id=JOB,
     )
 
 

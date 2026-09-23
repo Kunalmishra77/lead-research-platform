@@ -1,0 +1,131 @@
+{
+  "id": "ChIJexampleAAAAAAAAAAAAAAAA1",
+  "types": [
+    "dental_clinic",
+    "dentist",
+    "doctor",
+    "point_of_interest",
+    "establishment"
+  ],
+  "formattedAddress": "12 Example Road, Pune, Maharashtra 411001, India",
+  "addressComponents": [
+    {
+      "longText": "12",
+      "shortText": "12",
+      "types": [
+        "street_number"
+      ],
+      "languageCode": "en"
+    },
+    {
+      "longText": "Example Road",
+      "shortText": "Example Rd",
+      "types": [
+        "route"
+      ],
+      "languageCode": "en"
+    },
+    {
+      "longText": "Pune",
+      "shortText": "Pune",
+      "types": [
+        "locality",
+        "political"
+      ],
+      "languageCode": "en"
+    },
+    {
+      "longText": "Maharashtra",
+      "shortText": "MH",
+      "types": [
+        "administrative_area_level_1",
+        "political"
+      ],
+      "languageCode": "en"
+    },
+    {
+      "longText": "India",
+      "shortText": "IN",
+      "types": [
+        "country",
+        "political"
+      ],
+      "languageCode": "en"
+    },
+    {
+      "longText": "411001",
+      "shortText": "411001",
+      "types": [
+        "postal_code"
+      ],
+      "languageCode": "en"
+    }
+  ],
+  "location": {
+    "latitude": 18.5158,
+    "longitude": 73.8418
+  },
+  "primaryType": "dental_clinic",
+  "displayName": {
+    "text": "Example Dental Studio",
+    "languageCode": "en"
+  },
+  "businessStatus": "OPERATIONAL",
+  "googleMapsUri": "https://maps.google.com/?cid=876544076425375759",
+  "nationalPhoneNumber": "020 2555 0111",
+  "websiteUri": "https://example-dental.test",
+  "rating": 4.6,
+  "userRatingCount": 182,
+  "internationalPhoneNumber": "+91 20 2555 0111",
+  "primaryTypeDisplayName": {
+    "text": "Dental Clinic",
+    "languageCode": "en-US"
+  },
+  "utcOffsetMinutes": 330,
+  "regularOpeningHours": {
+    "openNow": true,
+    "periods": [
+      {
+        "open": {
+          "day": 1,
+          "hour": 9,
+          "minute": 30
+        },
+        "close": {
+          "day": 1,
+          "hour": 19,
+          "minute": 0
+        }
+      },
+      {
+        "open": {
+          "day": 2,
+          "hour": 9,
+          "minute": 30
+        },
+        "close": {
+          "day": 2,
+          "hour": 19,
+          "minute": 0
+        }
+      },
+      {
+        "open": {
+          "day": 0,
+          "hour": 10,
+          "minute": 0
+        },
+        "close": {
+          "day": 0,
+          "hour": 14,
+          "minute": 0
+        }
+      }
+    ],
+    "weekdayDescriptions": [
+      "Monday: 9:30 AM - 7:00 PM",
+      "Tuesday: 9:30 AM - 7:00 PM",
+      "Sunday: 10:00 AM - 2:00 PM"
+    ]
+  }
+}

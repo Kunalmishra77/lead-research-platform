@@ -140,7 +140,10 @@ class ConnectorHttpClient:
             span.set_attribute("http.request.method", method)
             span.set_attribute("server.address", request.url.host)
             response = await self._send_with_retries(request, span, log)
-        await self._meter(cost, request, ctx)
+        if response.status_code < 400:
+            # A rejected request is not a billed one: providers charge for answers, and
+            # recording a 400 as spend would overstate what a job cost.
+            await self._meter(cost, request, ctx)
         return response
 
     async def get(self, url: str, **kwargs: Any) -> httpx.Response:

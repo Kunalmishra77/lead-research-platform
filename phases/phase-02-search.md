@@ -14,11 +14,12 @@ docs/00, 05 (research endpoints, SSE, credits), 06 sections 1-3, 07 (gateway, sp
 - [x] 2.5 Credit estimation service and ledger operations: grant (signup bonus), reserve, consume, release; 402 handling
 - [x] 2.6 Research job lifecycle: create search + job (reserve), statuses, cancel, SSE progress, history endpoint
 - [x] 2.7 Connector framework: BaseConnector, registry, metered + rate-limited HTTP client, restriction detection hooks, fixtures pattern, `/new-connector` used for the first connector
-- [ ] 2.8 Google Places connector (Text Search + Details with field masks), geography tiling, caching of place IDs per terms
+- [x] 2.8 Google Places connector (Text Search + Details with field masks), geography tiling, caching of place IDs per terms
 - [ ] 2.9 SERP connector (choose vendor after a small cost/quality test; record in ADR)
 - [ ] 2.10 Planner v1: intent templates, capability map, `query_expand` task, task DAG in research_tasks, per-task budgets
 - [ ] 2.11 Discovery executor: run tasks (honour the cancel flag, ADR-0008), upsert candidate companies + locations + field_values with provenance, progress events, stop on budget/limits
-- [ ] 2.12 Web: New Research page (prompt box, examples, SpecChips edit, feasibility badges, depth selector, estimate, run); Research job page (stage progress, counters, credits, streaming basic table); history page; OpenStreetMap attribution ("(c) OpenStreetMap contributors") wherever seeded geography is shown (ODbL, docs/08)
+- [ ] 2.8a Value expiry sweeper: delete `field_values` past `observed_at + sources.default_ttl_days`, scheduled; required before `GOOGLE_PLACES_ENABLED` may be turned on (ADR-0011)
+- [ ] 2.12 Web: New Research page (prompt box, examples, SpecChips edit, feasibility badges, depth selector, estimate, run); Research job page (stage progress, counters, credits, streaming basic table); history page; OpenStreetMap attribution ("(c) OpenStreetMap contributors") wherever seeded geography is shown (ODbL, docs/08); Google attribution wherever a Google Places value is shown (ADR-0011)
 - [ ] 2.13 Admin: jobs list with status and task DAG view; connector health counters
 
 ## Acceptance criteria

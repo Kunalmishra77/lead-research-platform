@@ -63,6 +63,9 @@ class Candidate:
     lng: float | None = None
     #: Where the value can be seen (stored as provenance `source_url`).
     source_url: str = ""
+    #: When the source showed this, not when it was written down. Whatever stores a candidate
+    #: needs it: a perishable source is swept on this clock (ADR-0011).
+    observed_at: datetime | None = None
     raw: dict[str, Any] = field(default_factory=dict)
 
 

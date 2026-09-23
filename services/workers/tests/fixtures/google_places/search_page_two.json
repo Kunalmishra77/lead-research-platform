@@ -1,0 +1,83 @@
+{
+  "places": [
+    {
+      "id": "ChIJexampleAAAAAAAAAAAAAAAA4",
+      "types": [
+        "dental_clinic",
+        "dentist",
+        "doctor",
+        "point_of_interest",
+        "establishment"
+      ],
+      "formattedAddress": "12 Example Road, Pune, Maharashtra 411001, India",
+      "addressComponents": [
+        {
+          "longText": "12",
+          "shortText": "12",
+          "types": [
+            "street_number"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Example Road",
+          "shortText": "Example Rd",
+          "types": [
+            "route"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Pune",
+          "shortText": "Pune",
+          "types": [
+            "locality",
+            "political"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Maharashtra",
+          "shortText": "MH",
+          "types": [
+            "administrative_area_level_1",
+            "political"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "India",
+          "shortText": "IN",
+          "types": [
+            "country",
+            "political"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "411001",
+          "shortText": "411001",
+          "types": [
+            "postal_code"
+          ],
+          "languageCode": "en"
+        }
+      ],
+      "location": {
+        "latitude": 18.5301,
+        "longitude": 73.8549
+      },
+      "primaryType": "dental_clinic",
+      "displayName": {
+        "text": "Fourth Example Dental",
+        "languageCode": "en"
+      },
+      "businessStatus": "OPERATIONAL",
+      "googleMapsUri": "https://maps.google.com/?cid=331986082274824815",
+      "nationalPhoneNumber": "020 2555 0144",
+      "websiteUri": "https://fourth-example.test",
+      "rating": 4.6,
+      "userRatingCount": 182
+    }
+  ]
+}

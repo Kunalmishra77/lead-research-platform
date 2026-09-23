@@ -1,0 +1,238 @@
+{
+  "places": [
+    {
+      "id": "ChIJexampleAAAAAAAAAAAAAAAA1",
+      "types": [
+        "dental_clinic",
+        "dentist",
+        "doctor",
+        "point_of_interest",
+        "establishment"
+      ],
+      "formattedAddress": "12 Example Road, Pune, Maharashtra 411001, India",
+      "addressComponents": [
+        {
+          "longText": "12",
+          "shortText": "12",
+          "types": [
+            "street_number"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Example Road",
+          "shortText": "Example Rd",
+          "types": [
+            "route"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Pune",
+          "shortText": "Pune",
+          "types": [
+            "locality",
+            "political"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Maharashtra",
+          "shortText": "MH",
+          "types": [
+            "administrative_area_level_1",
+            "political"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "India",
+          "shortText": "IN",
+          "types": [
+            "country",
+            "political"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "411001",
+          "shortText": "411001",
+          "types": [
+            "postal_code"
+          ],
+          "languageCode": "en"
+        }
+      ],
+      "location": {
+        "latitude": 18.5158,
+        "longitude": 73.8418
+      },
+      "primaryType": "dental_clinic",
+      "displayName": {
+        "text": "Example Dental Studio",
+        "languageCode": "en"
+      },
+      "businessStatus": "OPERATIONAL",
+      "googleMapsUri": "https://maps.google.com/?cid=876544076425375759",
+      "nationalPhoneNumber": "020 2555 0111",
+      "websiteUri": "https://example-dental.test",
+      "rating": 4.6,
+      "userRatingCount": 182
+    },
+    {
+      "id": "ChIJexampleAAAAAAAAAAAAAAAA2",
+      "types": [
+        "dental_clinic",
+        "dentist",
+        "doctor",
+        "point_of_interest",
+        "establishment"
+      ],
+      "formattedAddress": "12 Example Road, Pune, Maharashtra 411001, India",
+      "addressComponents": [
+        {
+          "longText": "12",
+          "shortText": "12",
+          "types": [
+            "street_number"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Example Road",
+          "shortText": "Example Rd",
+          "types": [
+            "route"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Pune",
+          "shortText": "Pune",
+          "types": [
+            "locality",
+            "political"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Maharashtra",
+          "shortText": "MH",
+          "types": [
+            "administrative_area_level_1",
+            "political"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "India",
+          "shortText": "IN",
+          "types": [
+            "country",
+            "political"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "411001",
+          "shortText": "411001",
+          "types": [
+            "postal_code"
+          ],
+          "languageCode": "en"
+        }
+      ],
+      "location": {
+        "latitude": 18.5201,
+        "longitude": 73.8449
+      },
+      "primaryType": "dental_clinic",
+      "displayName": {
+        "text": "Second Example Dental Care",
+        "languageCode": "en"
+      },
+      "businessStatus": "OPERATIONAL",
+      "googleMapsUri": "https://maps.google.com/?cid=644096655430468040",
+      "nationalPhoneNumber": "020 2555 0122",
+      "rating": 4.6,
+      "userRatingCount": 182
+    },
+    {
+      "id": "ChIJexampleAAAAAAAAAAAAAAAA3",
+      "types": [
+        "dental_clinic",
+        "dentist",
+        "doctor",
+        "point_of_interest",
+        "establishment"
+      ],
+      "formattedAddress": "12 Example Road, Pune, Maharashtra 411001, India",
+      "addressComponents": [
+        {
+          "longText": "12",
+          "shortText": "12",
+          "types": [
+            "street_number"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Example Road",
+          "shortText": "Example Rd",
+          "types": [
+            "route"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Pune",
+          "shortText": "Pune",
+          "types": [
+            "locality",
+            "political"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Maharashtra",
+          "shortText": "MH",
+          "types": [
+            "administrative_area_level_1",
+            "political"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "India",
+          "shortText": "IN",
+          "types": [
+            "country",
+            "political"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "411001",
+          "shortText": "411001",
+          "types": [
+            "postal_code"
+          ],
+          "languageCode": "en"
+        }
+      ],
+      "location": {
+        "latitude": 18.5099,
+        "longitude": 73.8501
+      },
+      "primaryType": "dental_clinic",
+      "displayName": {
+        "text": "Third Example Orthodontics",
+        "languageCode": "en"
+      },
+      "businessStatus": "OPERATIONAL",
+      "googleMapsUri": "https://maps.google.com/?cid=909168748480131358",
+      "websiteUri": "https://third-example.test"
+    }
+  ],
+  "nextPageToken": "EXAMPLE_NEXT_PAGE_TOKEN"
+}

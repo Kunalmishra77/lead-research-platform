@@ -75,3 +75,8 @@ loading (skeleton), empty, partial (job running), error (with retry and error co
 - All forms Zod-validated; errors inline.
 - Components in `features/<feature>/components`; shared primitives only in `components/ui`.
 - Numbers and dates formatted with Intl (en-IN default, user locale configurable); currency INR/USD by org region.
+
+## Attribution
+
+- Values from Google Places carry visible, unmodified Google attribution wherever they are shown (ADR-0011). `field_values.source_id` pointing at `google_places` is what the UI keys on.
+- Seeded geography carries © OpenStreetMap contributors (ODbL, docs/08).

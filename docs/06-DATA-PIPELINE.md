@@ -46,7 +46,13 @@ JSON Schema in `packages/contracts/schemas/research-spec.schema.json`. Minimum s
 ```
 
 ## 2. Planner
-- Deterministic plan templates per intent (`orchestrator/templates/*.yaml`) + capability map `field -> connectors` with historical yield.
+- Deterministic plan templates per intent (`app/planner/templates.py`) + capability map
+  `field -> connectors` (`app/planner/capability.py`). Built in task 2.10 as Python rather than
+  the YAML first sketched here: every value in a template is a number the planner's arithmetic
+  reads, so a file would buy a parser and a class of typo that only appears at runtime. If they
+  ever need editing without a deploy they belong in the database, not beside the code.
+  **Historical yield is not built yet**: `registry.providing` orders by cost alone, and there is
+  no completed-job data to learn from until discovery runs (task 2.11).
 - LLM (small model) only generates query expansions (synonyms, sub-localities, regional terms) and orders sources.
 - Geography tiling for Places: split city bounding box into tiles; subdivide a tile when a query returns the page cap.
 - Output: `research_tasks` rows with type, input, parent, per-task credit budget.

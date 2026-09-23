@@ -11,8 +11,12 @@ from redis.asyncio import Redis
 
 from app.ai.factory import build_gateway
 from app.config import Settings, get_settings
+from app.connectors.factory import build_connectors, close_clients
 from app.db.engine import create_engine
 from app.db.job_runs import SqlJobRunsRepo
+from app.db.reference import ReferenceData
+from app.db.research_jobs import SqlResearchJobsRepo
+from app.db.research_tasks import SqlResearchTasksRepo
 from app.devdns import install_dev_dns
 from app.error_reporting import configure_error_reporting, report_exception
 from app.handlers import build_registry
@@ -50,7 +54,16 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
         # The process still runs: only the pools whose jobs need a model are left unhandled,
         # and the consumer reports that per job rather than failing at startup (ADR-0009).
         log.warning("OPENAI_API_KEY is not set; ai handlers are not registered")
-    registry = build_registry(job_runs=SqlJobRunsRepo(engine), gateway=gateway)
+    connectors, connector_clients = build_connectors(settings=settings, redis=redis)
+    registry = build_registry(
+        job_runs=SqlJobRunsRepo(engine),
+        gateway=gateway,
+        connectors=connectors,
+        reference=ReferenceData(engine),
+        research_tasks=SqlResearchTasksRepo(engine),
+        research_jobs=SqlResearchJobsRepo(engine),
+        discovery_pool=settings.DISCOVERY_POOL,
+    )
     name = settings.WORKER_NAME or f"{socket.gethostname()}-{os.getpid()}"
     consumers = [
         StreamConsumer(
@@ -77,6 +90,7 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
             for consumer in consumers:
                 tasks.create_task(consumer.run(stop))
     finally:
+        await close_clients(connector_clients)
         await redis.aclose()
         await engine.dispose()
         log.info("workers stopped")

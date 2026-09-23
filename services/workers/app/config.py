@@ -62,6 +62,10 @@ class Settings(BaseSettings):
 
     #: Comma-separated pools this process consumes, e.g. "system,crawl_http" (streams jobs:<pool>).
     WORKER_POOLS: str = "system"
+    #: Where the planner fans discovery tasks out to. Must match the API's JOBS_DISCOVERY_POOL,
+    #: which is configurable and which its tests override per run: a mismatch puts the plan's
+    #: tasks on a stream nothing consumes, and the job simply never progresses.
+    DISCOVERY_POOL: str = "discovery"
     #: Consumer name inside the group; defaults to host + pid at runtime.
     WORKER_NAME: str | None = None
     #: A pending message older than this is considered abandoned and reclaimed (XAUTOCLAIM).

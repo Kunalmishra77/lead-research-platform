@@ -42,7 +42,12 @@ class ConnectorRegistry:
     def providing(
         self, field: str, *, legal_approved: bool = False, for_discovery: bool = False
     ) -> list[BaseConnector]:
-        """Connectors that may fill `field`, cheapest call first (yield stats arrive in 2.10).
+        """Connectors that may fill `field`, cheapest call first.
+
+        Cost alone, deliberately. docs/06 describes the capability map as carrying historical
+        yield, and this docstring used to promise it for task 2.10; nothing was built, because
+        there is nothing to learn from until discovery has run enough jobs to compare sources
+        on. A weighting invented now would be a guess wearing arithmetic.
 
         Red sources are left out unless legal review has approved them (docs/08 source policy),
         so the planner cannot reach for one by accident. `for_discovery` additionally excludes

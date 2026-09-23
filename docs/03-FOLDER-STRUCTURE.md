@@ -58,7 +58,7 @@ lead-research-platform/
 │           ├── jobs/ (consumer.py, publisher.py, retry.py, envelope.py, registry.py)
 │           ├── db/ (engine.py, tables.py reflect-or-core, tenant.py, repos/)
 │           ├── storage/  cache/  ratelimit/  metering/
-│           ├── orchestrator/ (spec_parser.py, planner.py, executor.py, critic.py, budgets.py, templates/)
+│           ├── planner/ (plan.py, capability.py, templates.py)  # docs/06 calls this orchestrator/; built as planner/ in task 2.10, with executor.py and critic.py still to come
 │           ├── connectors/
 │           │   ├── base.py  registry.py  http_client.py (metered + rate-limited)
 │           │   ├── google_places/  serp/  website/  companies_house/  opencorporates/

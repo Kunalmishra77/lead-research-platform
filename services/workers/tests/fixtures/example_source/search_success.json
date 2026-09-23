@@ -1,0 +1,24 @@
+{
+  "results": [
+    {
+      "id": "ex-1",
+      "name": "Shree Ganesh Restaurant",
+      "website": "https://shreeganesh.example",
+      "phone": "+911123456789",
+      "address": "12 Ring Road, Karol Bagh, New Delhi",
+      "city": "Delhi",
+      "country": "IN",
+      "location": { "lat": 28.6512, "lng": 77.1896 }
+    },
+    {
+      "id": "ex-2",
+      "name": "Delhi Darbar",
+      "website": null,
+      "phone": "+911198765432",
+      "address": "7 Main Market, Lajpat Nagar, New Delhi",
+      "city": "Delhi",
+      "country": "IN",
+      "location": { "lat": 28.5672, "lng": 77.2436 }
+    }
+  ]
+}

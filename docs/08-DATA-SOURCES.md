@@ -6,7 +6,7 @@
 - Never bypass CAPTCHA, login, paywall, bot challenge, robots.txt disallow, or IP blocks. Detect -> stop -> `access_restricted`.
 - Prefer official APIs whenever they exist. Respect each API's caching/storage terms (e.g. Google Places content caching rules — store place IDs and refresh details per terms).
 - Store facts and short evidence snippets; do not store full articles, full review texts, or images from third-party sites.
-- Honest User-Agent with contact URL; per-domain rate limits.
+- Honest User-Agent with contact URL; declared rate limits, enforced per connector.
 - Verify each provider's current quotas, pricing and terms in official docs at implementation time and record them in the connector README.
 
 ## Connector contract (Python)
@@ -20,12 +20,14 @@ class BaseConnector(ABC):
     rate_limit: ClassVar[RateLimit]     # requests per window, concurrency
     cost_per_call_micros: ClassVar[int]
 
-    async def search(self, query: DiscoveryQuery, ctx: JobContext) -> list[Candidate]: ...
-    async def fetch(self, ref: SourceRef, ctx: JobContext) -> RawResult: ...
+    async def search(self, query: DiscoveryQuery, ctx: ConnectorContext) -> list[Candidate]: ...
+    async def fetch(self, ref: SourceRef, ctx: ConnectorContext) -> RawResult: ...
     def map(self, raw: RawResult) -> list[FieldValue]: ...   # pure, deterministic, tested
     async def health(self) -> ConnectorHealth: ...
 ```
-- All network calls via `connectors/http_client.py` (metering, rate limiting, retries for transient, restriction detection, tracing).
+- `ConnectorContext` (org, research job, trace id, cost cap, logger) is deliberately narrower than `JobContext`: a connector gets attribution, not the Redis handle or the progress publisher. Registered connectors are shared between jobs and must hold no per-org state.
+- All network calls via `connectors/http_client.py` (metering, rate limiting, retries for transient, restriction detection, tracing). Limits are per connector, because a quota belongs to the API key, not the hostname. A paid call without an org and research job is refused, not made.
+- The client raises a classified error for a block, a rate limit, an exhausted retry budget, an undecodable or oversized body; other non-2xx responses are handed to the connector, which knows what its source means by 404 or 400.
 - Tests use recorded fixtures (`tests/fixtures/<key>/*.json|html`): success, empty, rate-limited, restricted/error.
 
 ## Source matrix

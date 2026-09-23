@@ -5,6 +5,21 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 ## Template
 
 ```
+### YYYY-MM-DD — Phase N — <short title>
+- Done:
+- Decisions (link ADRs):
+- Tests/checks status:
+- Open issues / blockers:
+- Next step:
+```
+
+### 2026-09-23 — Phase 2 — Task 2.7 connector framework
+- Done: `services/workers/app/connectors/` — `BaseConnector` (policy attributes validated at class creation, `search`/`fetch` taking a `ConnectorContext`, pure `map()`, `usable_in_production` gate), `ConnectorRegistry` (`providing()` cheapest-allowed-first, `enabled()`, both filtering red sources unless `legal_approved`), `ConnectorHttpClient` (per-connector limiter + concurrency cap, streaming size cap, retries for transient only, `Retry-After` in both RFC 9110 forms, metering, OTel span, correlated logs), `restrictions.py` (strong/weak marker split), `usage.py` (`call_unit_key`, `SqlUsageRecorder` writing `usage_unit_keys` + `usage_events` in a `tenant_transaction`). Fixtures pattern `tests/fixtures/<key>/` (success, empty, rate-limited, restricted, error) with a fixture-backed example connector in the tests. `/new-connector` and docs/08 updated to match.
+- Decisions (link ADRs): connectors receive a narrow `ConnectorContext` (org, job, trace, cost cap, logger) instead of `JobContext`, so a connector cannot reach Redis or the progress stream — docs/08 amended in the same commit (no ADR: no architecture change). Rate limits are enforced per connector, not per host, because a quota belongs to the API key. Metering covers delivered calls only, not attempts. Non-2xx responses that are not a block/rate limit/transient failure are handed to the connector, which knows what its source means by 404 or 400. A paid call with no org+job, or through a client with no usage recorder, is refused before the request is sent.
+- Tests/checks status: pytest 101 passed (also against real Redis on db 15), ruff, ruff format, mypy strict all green. Code-reviewer: CHANGES REQUESTED -> 3 blockers + 8 should-fixes fixed -> APPROVE; R1/R2/R3/R5/R6 from the verification pass folded in too. Blocker worth noting: the client rebuilt responses with the original wire headers, so every gzipped (i.e. every real) API response would have failed to decode.
+- Open issues / blockers: `ConnectorContext.cost_cap_micros` is carried but not yet enforced — task 2.8 must check it. No SSRF guard on outbound URLs (needed before the Phase 3 crawler). Failed attempts are not metered (fine for the Phase 2 providers). `NullUsageRecorder` now refuses paid meters, so any future free-source client must pass `cost_micros=0`. Still waiting on ANTHROPIC_API_KEY, GOOGLE_PLACES_API_KEY, SERP_API_KEY (serper.dev) from the owner.
+- Next step: task 2.8 Google Places connector (needs GOOGLE_PLACES_API_KEY), or 2.2 AI gateway (needs ANTHROPIC_API_KEY); key-free alternative is 2.10 planner.
+
 ### 2026-09-23 — Phase 2 — Task 2.6 research job lifecycle API
 - Done: `POST /app/research` validates the spec (contracts) and the industry slugs, creates search + job and reserves credits in one transaction, then publishes a `research.plan` envelope with the job budget and the API request id as `trace_id`. Plus `GET /app/research` (cursor paging, new index), `GET /app/research/:id`, `GET /app/research/:id/events` (SSE, reuses the Phase 1 hub) and `POST /app/research/:id/cancel`. Reading needs `contacts.view`, spending needs `research.run`. `Idempotency-Key` is honoured for 24 h per org+route (new `IdempotencyService`, Redis).
 - Decisions (link ADRs): ADR-0008 cancel signal - the API sets `research:cancelled:<job_id>` in Redis before releasing credits, and workers must check it before each step and before recording usage. The org credit lock is taken before the inserts (an advisory lock), because both would otherwise upgrade the same organization row lock and deadlock; a serialization failure maps to 503 `research.busy`.
@@ -129,14 +144,6 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Tests/checks status: vitest 31 passed (redirect guard, proxy path/headers/origin/body cap, cookie flags, workspace action, sign-out clears cookie, shell render); Playwright 6 passed against a production build with placeholder env (no live Supabase); lint, typecheck, build green. Code-reviewer: CHANGES REQUESTED (open redirect via `/\` and tab, `..` path escape in proxy) -> all blockers and should-fix items fixed.
 - Open issues / blockers: live login needs `SUPABASE_PUBLISHABLE_KEY` from the owner (so 1.7 web part stays unticked). Supabase Auth rate limits are per client IP and all auth calls now come from the web server IP: check limits / forwarding before launch (docs/10). `recovery` links land on /dashboard (no set-password page yet); PKCE `code` flow not handled, so email templates must use `token_hash`. Top bar still lacks running-jobs indicator, notifications and user menu (later phases). Protected-layout redirect drops the originally requested path.
 - Next step: task 1.12 admin shell.
-
-### YYYY-MM-DD — Phase N — <short title>
-- Done:
-- Decisions (link ADRs):
-- Tests/checks status:
-- Open issues / blockers:
-- Next step:
-```
 
 ---
 

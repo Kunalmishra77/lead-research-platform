@@ -23,14 +23,15 @@ from app.connectors import (
     RawResult,
     SourceRef,
 )
-from app.connectors.types import AuthKind, ConnectorContext, TosClass
+from app.connectors.types import AuthKind, TosClass
 from app.jobs.context import JobContext
 from app.jobs.errors import InvalidInputError
 from app.jobs.progress import ProgressPublisher
+from app.metering.context import CallContext
 from tests.conftest import EnvelopeFactory
 from tests.fixtures import load_json
 
-CTX = ConnectorContext(
+CTX = CallContext(
     org_id="11111111-1111-7111-8111-111111111111",
     research_job_id="22222222-2222-7222-8222-222222222222",
     trace_id="0af7651916cd43dd8448eb211c80319c",
@@ -52,7 +53,7 @@ class ExampleConnector(BaseConnector):
     def __init__(self, case: str = "search_success") -> None:
         self._case = case
 
-    async def search(self, query: DiscoveryQuery, ctx: ConnectorContext) -> list[Candidate]:
+    async def search(self, query: DiscoveryQuery, ctx: CallContext) -> list[Candidate]:
         payload = load_json(self.key, self._case)
         return [
             Candidate(
@@ -72,7 +73,7 @@ class ExampleConnector(BaseConnector):
             for item in payload["results"][: query.max_results]
         ]
 
-    async def fetch(self, ref: SourceRef, ctx: ConnectorContext) -> RawResult:
+    async def fetch(self, ref: SourceRef, ctx: CallContext) -> RawResult:
         payload = load_json(self.key, self._case)
         body = next(i for i in payload["results"] if i["id"] == ref.external_id)
         url = f"https://api.example.test/places/{ref.external_id}"
@@ -142,11 +143,11 @@ def test_a_connector_missing_a_declared_attribute_is_rejected_at_import_time() -
             key: ClassVar[str] = "broken"
             tos_class: ClassVar[TosClass] = "green"
 
-            async def search(self, query: DiscoveryQuery, ctx: ConnectorContext) -> list[Candidate]:
+            async def search(self, query: DiscoveryQuery, ctx: CallContext) -> list[Candidate]:
                 return []
 
             async def fetch(  # pragma: no cover - never built
-                self, ref: SourceRef, ctx: ConnectorContext
+                self, ref: SourceRef, ctx: CallContext
             ) -> RawResult:
                 raise NotImplementedError
 
@@ -271,7 +272,7 @@ async def test_a_connector_context_carries_the_job_attribution(
         message_id="1-0",
     )
 
-    ctx = ConnectorContext.from_job(job_ctx)
+    ctx = CallContext.from_job(job_ctx)
 
     assert ctx.org_id == str(envelope.org_id)
     assert ctx.research_job_id == str(envelope.research_job_id)
@@ -291,4 +292,4 @@ async def test_an_envelope_without_an_org_cannot_reach_a_connector(
     )
     # Fails fast: a retry cannot conjure an org, and connectors must never run unattributed.
     with pytest.raises(InvalidInputError, match="org context"):
-        ConnectorContext.from_job(job_ctx)
+        CallContext.from_job(job_ctx)

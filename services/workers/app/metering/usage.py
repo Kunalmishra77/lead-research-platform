@@ -1,5 +1,7 @@
 """Metering for paid calls (CLAUDE.md: every paid API/LLM/browser call records a usage event).
 
+Shared by the connectors and the AI gateway, so it belongs to neither.
+
 `unit_key` makes a retry free: the same call within one job is recorded once (docs/11). Credits for
 delivered leads are booked separately by the executor; these rows carry internal cost only.
 

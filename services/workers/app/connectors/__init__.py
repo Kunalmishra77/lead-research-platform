@@ -7,7 +7,6 @@ from app.connectors.restrictions import restriction_reason
 from app.connectors.types import (
     AuthKind,
     Candidate,
-    ConnectorContext,
     ConnectorHealth,
     DiscoveryQuery,
     FieldValue,
@@ -16,14 +15,15 @@ from app.connectors.types import (
     SourceRef,
     TosClass,
 )
-from app.connectors.usage import NullUsageRecorder, SqlUsageRecorder, UsageRecorder, call_unit_key
+from app.metering.context import CallContext
+from app.metering.usage import NullUsageRecorder, SqlUsageRecorder, UsageRecorder, call_unit_key
 
 __all__ = [
     "AuthKind",
     "BaseConnector",
+    "CallContext",
     "CallCost",
     "Candidate",
-    "ConnectorContext",
     "ConnectorHealth",
     "ConnectorHttpClient",
     "ConnectorRegistry",

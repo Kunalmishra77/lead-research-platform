@@ -25,8 +25,7 @@ from aiolimiter import AsyncLimiter
 from opentelemetry import trace
 
 from app.connectors.restrictions import restriction_reason
-from app.connectors.types import ConnectorContext, RateLimit
-from app.connectors.usage import NullUsageRecorder, UsageRecorder, call_unit_key
+from app.connectors.types import RateLimit
 from app.jobs.errors import (
     AccessRestrictedError,
     InvalidInputError,
@@ -34,6 +33,8 @@ from app.jobs.errors import (
     RateLimitedError,
     TransientError,
 )
+from app.metering.context import CallContext
+from app.metering.usage import NullUsageRecorder, UsageRecorder, call_unit_key
 
 _tracer = trace.get_tracer("leadforge.connectors")
 
@@ -106,7 +107,7 @@ class ConnectorHttpClient:
         url: str,
         *,
         cost: CallCost,
-        ctx: ConnectorContext | None = None,
+        ctx: CallContext | None = None,
         headers: Mapping[str, str] | None = None,
         params: Mapping[str, Any] | None = None,
         json: Any | None = None,
@@ -218,9 +219,7 @@ class ConnectorHttpClient:
                 request=request,
             )
 
-    async def _meter(
-        self, cost: CallCost, request: httpx.Request, ctx: ConnectorContext | None
-    ) -> None:
+    async def _meter(self, cost: CallCost, request: httpx.Request, ctx: CallContext | None) -> None:
         if cost.cost_micros <= 0 or ctx is None:
             return
         await self._usage.record(

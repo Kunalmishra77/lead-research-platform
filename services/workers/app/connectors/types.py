@@ -2,14 +2,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Literal
-
-import structlog
-
-from app.jobs.errors import InvalidInputError
-
-if TYPE_CHECKING:  # keeps this module free of Redis and the progress publisher
-    from app.jobs.context import JobContext
+from typing import Any, Literal
 
 TosClass = Literal["green", "amber", "red"]
 AuthKind = Literal["none", "api_key", "oauth"]
@@ -108,34 +101,3 @@ class ConnectorHealth:
     ok: bool
     detail: str | None = None
     checked_at: datetime | None = None
-
-
-@dataclass(frozen=True, slots=True)
-class ConnectorContext:
-    """What a connector needs from the job it runs for (docs/08).
-
-    Deliberately narrower than `JobContext`: a connector gets attribution and a logger, not the
-    Redis handle or the progress publisher, so it cannot reach past its own responsibility.
-    """
-
-    org_id: str
-    research_job_id: str | None
-    trace_id: str
-    log: structlog.stdlib.BoundLogger
-    #: Remaining internal cost cap in micros (0 = uncapped); the executor enforces it.
-    cost_cap_micros: int = 0
-
-    @classmethod
-    def from_job(cls, ctx: "JobContext") -> "ConnectorContext":
-        if ctx.org_id is None:
-            # Retrying cannot conjure an org, so this fails fast instead of looking transient.
-            raise InvalidInputError("connectors need an org context; this envelope has none")
-        envelope = ctx.envelope
-        job_id = None if envelope.research_job_id is None else str(envelope.research_job_id)
-        return cls(
-            org_id=ctx.org_id,
-            research_job_id=job_id,
-            trace_id=envelope.trace_id,
-            log=ctx.log,
-            cost_cap_micros=envelope.budget.cost_cap_micros,
-        )

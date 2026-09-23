@@ -4,7 +4,8 @@ import httpx
 import structlog
 
 from app.connectors.http_client import CallCost, ConnectorHttpClient
-from app.connectors.types import ConnectorContext, RateLimit
+from app.connectors.types import RateLimit
+from app.metering.context import CallContext
 
 URL = "https://api.example.test/search"
 FREE = CallCost(meter="api_example_source")
@@ -14,8 +15,8 @@ JOB = "22222222-2222-7222-8222-222222222222"
 USER_AGENT = "LeadForgeBot/1.0 (+https://leadforge.example/bot)"
 
 
-def make_ctx(*, research_job_id: str | None = JOB) -> ConnectorContext:
-    return ConnectorContext(
+def make_ctx(*, research_job_id: str | None = JOB) -> CallContext:
+    return CallContext(
         org_id=ORG,
         research_job_id=research_job_id,
         trace_id="0af7651916cd43dd8448eb211c80319c",
@@ -28,6 +29,8 @@ class RecordingUsage:
 
     def __init__(self) -> None:
         self.calls: list[dict[str, object]] = []
+        #: Whether each call was booked (False = the unit key had already been charged).
+        self.recorded: list[bool] = []
         self._seen: set[str] = set()
 
     async def record(
@@ -51,8 +54,10 @@ class RecordingUsage:
             }
         )
         if unit_key in self._seen:
+            self.recorded.append(False)
             return False
         self._seen.add(unit_key)
+        self.recorded.append(True)
         return True
 
 

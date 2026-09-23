@@ -40,6 +40,18 @@ class Settings(BaseSettings):
     SENTRY_ENVIRONMENT: str | None = None
     SENTRY_TRACES_SAMPLE_RATE: float = Field(default=0.0, ge=0.0, le=1.0)
 
+    # AI layer (docs/07). Without a key the gateway refuses to call a provider; nothing else
+    # in the worker depends on it, so a key-less process still runs every other pool.
+    OPENAI_API_KEY: str | None = None
+    OPENAI_BASE_URL: str | None = None
+    #: Model ids per tier. Defaults live in app/ai/config.py; set these to pin or roll back.
+    AI_MODEL_SMALL: str | None = None
+    AI_MODEL_MEDIUM: str | None = None
+    AI_MODEL_LARGE: str | None = None
+    AI_TIMEOUT_S: float = Field(default=60.0, gt=0)
+    #: Turns the response cache off entirely (docs/07 caching); per-task TTLs still apply.
+    AI_CACHE_ENABLED: bool = True
+
     #: Comma-separated pools this process consumes, e.g. "system,crawl_http" (streams jobs:<pool>).
     WORKER_POOLS: str = "system"
     #: Consumer name inside the group; defaults to host + pid at runtime.
@@ -53,7 +65,15 @@ class Settings(BaseSettings):
     JOB_RETRY_BASE_DELAY_MS: int = Field(default=2_000, ge=10)
 
     @field_validator(
-        "SENTRY_DSN_WORKERS", "SENTRY_ENVIRONMENT", "SENTRY_TRACES_SAMPLE_RATE", mode="before"
+        "SENTRY_DSN_WORKERS",
+        "SENTRY_ENVIRONMENT",
+        "SENTRY_TRACES_SAMPLE_RATE",
+        "OPENAI_API_KEY",
+        "OPENAI_BASE_URL",
+        "AI_MODEL_SMALL",
+        "AI_MODEL_MEDIUM",
+        "AI_MODEL_LARGE",
+        mode="before",
     )
     @classmethod
     def _empty_is_unset(cls, value: object, info: ValidationInfo) -> object:

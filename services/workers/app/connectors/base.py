@@ -5,7 +5,7 @@ so the planner and the source policy can reason about it without calling it. `ma
 deterministic, which is what makes recorded fixtures a meaningful test.
 
 Connectors are registered once and shared by every job, so they must hold no per-org state: what
-belongs to one job travels in the `ConnectorContext` passed to each call.
+belongs to one job travels in the `CallContext` passed to each call.
 """
 
 from abc import ABC, abstractmethod
@@ -15,7 +15,6 @@ from typing import ClassVar
 from app.connectors.types import (
     AuthKind,
     Candidate,
-    ConnectorContext,
     ConnectorHealth,
     DiscoveryQuery,
     FieldValue,
@@ -24,6 +23,7 @@ from app.connectors.types import (
     SourceRef,
     TosClass,
 )
+from app.metering.context import CallContext
 
 
 class BaseConnector(ABC):
@@ -64,11 +64,11 @@ class BaseConnector(ABC):
             cls.meter = f"api_{cls.key}"
 
     @abstractmethod
-    async def search(self, query: DiscoveryQuery, ctx: ConnectorContext) -> list[Candidate]:
+    async def search(self, query: DiscoveryQuery, ctx: CallContext) -> list[Candidate]:
         """Finds candidate businesses for one query. `ctx` attributes every call to its job."""
 
     @abstractmethod
-    async def fetch(self, ref: SourceRef, ctx: ConnectorContext) -> RawResult:
+    async def fetch(self, ref: SourceRef, ctx: CallContext) -> RawResult:
         """Fetches one record's details, unparsed."""
 
     @abstractmethod

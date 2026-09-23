@@ -7,7 +7,7 @@ crying block on an ordinary page would throw away a company page we are allowed 
 import pytest
 
 from app.connectors.restrictions import SMALL_BODY_BYTES, restriction_reason
-from app.connectors.usage import call_unit_key
+from app.metering.usage import call_unit_key
 from tests.fixtures import load_bytes
 
 #: Stands in for a real company page: too big to be an interstitial.

@@ -8,9 +8,9 @@ import pytest
 import respx
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from app.connectors import usage as usage_module
-from app.connectors.usage import SqlUsageRecorder, call_unit_key
 from app.jobs.errors import AccessRestrictedError, InvalidInputError
+from app.metering import usage as usage_module
+from app.metering.usage import SqlUsageRecorder, call_unit_key
 from tests.connector_support import COST, FREE, JOB, ORG, URL, RecordingUsage, make_client, make_ctx
 
 

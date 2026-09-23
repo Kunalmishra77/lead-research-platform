@@ -6,10 +6,12 @@ All model calls go through `services/workers/app/ai/gateway.py` (and a thin TS c
 - Prompt registry: `app/ai/prompts/<task>/v<N>.md` + output JSON schema in `app/ai/schemas/<task>.json`.
 - Routing by task -> model tier (config, not code). Fallback model on provider error.
 - Structured output: provider-native JSON schema / tool-use mode; validate with Pydantic; one repair retry; then fail `parse_failed`.
-- Caching: key = sha256(task, prompt_version, model, normalized_input); TTL per task. Use provider prompt caching for long static system prompts.
+- Caching: key = sha256(org_id, task, prompt_version, model, max_output_tokens, normalized_input); TTL per task. Keys are namespaced per org: a derived value is still tenant data (CLAUDE.md). The token budget is part of the key so that raising it cannot serve back a truncated answer. Provider prompt caching is automatic and is reported as `cached_tokens`.
 - Batch mode for non-interactive tasks (provider batch APIs).
 - Metering: tokens in/out, cost_micros, latency -> `usage_events` (meter `ai`) with job/org ids.
-- Record `model` and `prompt_version` on every AI-derived FieldValue.
+- Record `model`, `prompt_version` and the result's `observed_at` on every AI-derived FieldValue. A cached answer keeps the time it was originally produced, so it cannot claim to be fresh. `confidence` is part of each task's own output schema, not something the gateway invents.
+- The gateway prepends a safety preamble to every task's system prompt (grounding rules 1 and 4) and wraps the payload in `<input>` delimiters. A task prompt adds to those rules; it may not weaken them.
+- Every model call is attributed to an org and a research job before it is made, and everything billed reaches `usage_events` — including refusals, truncated answers and failed repair turns.
 
 ## Task catalogue
 | Task | Tier | Phase | Output |

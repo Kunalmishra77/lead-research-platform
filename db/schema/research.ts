@@ -85,6 +85,8 @@ export const researchJobs = app.table(
     unique('research_jobs_id_org_key').on(t.id, t.orgId),
     index('research_jobs_org_status_idx').on(t.orgId, t.status),
     index('research_jobs_workspace_created_idx').on(t.workspaceId, t.createdAt.desc()),
+    // History paging orders by id (UUID v7 = creation order) within a workspace.
+    index('research_jobs_workspace_id_idx').on(t.workspaceId, t.id.desc()),
     check(
       'research_jobs_credits_nonnegative',
       sql`${t.creditBudget} >= 0 and ${t.creditsReserved} >= 0 and ${t.creditsUsed} >= 0 and ${t.costMicros} >= 0`,

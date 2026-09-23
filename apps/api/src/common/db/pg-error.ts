@@ -6,3 +6,11 @@ export function pgCode(err: unknown): string | undefined {
   }
   return undefined;
 }
+
+/** Postgres tells us to retry: deadlock detected / serialization failure. */
+export const RETRYABLE_SQLSTATES = new Set(['40P01', '40001']);
+
+export function isRetryable(err: unknown): boolean {
+  const code = pgCode(err);
+  return code !== undefined && RETRYABLE_SQLSTATES.has(code);
+}

@@ -50,5 +50,7 @@ Rates and plan allowances live in `app.credit_rates` and `app.plans` (seeded fro
 - `app.credit_settle(job, consume_id, release_id)` — books delivered usage of that job **in that org**, capped by the reservation, and returns the remainder once (`research_jobs.settled_at`). Calling it again only books usage that is not booked yet, so a late `usage_events` row is still charged and never charged twice.
 - The reservation is always read from the append-only ledger, never from a column an app role could write.
 
+A job's envelope also carries an internal cost cap: `COST_CAP_MICROS_PER_CREDIT` (default 20 000 micros = USD 0.02 per reserved credit) times the reservation. That cap is internal only and never shown to customers.
+
 `app.bootstrap_org` grants the plan's `signup_credits` through the ledger at signup. The API side is `apps/api/src/modules/credits` (rate cache, estimate, reserve, settle, balance).
 

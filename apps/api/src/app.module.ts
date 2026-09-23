@@ -4,6 +4,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { ZodValidationPipe } from 'nestjs-zod';
 
 import { ProblemDetailsFilter } from './common/errors/problem-details.filter';
+import { IdempotencyModule } from './common/idempotency/idempotency.module';
 import { REDACTED_PATHS, serializeRequest } from './common/logging';
 import { REQUEST_ID_HEADER } from './common/request-id';
 import { APP_CONFIG, ConfigModule } from './config/config.module';
@@ -20,6 +21,7 @@ import { DevModule } from './modules/dev/dev.module';
 import { HealthModule } from './modules/health/health.module';
 import { MembersModule } from './modules/members/members.module';
 import { OrgsModule } from './modules/orgs/orgs.module';
+import { ResearchModule } from './modules/research/research.module';
 
 @Module({
   imports: [
@@ -52,6 +54,7 @@ import { OrgsModule } from './modules/orgs/orgs.module';
       }),
     }),
     DbModule,
+    IdempotencyModule,
     RedisModule,
     StorageModule,
     StreamsModule,
@@ -62,6 +65,7 @@ import { OrgsModule } from './modules/orgs/orgs.module';
     MembersModule,
     AdminModule,
     CreditsModule,
+    ResearchModule,
     DevModule,
   ],
   providers: [

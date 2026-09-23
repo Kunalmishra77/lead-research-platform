@@ -1,4 +1,4 @@
-import { creditRates, sql, withTenant } from '@leadforge/db';
+import { creditRates, sql, type Transaction, withTenant } from '@leadforge/db';
 import { Inject, Injectable } from '@nestjs/common';
 import { uuidv7 } from 'uuidv7';
 import { z } from 'zod';
@@ -117,14 +117,10 @@ export class CreditsService {
     jobId: string,
     amount: number,
   ): Promise<number> {
-    amountSchema.parse(amount);
     try {
-      const rows = await withTenant(this.db, { orgId, userId }, (tx) =>
-        tx.execute<{ credit_reserve: string }>(
-          sql`select app.credit_reserve(${jobId}::uuid, ${amount}::bigint, ${uuidv7()}::uuid)`,
-        ),
+      return await withTenant(this.db, { orgId, userId }, (tx) =>
+        this.reserveIn(tx, jobId, amount),
       );
-      return Number(rows[0]?.credit_reserve ?? 0);
     } catch (err) {
       if (pgCode(err) === INSUFFICIENT_CREDITS) {
         throw new AppError({
@@ -138,6 +134,33 @@ export class CreditsService {
       }
       throw ledgerError(err, 'reserve');
     }
+  }
+
+  /**
+   * Same reservation, inside a transaction the caller already opened, so creating a job and
+   * holding its credits succeed or fail together. Errors are mapped by the caller.
+   */
+  async reserveIn(tx: Transaction, jobId: string, amount: number): Promise<number> {
+    amountSchema.parse(amount);
+    const rows = await tx.execute<{ credit_reserve: string }>(
+      sql`select app.credit_reserve(${jobId}::uuid, ${amount}::bigint, ${uuidv7()}::uuid)`,
+    );
+    return Number(rows[0]?.credit_reserve ?? 0);
+  }
+
+  /** Maps the ledger SQLSTATEs (402 / 403 / 409) for callers that reserve inside their own tx. */
+  toCreditError(err: unknown, amount: number): Error {
+    if (pgCode(err) === INSUFFICIENT_CREDITS) {
+      return new AppError({
+        code: 'credits.insufficient',
+        httpStatus: 402,
+        title: 'Not enough credits',
+        detail: `This run needs ${String(amount)} credits. Top up and try again.`,
+        errorClass: 'budget_exhausted',
+        cause: err,
+      });
+    }
+    return ledgerError(err, 'reserve');
   }
 
   /**
@@ -163,7 +186,7 @@ export class CreditsService {
 }
 
 /** Turns the ledger functions' SQLSTATEs into typed errors (docs/12: no raw 500s). */
-function ledgerError(err: unknown, operation: 'reserve' | 'settle'): unknown {
+function ledgerError(err: unknown, operation: 'reserve' | 'settle'): Error {
   switch (pgCode(err)) {
     case '42501':
       return new AppError({
@@ -181,6 +204,6 @@ function ledgerError(err: unknown, operation: 'reserve' | 'settle'): unknown {
         cause: err,
       });
     default:
-      return err;
+      return err instanceof Error ? err : new Error(String(err));
   }
 }

@@ -1,0 +1,1 @@
+CREATE INDEX "research_jobs_workspace_id_idx" ON "app"."research_jobs" USING btree ("workspace_id","id" DESC NULLS LAST);

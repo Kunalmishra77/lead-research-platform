@@ -42,6 +42,13 @@ export const envSchema = z
       .string()
       .regex(/^[a-z][a-z0-9_]{1,40}$/)
       .default('system'),
+    /** Stream pool for research planning/discovery jobs. */
+    JOBS_DISCOVERY_POOL: z
+      .string()
+      .regex(/^[a-z][a-z0-9_]{1,40}$/)
+      .default('discovery'),
+    /** Internal spend cap per reserved credit (docs/11: cost is tracked, never shown to users). */
+    COST_CAP_MICROS_PER_CREDIT: z.coerce.number().int().min(0).default(20_000),
     PROGRESS_STREAM_MAX_MS: z.coerce.number().int().min(1_000).max(3_600_000).default(600_000),
 
     S3_ENDPOINT: z.url(),

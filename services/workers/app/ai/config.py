@@ -91,7 +91,7 @@ class TaskConfig:
 
 
 #: A task appears here only once its prompt and schema ship, so `TASKS` can never promise a
-#: task the gateway cannot run. `query_expand` arrives with the planner (task 2.10).
+#: task the gateway cannot run.
 TASKS: Final[dict[str, TaskConfig]] = {
     "intent_classify": TaskConfig(
         tier="small",
@@ -102,6 +102,15 @@ TASKS: Final[dict[str, TaskConfig]] = {
     ),
     # The user sees a parse and corrects it before anything is spent, so it is worth a little
     # thinking; the budget covers reasoning tokens as well as the answer.
+    # The same trade in the same city expands the same way, and the planner asks once per city
+    # per job, so this is the task that benefits most from the cache. A week is safe: the local
+    # name for a kind of business does not change faster than a prompt version does.
+    "query_expand": TaskConfig(
+        tier="small",
+        max_output_tokens=1024,
+        cache_ttl_s=7 * 24 * 3600,
+        prompt_version=1,
+    ),
     "spec_parse": TaskConfig(
         tier="small",
         max_output_tokens=4096,

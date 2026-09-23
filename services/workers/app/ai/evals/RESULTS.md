@@ -63,6 +63,62 @@ widens it. A case that has more than one honest reading opts out with `"allow_ex
 — that is how "NEET" is satisfied by "NEET preparation" while "cbse school" is still not
 satisfied by "school".
 
+## query_expand
+
+| Date | Model | Prompt | Cases | Pass rate | Field acc. | Cost/1k | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 2026-09-23 | gpt-5.4-mini-2026-03-17 | v1 (draft) | 81 | 91.4% | 96.9% | 440,309 | First run. Two prompt contradictions and four wrong expectations, below. |
+| 2026-09-23 | gpt-5.4-mini-2026-03-17 | v1 (draft) | 81 | 92.6% | 96.9% | 472,198 | Contradictions fixed. Six mid-sized Indian cities returned **no** areas at all. |
+| 2026-09-23 | gpt-5.4-mini-2026-03-17 | v1 (draft) | 81 | 100.0% | 100.0% | 526,531 | The size rule made explicit — but it named the three cities that had failed, so this number is partly recall. |
+| 2026-09-23 | gpt-5.4-mini-2026-03-17 | v1 (draft) | 81 | 97.5% | 98.5% | 528,728 | **De-leaked.** The population rule holds without the city names; the mid-sized-city failures did not return. Two new misses: "near Connaught Place" ranged 25 km across Delhi, and one check of mine was wrong. |
+| 2026-09-23 | gpt-5.4-mini-2026-03-17 | **v1** | 81 | **100.0%** | 100.0% | 544,753 | Current default and the recorded baseline. "Near an area still means that area." |
+
+### Two contradictions in the draft prompt, found by the eval and not by reading it
+
+- It asked for "the plain reading of the request" as the first phrase **and** for filters a maps
+  search cannot read to be left out. For "startups in Bangalore that raised Series A" those are
+  opposite instructions, and the model obeyed the first. A funding stage in a maps query does not
+  narrow the search, it corrupts it.
+- It said to return an empty list when the request already names an area inside a city. But
+  "Bandra" splits into "Bandra West" and "Bandra East", and that covers Bandra *better* than one
+  search does. The rule that matters is staying **inside** the named area, not declining to
+  subdivide it; the cases now pin that instead.
+
+### The failure that was worth the whole exercise
+
+At 92.6%, the six remaining failures were all one behaviour: **Indore (3.2M), Rajkot (1.6M),
+Ranchi (1.4M), Mysuru, Noida and Udaipur each came back with no sub-localities.** The prompt
+offered only "large metro" or "small town", and the model filed all six under town.
+
+That is not a cosmetic miss. Without areas the planner issues one Places call for a whole
+mid-sized city, the API returns a capped page, and every business past the cap is simply never
+seen — the user pays for a search that quietly returned a fraction of the market. Naming a
+population figure ("roughly half a million or more has these, and needs them") and saying plainly
+which mistake is the expensive one took it to 100%.
+
+### Four expectations that were wrong, not the model
+
+Corrected rather than tuned around, because each was a fact about the world:
+
+- **Dublin** came back as "Dublin 2", "Dublin 4" — postal districts are what people there
+  actually use. **Jakarta** came back as "South Jakarta", "Central Jakarta"; **Delhi** as its
+  eleven administrative districts. For tiling, a complete administrative cover is arguably better
+  than a dozen hand-picked neighbourhoods. `sub_localities_any_of` means "at least one real area
+  of this place", so every real naming family belongs in it.
+- **Thrissur** and **Karnal** (~300k, a planned city with genuine numbered sectors) sit exactly on
+  the line where one search may or may not be enough. Neither we nor the model can settle that, so
+  those cases pin only what is certain. Pithoragarh, Sivakasi and Chikmagalur carry the "nothing
+  inside to name" behaviour, and they are not borderline.
+
+### What this set does not yet prove
+
+The same caution as the sections above applies, and one more: **the scorer never checks that a
+sub-locality is real.** It checks that at least one recognised name appears, that the count is
+plausible, and that no other city leaks in. A confidently invented neighbourhood inside an
+otherwise good list would pass, and would cost one wasted Places call per job. Checking that
+needs the geo seed, which the planner reads anyway — worth doing once discovery is running and
+real yield per area can be compared.
+
 ## How honest is 100%
 
 Not as honest as it looks, and here is the arithmetic.
@@ -75,8 +131,15 @@ correct and measured worse.
 **In-prompt examples were leaking.** Before v5/v4, 14 of 50 `intent_classify` case queries and 10
 of 50 `spec_parse` queries appeared verbatim in the prompt, next to their correct answer — those
 cases were scored on memory. Every example has been rewritten to phrasings that appear in no case
-file, and a check confirms zero verbatim overlap. The numbers above for v5 and v4 are measured on
-that basis; every earlier row is not.
+file. The numbers above for v5 and v4 are measured on that basis; every earlier row is not.
+
+That used to be a hand check, and this section claimed it as a guarantee. It is now a test
+(`test_no_case_is_answered_for_the_model_inside_its_own_prompt`), which was worth writing: it
+immediately found two fresh leaks in the `query_expand` draft, one of them naming the exact three
+cities whose failures had prompted the rule it sat beneath. Removing those names cost 2.5 points
+on the first re-run — the rule still held on its own, but part of that score had been recall.
+Single-word queries ("leads", "business") are exempt, because finding a common word in prose
+about lead research proves nothing.
 
 **A single run is not the score.** `spec_parse` ranges over 8.5 points between runs. Quote the
 range, not the best run. The recorded baseline is a 100% run because a replay needs a clean

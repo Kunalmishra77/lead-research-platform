@@ -12,7 +12,7 @@ from jsonschema import Draft202012Validator
 
 from app.ai.config import TASKS, model_for
 from app.ai.evals.runner import CASE_ROOT, RECORDING_ROOT, load_cases, load_recording, run_eval
-from app.ai.evals.scorers import SPEC_CHECKS, SUPERSET_FLAG, score_spec_parse
+from app.ai.evals.scorers import QUERY_EXPAND_CHECKS, SPEC_CHECKS, SUPERSET_FLAG, score_spec_parse
 from app.ai.prompt_registry import get_prompt
 from app.ai.schemas import get_schema
 from tests.ai_support import settings
@@ -45,12 +45,21 @@ def test_the_eval_set_is_big_enough_and_well_formed(task: str) -> None:
         assert case.tags, f"{case.id} has no tags, so it cannot be sliced"
 
 
+#: Expectation keys each scorer understands. A task missing from here is not checked, which is
+#: why the assertion below names the gap rather than passing quietly.
+KNOWN_CHECKS = {
+    "spec_parse": set(SPEC_CHECKS) | {SUPERSET_FLAG},
+    "query_expand": set(QUERY_EXPAND_CHECKS),
+}
+
+
 @pytest.mark.parametrize("task", EVAL_TASKS)
 def test_the_expectations_only_name_fields_the_scorer_checks(task: str) -> None:
-    if task != "spec_parse":
+    known = KNOWN_CHECKS.get(task)
+    if known is None:
         return
     for case in load_cases(task):
-        unknown = set(case.expected) - set(SPEC_CHECKS) - {SUPERSET_FLAG}
+        unknown = set(case.expected) - known
         # A typo in an expectation key would silently never be checked.
         assert not unknown, f"{case.id} pins unknown fields: {sorted(unknown)}"
 
@@ -58,9 +67,14 @@ def test_the_expectations_only_name_fields_the_scorer_checks(task: str) -> None:
 @pytest.mark.parametrize("task", EVAL_TASKS)
 def test_the_eval_set_covers_more_than_one_answer(task: str) -> None:
     cases = load_cases(task)
-    key = "intent"
-    answers = {c.expected.get(key) for c in cases if key in c.expected}
-    assert len(answers) >= 3, f"{task} only ever expects {answers}"
+    answers = {c.expected.get("intent") for c in cases if "intent" in c.expected}
+    if answers:
+        assert len(answers) >= 3, f"{task} only ever expects {answers}"
+        return
+    # A task whose answer is not one label out of a few is covered instead by the variety of
+    # what its cases pin: a set that checks the same key every time tests one behaviour 80 times.
+    shapes = {tuple(sorted(c.expected)) for c in cases}
+    assert len(shapes) >= 3, f"{task} only ever pins {sorted(shapes)}"
 
 
 @pytest.mark.parametrize("task", EVAL_TASKS)
@@ -68,7 +82,7 @@ def test_every_recorded_answer_still_matches_its_schema(task: str) -> None:
     validator = Draft202012Validator(get_schema(task))
     for case_id, answer in load_recording(task).answers.items():
         validator.validate(answer)
-        assert case_id.startswith(("ic-", "sp-"))
+        assert case_id.startswith(("ic-", "qe-", "sp-"))
 
 
 @pytest.mark.parametrize("task", EVAL_TASKS)
@@ -123,6 +137,31 @@ def test_the_recordings_carry_no_note_of_who_ran_them() -> None:
         assert "sk-" not in raw
         for answer in json.loads(raw)["answers"].values():
             assert isinstance(answer, dict)
+
+
+#: A query shorter than this cannot leak meaningfully: "leads" and "business" are single common
+#: words that appear in any prose about lead research, and finding them proves nothing.
+MIN_LEAK_WORDS = 3
+
+
+@pytest.mark.parametrize("task", EVAL_TASKS)
+def test_no_case_is_answered_for_the_model_inside_its_own_prompt(task: str) -> None:
+    """An example in the prompt that repeats a case verbatim scores that case on memory.
+
+    RESULTS.md has claimed zero verbatim overlap since the prompts were de-leaked by hand. It was
+    a one-off check and nothing held it: writing this test found two fresh leaks in a prompt
+    drafted the same day, one of which also named the three cities whose failures prompted the
+    rule it sat under — the eval set marking its own homework.
+    """
+    prompt = get_prompt(task, TASKS[task].prompt_version)
+    haystack = f"{prompt.system} {prompt.template}".casefold()
+    leaked = [
+        case.id
+        for case in load_cases(task)
+        if len(str(case.input.get("query", "")).split()) >= MIN_LEAK_WORDS
+        and str(case.input["query"]).casefold() in haystack
+    ]
+    assert not leaked, f"{task} prompt contains these case queries verbatim: {leaked}"
 
 
 @pytest.mark.parametrize("task", EVAL_TASKS)

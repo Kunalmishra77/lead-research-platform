@@ -1,0 +1,1712 @@
+{
+  "answers": {
+    "qe-agra-sweets": {
+      "queries": [
+        "sweet shops in Agra",
+        "mithai shop in Agra",
+        "sweets shop in Agra",
+        "sweet mart in Agra"
+      ],
+      "reason": "Varied the shop type names used for sweet retailers in Agra and added common city sub-areas to cover the city more completely.",
+      "sub_localities": [
+        "Civil Lines",
+        "Sikandra",
+        "Khandari",
+        "Kamla Nagar",
+        "Dayal Bagh",
+        "Sadar Bazaar",
+        "Tajganj",
+        "Shahganj",
+        "Loha Mandi",
+        "Fatehabad Road"
+      ]
+    },
+    "qe-ahmedabad-cars": {
+      "queries": [
+        "car dealers in Ahmedabad",
+        "car dealership in Ahmedabad",
+        "used car dealers in Ahmedabad",
+        "used car dealership in Ahmedabad"
+      ],
+      "reason": "Varied the business type wording for car sales and kept Ahmedabad unchanged; added major Ahmedabad localities to cover the city piece by piece.",
+      "sub_localities": [
+        "Bopal",
+        "Maninagar",
+        "Navrangpura",
+        "Satellite",
+        "SG Highway",
+        "Thaltej",
+        "Vastrapur",
+        "Gota",
+        "Naranpura",
+        "Paldi",
+        "Naroda",
+        "Memnagar"
+      ]
+    },
+    "qe-amsterdam-opticians": {
+      "queries": [
+        "opticians in Amsterdam",
+        "optician Amsterdam",
+        "optical store Amsterdam",
+        "eyewear store Amsterdam",
+        "brillenzaak Amsterdam"
+      ],
+      "reason": "Varied the business name terms for opticians while keeping Amsterdam unchanged; added common Amsterdam areas to cover the city more completely.",
+      "sub_localities": [
+        "Amsterdam-Centrum",
+        "Amsterdam-Zuid",
+        "Amsterdam-West",
+        "Amsterdam-Oost",
+        "Amsterdam-Noord",
+        "Amsterdam Nieuw-West",
+        "Amsterdam Zuidoost"
+      ]
+    },
+    "qe-bandra-salons": {
+      "queries": [
+        "salons in Bandra Mumbai",
+        "beauty salon in Bandra Mumbai",
+        "hair salon in Bandra Mumbai",
+        "unisex salon in Bandra Mumbai"
+      ],
+      "reason": "Varied the business name from salons to common local and narrower salon types, and split Bandra into its commonly used sub-areas.",
+      "sub_localities": [
+        "Bandra West",
+        "Bandra East"
+      ]
+    },
+    "qe-bangalore-cafes": {
+      "queries": [
+        "cafes in Bangalore",
+        "coffee shops in Bangalore",
+        "tea cafes in Bangalore",
+        "espresso bars in Bangalore",
+        "bakeries in Bangalore"
+      ],
+      "reason": "Varied the business type synonyms for cafe while keeping Bangalore, and added major Bangalore localities to cover the city in searchable pieces.",
+      "sub_localities": [
+        "Koramangala",
+        "Indiranagar",
+        "Jayanagar",
+        "Whitefield",
+        "HSR Layout",
+        "Marathahalli",
+        "Electronic City",
+        "JP Nagar",
+        "MG Road",
+        "Malleshwaram",
+        "Rajajinagar",
+        "Bannerghatta Road"
+      ]
+    },
+    "qe-bangalore-funding": {
+      "queries": [
+        "startups in Bangalore",
+        "startup in Bangalore",
+        "tech startups in Bangalore",
+        "Bangalore startups",
+        "software startups in Bangalore"
+      ],
+      "reason": "Varied the business type terms around startups and kept Bangalore as the place, while removing the funding-stage filter that maps searches cannot use.",
+      "sub_localities": [
+        "Koramangala",
+        "Indiranagar",
+        "HSR Layout",
+        "Whitefield",
+        "Electronic City",
+        "BTM Layout",
+        "Jayanagar",
+        "JP Nagar",
+        "HSR Layout Sector 1",
+        "Bellandur",
+        "Marathahalli",
+        "Domlur"
+      ]
+    },
+    "qe-berlin-bakeries": {
+      "queries": [
+        "bakeries in Berlin",
+        "bakery in Berlin",
+        "bread shop in Berlin",
+        "patisserie in Berlin",
+        "backshop in Berlin"
+      ],
+      "reason": "Varied the business type names used by bakeries and split Berlin into common districts to cover the city more completely.",
+      "sub_localities": [
+        "Mitte",
+        "Prenzlauer Berg",
+        "Kreuzberg",
+        "Friedrichshain",
+        "Charlottenburg",
+        "Neuk\u00f6lln",
+        "Sch\u00f6neberg",
+        "Wilmersdorf",
+        "Tempelhof",
+        "Steglitz",
+        "Spandau",
+        "Wedding"
+      ]
+    },
+    "qe-bhopal-parlour": {
+      "queries": [
+        "beauty parlours in Bhopal",
+        "beauty salon in Bhopal",
+        "beauty clinic in Bhopal",
+        "unisex salon in Bhopal",
+        "women's beauty parlour in Bhopal"
+      ],
+      "reason": "Varied the business type wording for beauty parlours and added common Bhopal area names to cover the city more completely.",
+      "sub_localities": [
+        "Arera Colony",
+        "M.P. Nagar",
+        "Habibganj",
+        "Kolar Road",
+        "Gautam Nagar",
+        "Shahpura",
+        "TT Nagar",
+        "Old Bhopal",
+        "Bairagarh",
+        "Kohefiza",
+        "Lalghati",
+        "Chuna Bhatti"
+      ]
+    },
+    "qe-california-labs": {
+      "queries": [
+        "dental labs in California",
+        "dental laboratory in California",
+        "dental lab in California",
+        "denture lab in California"
+      ],
+      "reason": "Varied the business type wording while keeping the same place and trade.",
+      "sub_localities": []
+    },
+    "qe-capetown-cafes": {
+      "queries": [
+        "cafes in Cape Town",
+        "coffee shops in Cape Town",
+        "coffee house in Cape Town",
+        "tea room in Cape Town"
+      ],
+      "reason": "Varied the business name for cafes and added common Cape Town area names to cover the city more completely.",
+      "sub_localities": [
+        "City Bowl",
+        "Atlantic Seaboard",
+        "Southern Suburbs",
+        "Northern Suburbs",
+        "Cape Flats",
+        "Helderberg",
+        "Table View",
+        "Wynberg",
+        "Rondebosch",
+        "Claremont",
+        "Observatory",
+        "Woodstock"
+      ]
+    },
+    "qe-chandigarh-interiors": {
+      "queries": [
+        "interior designers in Chandigarh",
+        "interior design services in Chandigarh",
+        "interior decorator in Chandigarh",
+        "interior design studio in Chandigarh",
+        "interior design firm in Chandigarh"
+      ],
+      "reason": "Varied the business type wording for interior design while keeping Chandigarh, and added common Chandigarh sectors to cover the city piece by piece.",
+      "sub_localities": [
+        "Sector 17",
+        "Sector 22",
+        "Sector 35",
+        "Sector 8",
+        "Sector 9",
+        "Sector 10",
+        "Sector 11",
+        "Sector 15",
+        "Sector 16",
+        "Sector 18",
+        "Sector 19",
+        "Sector 20",
+        "Sector 21",
+        "Sector 26",
+        "Sector 34"
+      ]
+    },
+    "qe-chennai-restaurants": {
+      "queries": [
+        "restaurants in Chennai",
+        "dining restaurants in Chennai",
+        "food restaurants in Chennai",
+        "family restaurants in Chennai",
+        "multi cuisine restaurants in Chennai"
+      ],
+      "reason": "Varied the business type by common restaurant subtypes while keeping Chennai unchanged.",
+      "sub_localities": [
+        "T. Nagar",
+        "Anna Nagar",
+        "Adyar",
+        "Velachery",
+        "Nungambakkam",
+        "Kilpauk",
+        "Mylapore",
+        "Besant Nagar",
+        "Kotturpuram",
+        "Alwarpet",
+        "Guindy",
+        "Alandur"
+      ]
+    },
+    "qe-chicago-plumbers": {
+      "queries": [
+        "plumbers in Chicago",
+        "plumbing company in Chicago",
+        "plumbing contractor in Chicago",
+        "emergency plumber in Chicago",
+        "24 hour plumber in Chicago"
+      ],
+      "reason": "Varied the business type wording for plumbing services in Chicago and added major Chicago neighborhoods to cover the city piece by piece.",
+      "sub_localities": [
+        "The Loop",
+        "River North",
+        "Streeterville",
+        "Lincoln Park",
+        "Lakeview",
+        "Wicker Park",
+        "Bucktown",
+        "West Loop",
+        "Hyde Park",
+        "Logan Square",
+        "Lincoln Square",
+        "South Loop"
+      ]
+    },
+    "qe-chikmagalur-hardware": {
+      "queries": [
+        "hardware shops in Chikmagalur",
+        "hardware store in Chikmagalur",
+        "building materials store in Chikmagalur",
+        "furniture hardware shop in Chikmagalur",
+        "electrical hardware shop in Chikmagalur"
+      ],
+      "reason": "Varied the shop type wording for hardware retailers while keeping Chikmagalur unchanged.",
+      "sub_localities": []
+    },
+    "qe-coimbatore-employees": {
+      "queries": [
+        "manufacturers in Coimbatore",
+        "manufacturer in Coimbatore",
+        "manufacturing company in Coimbatore",
+        "factory in Coimbatore",
+        "industrial unit in Coimbatore"
+      ],
+      "reason": "I kept the place and trade, removed the employee-count filter, and varied the searches by common business names used for manufacturers in Coimbatore.",
+      "sub_localities": [
+        "Gandhipuram",
+        "R.S. Puram",
+        "Saibaba Colony",
+        "Singanallur",
+        "Peelamedu",
+        "Race Course",
+        "Tidel Park",
+        "Ukkadam",
+        "Podanur",
+        "Vadavalli",
+        "Saravanampatti",
+        "Kovai Pudur"
+      ]
+    },
+    "qe-coimbatore-laundry": {
+      "queries": [
+        "laundry services in Coimbatore",
+        "laundry in Coimbatore",
+        "laundry service in Coimbatore",
+        "dry cleaners in Coimbatore"
+      ],
+      "reason": "Varied the business name from laundry services to common map-search terms like laundry and dry cleaners, while keeping Coimbatore unchanged.",
+      "sub_localities": [
+        "RS Puram",
+        "Saibaba Colony",
+        "Gandhipuram",
+        "Peelamedu",
+        "Singanallur",
+        "Saravanampatti",
+        "Race Course",
+        "Tidel Park",
+        "Kuniyamuthur",
+        "Vadavalli"
+      ]
+    },
+    "qe-cp-cafes": {
+      "queries": [
+        "cafes in Connaught Place Delhi",
+        "coffee shops in Connaught Place Delhi",
+        "restaurants in Connaught Place Delhi",
+        "bakeries in Connaught Place Delhi"
+      ],
+      "reason": "Varied the business type wording for cafes while keeping Connaught Place, Delhi fixed; added nearby named areas inside central Delhi to cover the search area piece by piece.",
+      "sub_localities": [
+        "Connaught Place",
+        "Rajiv Chowk",
+        "Khan Market",
+        "Mandi House",
+        "Barakhamba Road",
+        "Janpath",
+        "Parliament Street",
+        "Paharganj",
+        "Karol Bagh",
+        "Chanakyapuri",
+        "Kasturba Gandhi Marg",
+        "Connaught Circus"
+      ]
+    },
+    "qe-delhi-rating-filter": {
+      "queries": [
+        "restaurants in Delhi",
+        "restaurant in Delhi",
+        "dining restaurants in Delhi",
+        "family restaurants in Delhi",
+        "multi cuisine restaurants in Delhi"
+      ],
+      "reason": "Varied the search terms for restaurant type and removed the rating filter because maps searches cannot match it.",
+      "sub_localities": [
+        "Connaught Place",
+        "Karol Bagh",
+        "Lajpat Nagar",
+        "Saket",
+        "Hauz Khas",
+        "Defence Colony",
+        "Greater Kailash",
+        "Rajouri Garden",
+        "South Extension",
+        "Khan Market",
+        "Noida",
+        "Gurgaon"
+      ]
+    },
+    "qe-delhi-restaurants": {
+      "queries": [
+        "restaurants in Delhi",
+        "dining restaurants in Delhi",
+        "eating places in Delhi",
+        "food restaurants in Delhi"
+      ],
+      "reason": "Varied the restaurant wording while keeping Delhi, and added major Delhi localities to cover the city piece by piece.",
+      "sub_localities": [
+        "Connaught Place",
+        "Karol Bagh",
+        "Lajpat Nagar",
+        "Saket",
+        "Hauz Khas",
+        "South Extension",
+        "Rajouri Garden",
+        "Dwarka",
+        "Pitampura",
+        "Greater Kailash",
+        "Defence Colony",
+        "Nehru Place"
+      ]
+    },
+    "qe-delhi-schools": {
+      "queries": [
+        "schools in Delhi",
+        "school in Delhi",
+        "primary school in Delhi",
+        "secondary school in Delhi",
+        "high school in Delhi",
+        "senior secondary school in Delhi",
+        "public school in Delhi",
+        "private school in Delhi"
+      ],
+      "reason": "I varied the school type terms to capture common ways schools are listed and added Delhi sub-localities to cover the city piece by piece.",
+      "sub_localities": [
+        "Connaught Place",
+        "Karol Bagh",
+        "Rajouri Garden",
+        "Janakpuri",
+        "Dwarka",
+        "Saket",
+        "Lajpat Nagar",
+        "Greater Kailash",
+        "Hauz Khas",
+        "South Extension",
+        "Preet Vihar",
+        "Mayur Vihar",
+        "Pitampura",
+        "Rohini",
+        "Vasant Kunj",
+        "Defence Colony"
+      ]
+    },
+    "qe-dubai-restaurants": {
+      "queries": [
+        "restaurants in Dubai",
+        "restaurant in Dubai",
+        "dining in Dubai",
+        "eatery in Dubai",
+        "food court in Dubai"
+      ],
+      "reason": "I varied the business type wording while keeping Dubai fixed, and added major Dubai sub-areas to cover the city piece by piece.",
+      "sub_localities": [
+        "Deira",
+        "Bur Dubai",
+        "Jumeirah",
+        "Al Barsha",
+        "Dubai Marina",
+        "Downtown Dubai",
+        "Business Bay",
+        "Jumeirah Lake Towers",
+        "Palm Jumeirah",
+        "Al Quoz",
+        "Satwa",
+        "Karama"
+      ]
+    },
+    "qe-dublin-accountants": {
+      "queries": [
+        "accountants in Dublin",
+        "chartered accountants in Dublin",
+        "accounting firm in Dublin",
+        "accountancy firm in Dublin",
+        "tax consultant in Dublin"
+      ],
+      "reason": "I varied the business type names used for accountants and covered common Dublin sub-areas to help map search coverage.",
+      "sub_localities": [
+        "Dublin 1",
+        "Dublin 2",
+        "Dublin 4",
+        "Dublin 6",
+        "Dublin 8",
+        "Dublin 9",
+        "Dublin 10",
+        "Dublin 12",
+        "Dublin 14",
+        "Dublin 15",
+        "Dublin 16",
+        "Dublin 18"
+      ]
+    },
+    "qe-faridabad-movers": {
+      "queries": [
+        "packers and movers in Faridabad",
+        "moving company in Faridabad",
+        "movers and packers in Faridabad",
+        "relocation services in Faridabad"
+      ],
+      "reason": "Varied the business name terms for relocation services while keeping Faridabad unchanged.",
+      "sub_localities": [
+        "Ballabgarh",
+        "Sector 15",
+        "Sector 16",
+        "Sector 21",
+        "Sector 28",
+        "Sector 37",
+        "NIT Faridabad",
+        "Old Faridabad",
+        "Greater Faridabad",
+        "Green Fields Colony",
+        "Surajkund",
+        "Pali",
+        "Charmwood Village",
+        "Spring Field Colony"
+      ]
+    },
+    "qe-germany-software": {
+      "queries": [
+        "software companies in Germany",
+        "software company in Germany",
+        "software development company in Germany",
+        "software engineering company in Germany",
+        "IT consulting company in Germany"
+      ],
+      "reason": "Varied the business type wording while keeping the same country and trade.",
+      "sub_localities": []
+    },
+    "qe-guwahati-mobile": {
+      "queries": [
+        "mobile repair shops in Guwahati",
+        "mobile phone repair in Guwahati",
+        "cell phone repair in Guwahati",
+        "phone repair shop in Guwahati"
+      ],
+      "reason": "Varied the business type wording for mobile repair while keeping Guwahati unchanged, and added major Guwahati localities to cover the city more completely.",
+      "sub_localities": [
+        "Beltola",
+        "Dispur",
+        "Six Mile",
+        "Ganeshguri",
+        "Zoo Road",
+        "Ulubari",
+        "Bharalumukh",
+        "Pan Bazaar",
+        "G.S. Road",
+        "Maligaon",
+        "Paltan Bazaar",
+        "Silpukhuri"
+      ]
+    },
+    "qe-hyderabad-it": {
+      "queries": [
+        "IT companies in Hyderabad",
+        "software companies in Hyderabad",
+        "software development companies in Hyderabad",
+        "IT services companies in Hyderabad",
+        "tech companies in Hyderabad"
+      ],
+      "reason": "Varied the business type wording for IT firms and added major Hyderabad localities to cover the city piece by piece.",
+      "sub_localities": [
+        "HITEC City",
+        "Madhapur",
+        "Gachibowli",
+        "Kondapur",
+        "Jubilee Hills",
+        "Banjara Hills",
+        "Begumpet",
+        "Ameerpet",
+        "Kukatpally",
+        "Secunderabad",
+        "Kukatpally Housing Board Colony",
+        "Financial District"
+      ]
+    },
+    "qe-hyderabad-pk": {
+      "queries": [
+        "cafes in Hyderabad",
+        "coffee shop in Hyderabad",
+        "cafe in Hyderabad",
+        "tea house in Hyderabad"
+      ],
+      "reason": "Varied the venue type terms while keeping Hyderabad, Pakistan, and added common Hyderabad sub-areas to cover the city.",
+      "sub_localities": [
+        "Latifabad",
+        "Qasimabad",
+        "Old Hyderabad",
+        "Auto Bhan Road",
+        "Unit No. 7",
+        "Unit No. 8",
+        "Unit No. 9",
+        "Unit No. 10"
+      ]
+    },
+    "qe-hyderabad-staff": {
+      "queries": [
+        "gyms in Hyderabad",
+        "fitness center in Hyderabad",
+        "gymnasium in Hyderabad",
+        "health club in Hyderabad",
+        "fitness studio in Hyderabad"
+      ],
+      "reason": "Varied the business type wording for gyms in Hyderabad and removed the staff-count filter because maps searches cannot match it.",
+      "sub_localities": [
+        "Ameerpet",
+        "Banjara Hills",
+        "Begumpet",
+        "Gachibowli",
+        "Hitech City",
+        "Jubilee Hills",
+        "Kukatpally",
+        "Madhapur",
+        "Mehdipatnam",
+        "Secunderabad",
+        "Somajiguda",
+        "Kondapur"
+      ]
+    },
+    "qe-india-dental": {
+      "queries": [
+        "dental clinics in India",
+        "dentist in India",
+        "dental surgery in India",
+        "dental hospital in India",
+        "orthodontist in India",
+        "dental implant clinic in India"
+      ],
+      "reason": "Varied the business type synonyms and narrower dental specialties while keeping the place as India.",
+      "sub_localities": []
+    },
+    "qe-indore-tiffin": {
+      "queries": [
+        "tiffin services in Indore",
+        "tiffin service in Indore",
+        "home caterers in Indore",
+        "home food delivery in Indore",
+        "dabba service in Indore"
+      ],
+      "reason": "I varied the business name terms for tiffin-related providers and added common Indore area names to cover the city in parts.",
+      "sub_localities": [
+        "Vijay Nagar",
+        "Palasia",
+        "South Tukoganj",
+        "Old Palasia",
+        "Bhawarkuan",
+        "Sapna Sangeeta",
+        "Rajwada",
+        "Race Course Road",
+        "Scheme 54",
+        "Scheme 78",
+        "Annapurna Road",
+        "Navlakha"
+      ]
+    },
+    "qe-jaipur-coaching": {
+      "queries": [
+        "coaching centres in Jaipur",
+        "coaching institute in Jaipur",
+        "tuition centre in Jaipur",
+        "tutorial centre in Jaipur",
+        "coaching classes in Jaipur"
+      ],
+      "reason": "Varied the business name terms used for coaching centres while keeping Jaipur unchanged.",
+      "sub_localities": [
+        "Mansarovar",
+        "Vaishali Nagar",
+        "Malviya Nagar",
+        "Jagatpura",
+        "Sanganer",
+        "C Scheme",
+        "Shyam Nagar",
+        "Ajmer Road",
+        "Tonk Road",
+        "Raja Park",
+        "M.I. Road",
+        "Jhotwara"
+      ]
+    },
+    "qe-jakarta-gyms": {
+      "queries": [
+        "gyms in Jakarta",
+        "fitness center in Jakarta",
+        "gymnasium in Jakarta",
+        "health club in Jakarta",
+        "fitness club in Jakarta"
+      ],
+      "reason": "I varied the gym trade into common business names used for the same kind of place and split Jakarta into its main sub-areas to cover the city.",
+      "sub_localities": [
+        "Central Jakarta",
+        "West Jakarta",
+        "South Jakarta",
+        "East Jakarta",
+        "North Jakarta",
+        "Kemang",
+        "Kebayoran Baru",
+        "Menteng",
+        "Senayan",
+        "Sudirman",
+        "Kuningan",
+        "Pluit",
+        "Puri Indah",
+        "Tanjung Priok",
+        "Cengkareng"
+      ]
+    },
+    "qe-kanpur-medical": {
+      "queries": [
+        "medical stores in Kanpur",
+        "medical store in Kanpur",
+        "pharmacy in Kanpur",
+        "chemist in Kanpur",
+        "medicine shop in Kanpur"
+      ],
+      "reason": "I varied the store name terms used by businesses and added common Kanpur localities to cover the city more completely.",
+      "sub_localities": [
+        "Arya Nagar",
+        "Civil Lines",
+        "Swaroop Nagar",
+        "Kidwai Nagar",
+        "Govind Nagar",
+        "Shastri Nagar",
+        "Saket Nagar",
+        "Kakadeo",
+        "Nawabganj",
+        "Panki",
+        "Ratan Lal Nagar",
+        "Juhi"
+      ]
+    },
+    "qe-karnal-dhaba": {
+      "queries": [
+        "dhabas in Karnal",
+        "dhaba in Karnal",
+        "roadside dhaba in Karnal",
+        "truck dhaba in Karnal"
+      ],
+      "reason": "Varied the business name forms for dhabas while keeping Karnal fixed, and added common Karnal sub-areas to cover the city piece by piece.",
+      "sub_localities": [
+        "Model Town",
+        "Sector 6",
+        "Sector 7",
+        "Sector 8",
+        "Sector 9",
+        "Sector 12",
+        "Sector 13",
+        "Sector 14",
+        "Sector 32",
+        "Ashok Vihar",
+        "Gharaunda Road",
+        "Kalpana Chawla Chowk"
+      ]
+    },
+    "qe-kerala-logistics": {
+      "queries": [
+        "logistics companies in Kerala",
+        "logistics services in Kerala",
+        "transport companies in Kerala",
+        "cargo services in Kerala",
+        "freight services in Kerala"
+      ],
+      "reason": "Varied the business type wording for logistics-related companies while keeping Kerala unchanged.",
+      "sub_localities": []
+    },
+    "qe-kl-restaurants": {
+      "queries": [
+        "restaurants in Kuala Lumpur",
+        "dining restaurants in Kuala Lumpur",
+        "eateries in Kuala Lumpur",
+        "cafe restaurants in Kuala Lumpur",
+        "bistros in Kuala Lumpur"
+      ],
+      "reason": "I varied the search by restaurant synonym and common subtypes, while keeping Kuala Lumpur fixed.",
+      "sub_localities": [
+        "Bukit Bintang",
+        "KLCC",
+        "Chow Kit",
+        "Brickfields",
+        "Bangsar",
+        "Mont Kiara",
+        "Petaling Street",
+        "Mid Valley City",
+        "Damansara Heights",
+        "Cheras",
+        "Kepong",
+        "Taman Tun Dr Ismail"
+      ]
+    },
+    "qe-kochi-bookshops": {
+      "queries": [
+        "bookshops in Kochi",
+        "bookstores in Kochi",
+        "book store in Kochi",
+        "book shop in Kochi"
+      ],
+      "reason": "Varied the shop name used for bookstores while keeping Kochi fixed, and added common Kochi sub-areas to cover the city.",
+      "sub_localities": [
+        "Ernakulam",
+        "Fort Kochi",
+        "Mattancherry",
+        "Palarivattom",
+        "Kaloor",
+        "Edappally",
+        "Kakkanad",
+        "Kadavanthra",
+        "Panampilly Nagar",
+        "Vyttila",
+        "Aluva",
+        "Thrippunithura"
+      ]
+    },
+    "qe-kolkata-boutiques": {
+      "queries": [
+        "boutiques in Kolkata",
+        "fashion boutiques in Kolkata",
+        "designer boutiques in Kolkata",
+        "bridal boutiques in Kolkata",
+        "women's boutiques in Kolkata"
+      ],
+      "reason": "Varied the business type wording for boutiques while keeping Kolkata fixed, and added major Kolkata sub-localities to cover the city piece by piece.",
+      "sub_localities": [
+        "Ballygunge",
+        "Park Street",
+        "Salt Lake",
+        "Gariahat",
+        "New Alipore",
+        "Bhowanipore",
+        "Jodhpur Park",
+        "Alipore",
+        "Kasba",
+        "Tollygunge",
+        "Behala",
+        "Lake Gardens"
+      ]
+    },
+    "qe-konkan-suppliers": {
+      "queries": [
+        "suppliers in Konkan",
+        "wholesalers in Konkan",
+        "distributors in Konkan",
+        "traders in Konkan"
+      ],
+      "reason": "Varied the business type terms while keeping the same place reference, since the request is broad and maps searches cannot target 'serving' directly.",
+      "sub_localities": []
+    },
+    "qe-koramangala-gyms": {
+      "queries": [
+        "gyms in Koramangala Bangalore",
+        "fitness center in Koramangala Bangalore",
+        "health club in Koramangala Bangalore",
+        "gymnasium in Koramangala Bangalore"
+      ],
+      "reason": "Varied the business name from gyms to common signboard terms for fitness businesses while keeping Koramangala, Bangalore unchanged.",
+      "sub_localities": [
+        "Koramangala 1st Block",
+        "Koramangala 2nd Block",
+        "Koramangala 3rd Block",
+        "Koramangala 4th Block",
+        "Koramangala 5th Block",
+        "Koramangala 6th Block",
+        "Koramangala 7th Block",
+        "Koramangala 8th Block"
+      ]
+    },
+    "qe-lagos-hotels": {
+      "queries": [
+        "hotels in Lagos",
+        "hotel in Lagos",
+        "lodges in Lagos",
+        "guest house in Lagos",
+        "boutique hotel in Lagos"
+      ],
+      "reason": "Varied the accommodation type terms while keeping Lagos fixed, and added major Lagos sub-areas to cover the city piece by piece.",
+      "sub_localities": [
+        "Ikeja",
+        "Victoria Island",
+        "Lekki",
+        "Surulere",
+        "Yaba",
+        "Maryland",
+        "Ikoyi",
+        "Ajah",
+        "Ojodu",
+        "Mushin",
+        "Festac Town",
+        "Magodo"
+      ]
+    },
+    "qe-london-coffee": {
+      "queries": [
+        "coffee shops in London",
+        "cafe in London",
+        "coffee house in London",
+        "espresso bar in London",
+        "specialty coffee shop in London"
+      ],
+      "reason": "Varied the business type wording for coffee shops in London and added London sub-areas to cover the city piece by piece.",
+      "sub_localities": [
+        "Camden",
+        "Chelsea",
+        "City of London",
+        "Clapham",
+        "Croydon",
+        "Dalston",
+        "Deptford",
+        "Fulham",
+        "Greenwich",
+        "Hackney",
+        "Islington",
+        "Kensington",
+        "Kingston upon Thames",
+        "Notting Hill",
+        "Shoreditch",
+        "Southwark"
+      ]
+    },
+    "qe-lucknow-hospitals": {
+      "queries": [
+        "hospitals in Lucknow",
+        "multispeciality hospital in Lucknow",
+        "super speciality hospital in Lucknow",
+        "private hospital in Lucknow",
+        "general hospital in Lucknow"
+      ],
+      "reason": "Varied the search by hospital type while keeping Lucknow fixed, and listed major Lucknow localities to cover the city piece by piece.",
+      "sub_localities": [
+        "Hazratganj",
+        "Gomti Nagar",
+        "Indira Nagar",
+        "Aliganj",
+        "Mahanagar",
+        "Aminabad",
+        "Rajajipuram",
+        "Chinhat",
+        "Jankipuram",
+        "Vikas Nagar",
+        "Gomti Nagar Extension",
+        "Vrindavan Colony"
+      ]
+    },
+    "qe-ludhiana-hardware": {
+      "queries": [
+        "hardware shops in Ludhiana",
+        "hardware store in Ludhiana",
+        "building materials store in Ludhiana",
+        "home improvement store in Ludhiana"
+      ],
+      "reason": "Varied the trade wording for hardware retail and added common Ludhiana localities to cover the city more completely.",
+      "sub_localities": [
+        "Model Town",
+        "Civil Lines",
+        "BRS Nagar",
+        "Focal Point",
+        "Sarabha Nagar",
+        "Gill Road",
+        "Chandigarh Road",
+        "Hambran Road",
+        "Pakhowal Road",
+        "Dugri",
+        "Haibowal Kalan",
+        "Miller Ganj"
+      ]
+    },
+    "qe-manchester-dentists": {
+      "queries": [
+        "dentists in Manchester",
+        "dental clinic in Manchester",
+        "dental surgery in Manchester",
+        "dentist in Manchester",
+        "orthodontist in Manchester",
+        "dental implant clinic in Manchester"
+      ],
+      "reason": "I varied the business name by using common dental trade variants and narrower clinic types, while keeping Manchester unchanged.",
+      "sub_localities": [
+        "Manchester City Centre",
+        "Ancoats",
+        "Chorlton-cum-Hardy",
+        "Didsbury",
+        "Fallowfield",
+        "Hulme",
+        "Northern Quarter",
+        "Salford Quays",
+        "Harpurhey",
+        "Rusholme",
+        "Withington",
+        "Longsight"
+      ]
+    },
+    "qe-mumbai-founded": {
+      "queries": [
+        "companies in Mumbai",
+        "businesses in Mumbai",
+        "firms in Mumbai",
+        "enterprises in Mumbai",
+        "Mumbai companies"
+      ],
+      "reason": "I varied the business wordings for companies in Mumbai and removed the year filter because maps search cannot match it.",
+      "sub_localities": [
+        "Andheri",
+        "Bandra",
+        "Borivali",
+        "Chembur",
+        "Dadar",
+        "Ghatkopar",
+        "Goregaon",
+        "Juhu",
+        "Kandivali",
+        "Lower Parel",
+        "Malad",
+        "Mulund",
+        "Powai",
+        "Sion",
+        "Thane",
+        "Vashi"
+      ]
+    },
+    "qe-mumbai-gyms": {
+      "queries": [
+        "gyms in Mumbai",
+        "fitness center in Mumbai",
+        "fitness centre in Mumbai",
+        "gymnasium in Mumbai",
+        "health club in Mumbai"
+      ],
+      "reason": "Varied the business type terms used for gyms while keeping Mumbai fixed, and added common Mumbai sub-localities to cover the city piece by piece.",
+      "sub_localities": [
+        "Andheri East",
+        "Andheri West",
+        "Bandra West",
+        "Bandra East",
+        "Borivali West",
+        "Borivali East",
+        "Dadar West",
+        "Dadar East",
+        "Goregaon West",
+        "Goregaon East",
+        "Juhu",
+        "Kandivali West"
+      ]
+    },
+    "qe-mysuru-vets": {
+      "queries": [
+        "veterinary clinics in Mysuru",
+        "veterinary hospital in Mysuru",
+        "animal hospital in Mysuru",
+        "pet clinic in Mysuru",
+        "vet clinic in Mysuru"
+      ],
+      "reason": "Varied the business name form for veterinary services in Mysuru while keeping the place fixed.",
+      "sub_localities": [
+        "VV Mohalla",
+        "Saraswathipuram",
+        "Lakshmipuram",
+        "Chamrajpura",
+        "Kuvempunagar",
+        "Jayanagar",
+        "Nazarbad",
+        "Gokulam",
+        "Bogadi",
+        "Hebbal",
+        "Vijayanagar",
+        "Yadavagiri"
+      ]
+    },
+    "qe-nagpur-kirana": {
+      "queries": [
+        "kirana stores in Nagpur",
+        "grocery stores in Nagpur",
+        "general stores in Nagpur",
+        "provision stores in Nagpur",
+        "departmental stores in Nagpur"
+      ],
+      "reason": "Varied the shop type terms commonly used for kirana-style businesses while keeping Nagpur fixed, and added major Nagpur localities to cover the city piece by piece.",
+      "sub_localities": [
+        "Sitabuldi",
+        "Dhantoli",
+        "Sadar",
+        "Civil Lines",
+        "Mahal",
+        "Dharampeth",
+        "Shankar Nagar",
+        "Pratap Nagar",
+        "Manish Nagar",
+        "Khamla",
+        "Wardhaman Nagar",
+        "Mankapur"
+      ]
+    },
+    "qe-nagpur-like-haldiram": {
+      "queries": [
+        "sweet shops in Nagpur",
+        "mithai shops in Nagpur",
+        "sweets shop in Nagpur",
+        "sweet stores in Nagpur"
+      ],
+      "reason": "I varied the shop type wording into common local terms for sweet retailers while keeping Nagpur unchanged.",
+      "sub_localities": [
+        "Dharampeth",
+        "Sitabuldi",
+        "Sadar",
+        "Civil Lines",
+        "Ramdaspeth",
+        "Mahal",
+        "Nandanvan",
+        "Manish Nagar",
+        "Pratap Nagar",
+        "Mankapur",
+        "Jaripatka",
+        "Dhantoli"
+      ]
+    },
+    "qe-noida-pg": {
+      "queries": [
+        "PG accommodation in Noida",
+        "paying guest accommodation in Noida",
+        "PG hostel in Noida",
+        "paying guest hostel in Noida",
+        "hostel in Noida"
+      ],
+      "reason": "Varied the accommodation term into common map-search names and listed major Noida sectors to cover the city piece by piece.",
+      "sub_localities": [
+        "Sector 62",
+        "Sector 63",
+        "Sector 18",
+        "Sector 15",
+        "Sector 16",
+        "Sector 19",
+        "Sector 22",
+        "Sector 44",
+        "Sector 49",
+        "Sector 50",
+        "Sector 51",
+        "Sector 52",
+        "Sector 55",
+        "Sector 56",
+        "Sector 137"
+      ]
+    },
+    "qe-noplace-ancillary": {
+      "queries": [
+        "auto ancillary units in India",
+        "auto parts manufacturers in India",
+        "automotive components manufacturers in India",
+        "auto component manufacturers in India",
+        "auto parts suppliers in India"
+      ],
+      "reason": "Varied the business type wording around auto ancillary units while keeping the country fixed.",
+      "sub_localities": []
+    },
+    "qe-noplace-textiles": {
+      "queries": [
+        "textile export houses in India",
+        "textile exporters in India",
+        "export house textiles in India",
+        "textile trading companies in India"
+      ],
+      "reason": "Varied the business type wording around export houses and textile exporters while keeping the same place.",
+      "sub_localities": []
+    },
+    "qe-noplace-wholesale": {
+      "queries": [
+        "wholesale distributors in India",
+        "wholesale dealers in India",
+        "wholesalers in India",
+        "distributors in India",
+        "stockists in India"
+      ],
+      "reason": "Varied the business type wording while keeping the same place and trade.",
+      "sub_localities": []
+    },
+    "qe-nyc-dentists": {
+      "queries": [
+        "dentists in New York",
+        "dental clinic in New York",
+        "dental surgery in New York",
+        "orthodontist in New York",
+        "dental implant clinic in New York"
+      ],
+      "reason": "Varied the business type wording for dental practices in New York and split the city into common local areas to cover it more completely.",
+      "sub_localities": [
+        "Manhattan",
+        "Brooklyn",
+        "Queens",
+        "The Bronx",
+        "Staten Island",
+        "Upper East Side",
+        "Upper West Side",
+        "Midtown",
+        "Chelsea",
+        "Harlem",
+        "Financial District",
+        "Williamsburg"
+      ]
+    },
+    "qe-nz-farms": {
+      "queries": [
+        "farms in New Zealand",
+        "dairy farms in New Zealand",
+        "sheep farms in New Zealand",
+        "beef farms in New Zealand"
+      ],
+      "reason": "Varied the farm type while keeping the same country-wide place and trade.",
+      "sub_localities": []
+    },
+    "qe-odisha-diagnostics": {
+      "queries": [
+        "diagnostic centres in Odisha",
+        "diagnostic center in Odisha",
+        "diagnostic lab in Odisha",
+        "pathology lab in Odisha"
+      ],
+      "reason": "Varied the business name from diagnostic centres to common map-search terms like diagnostic center and diagnostic lab while keeping Odisha unchanged.",
+      "sub_localities": []
+    },
+    "qe-patna-tuition": {
+      "queries": [
+        "tuition centres in Patna",
+        "coaching centre in Patna",
+        "coaching institute in Patna",
+        "tuition classes in Patna",
+        "study centre in Patna"
+      ],
+      "reason": "Varied the business type terms used for tuition businesses and added major Patna sub-localities to cover the city more completely.",
+      "sub_localities": [
+        "Kankarbagh",
+        "Boring Road",
+        "S.K. Puri",
+        "Rajendra Nagar",
+        "Patliputra Colony",
+        "Bailey Road",
+        "Buddha Colony",
+        "Exhibition Road",
+        "Gandhi Maidan",
+        "Ashiana Nagar",
+        "Fraser Road",
+        "Danapur"
+      ]
+    },
+    "qe-pithoragarh-pharmacy": {
+      "queries": [
+        "pharmacies in Pithoragarh",
+        "medical store in Pithoragarh",
+        "chemist in Pithoragarh",
+        "drugstore in Pithoragarh"
+      ],
+      "reason": "I varied the shop name terms used for pharmacies and kept the place fixed as Pithoragarh.",
+      "sub_localities": []
+    },
+    "qe-pune-dental": {
+      "queries": [
+        "dental clinics in Pune",
+        "dentist in Pune",
+        "dental surgery in Pune",
+        "orthodontist in Pune",
+        "dental implant clinic in Pune"
+      ],
+      "reason": "Varied the business type wording for dental practices while keeping Pune fixed, and added common Pune sub-localities to cover the city piece by piece.",
+      "sub_localities": [
+        "Kothrud",
+        "Hinjawadi",
+        "Wakad",
+        "Baner",
+        "Aundh",
+        "Viman Nagar",
+        "Koregaon Park",
+        "Hadapsar",
+        "Kharadi",
+        "Wagholi",
+        "Pimpri",
+        "Nigdi"
+      ]
+    },
+    "qe-pune-gyms-plain": {
+      "queries": [
+        "gyms in Pune",
+        "fitness center in Pune",
+        "health club in Pune",
+        "gymnasium in Pune",
+        "workout studio in Pune"
+      ],
+      "reason": "Varied the business name terms for gyms and split Pune into common local areas to cover the city.",
+      "sub_localities": [
+        "Kothrud",
+        "Hinjawadi",
+        "Wakad",
+        "Baner",
+        "Aundh",
+        "Koregaon Park",
+        "Viman Nagar",
+        "Kharadi",
+        "Hadapsar",
+        "Pimple Saudagar",
+        "Wagholi",
+        "Camp"
+      ]
+    },
+    "qe-pune-like-decathlon": {
+      "queries": [
+        "sports shops in Pune",
+        "sports store in Pune",
+        "sports goods store in Pune",
+        "sports equipment store in Pune",
+        "athletic store in Pune"
+      ],
+      "reason": "Varied the business name from sports shops to common retail terms for sports stores while keeping Pune, and listed major Pune localities to cover the city piece by piece.",
+      "sub_localities": [
+        "Koregaon Park",
+        "Viman Nagar",
+        "Kharadi",
+        "Hadapsar",
+        "Baner",
+        "Aundh",
+        "Wakad",
+        "Hinjawadi",
+        "Kothrud",
+        "Camp",
+        "Deccan Gymkhana",
+        "FC Road"
+      ]
+    },
+    "qe-pune-website-filter": {
+      "queries": [
+        "dental clinics in Pune",
+        "dentist in Pune",
+        "dental surgery in Pune",
+        "dental hospital in Pune",
+        "orthodontist in Pune",
+        "dental implant clinic in Pune"
+      ],
+      "reason": "Varied the clinic wording with common dental business names while keeping Pune, and added Pune sub-areas to cover the city more completely.",
+      "sub_localities": [
+        "Hinjawadi",
+        "Kharadi",
+        "Wakad",
+        "Baner",
+        "Aundh",
+        "Kothrud",
+        "Viman Nagar",
+        "Hadapsar",
+        "Pimpri",
+        "Nigdi",
+        "Yerawada",
+        "Camp"
+      ]
+    },
+    "qe-rajasthan-furniture": {
+      "queries": [
+        "furniture makers in Rajasthan",
+        "furniture manufacturer in Rajasthan",
+        "furniture showroom in Rajasthan",
+        "wooden furniture makers in Rajasthan",
+        "custom furniture makers in Rajasthan"
+      ],
+      "reason": "Varied the business type wording while keeping the trade and place unchanged.",
+      "sub_localities": []
+    },
+    "qe-rajkot-autoparts": {
+      "queries": [
+        "auto parts dealers in Rajkot",
+        "auto spare parts dealers in Rajkot",
+        "automobile parts dealers in Rajkot",
+        "car spare parts dealers in Rajkot",
+        "two wheeler spare parts dealers in Rajkot"
+      ],
+      "reason": "Varied the business name from auto parts dealers to common alternate terms for the same trade, while keeping Rajkot unchanged.",
+      "sub_localities": [
+        "Aji Industrial Estate",
+        "Bhakti Nagar",
+        "Gondal Road",
+        "Kotharia",
+        "Mavdi",
+        "Kalawad Road",
+        "University Road",
+        "Raiya Road",
+        "Race Course",
+        "Shapar",
+        "Ranchhodnagar",
+        "Chandra Park"
+      ]
+    },
+    "qe-rajkot-solar": {
+      "queries": [
+        "solar panel installers in Rajkot",
+        "solar panel installation in Rajkot",
+        "solar power installers in Rajkot",
+        "solar EPC in Rajkot",
+        "solar energy company in Rajkot"
+      ],
+      "reason": "Varied the business type phrasing for solar installation while keeping Rajkot fixed, and added Rajkot localities to cover a large city piece by piece.",
+      "sub_localities": [
+        "Aji",
+        "Bhakti Nagar",
+        "Gondal Road",
+        "Kotharia",
+        "Mavdi",
+        "Nana Mava",
+        "Raiya Road",
+        "Sardar Nagar",
+        "University Road",
+        "Kalawad Road"
+      ]
+    },
+    "qe-ranchi-driving": {
+      "queries": [
+        "driving schools in Ranchi",
+        "driving school in Ranchi",
+        "motor driving school in Ranchi",
+        "car driving school in Ranchi",
+        "motor training school in Ranchi"
+      ],
+      "reason": "Varied the business type names used for driving instruction while keeping Ranchi fixed; added common Ranchi localities to cover the city in pieces.",
+      "sub_localities": [
+        "Bariatu",
+        "Argora",
+        "Kanke",
+        "Harmu",
+        "Doranda",
+        "Lalpur",
+        "Pundag",
+        "Ratu Road",
+        "Hinoo",
+        "Booty More",
+        "Morabadi",
+        "Ashok Nagar"
+      ]
+    },
+    "qe-rishikesh-yoga": {
+      "queries": [
+        "yoga studios in Rishikesh",
+        "yoga studio in Rishikesh",
+        "yoga center in Rishikesh",
+        "yoga institute in Rishikesh",
+        "ashtanga yoga studio in Rishikesh",
+        "hatha yoga studio in Rishikesh"
+      ],
+      "reason": "Varied the business type names while keeping the same place, since Rishikesh is a small town and does not need sub-locality coverage.",
+      "sub_localities": []
+    },
+    "qe-saopaulo-bakeries": {
+      "queries": [
+        "bakeries in Sao Paulo",
+        "padarias in Sao Paulo",
+        "confeitaria in Sao Paulo",
+        "bakery in Sao Paulo",
+        "patisserie in Sao Paulo"
+      ],
+      "reason": "Varied bakery business names used in S\u00e3o Paulo and listed major city areas to cover the city piece by piece.",
+      "sub_localities": [
+        "Avenida Paulista",
+        "Jardins",
+        "Pinheiros",
+        "Vila Madalena",
+        "Itaim Bibi",
+        "Moema",
+        "Brooklin",
+        "Santana",
+        "Tatuap\u00e9",
+        "Vila Mariana",
+        "Bela Vista",
+        "Liberdade"
+      ]
+    },
+    "qe-scotland-breweries": {
+      "queries": [
+        "breweries in Scotland",
+        "microbreweries in Scotland",
+        "craft breweries in Scotland",
+        "brew pubs in Scotland"
+      ],
+      "reason": "Varied the brewery type terms while keeping the same place, since Scotland is not a city and needs no sub-locality split.",
+      "sub_localities": []
+    },
+    "qe-sf-law": {
+      "queries": [
+        "law firms in San Francisco",
+        "law office in San Francisco",
+        "attorneys in San Francisco",
+        "legal services in San Francisco"
+      ],
+      "reason": "Varied the business name to cover common map labels for legal practices while keeping San Francisco fixed.",
+      "sub_localities": [
+        "Financial District",
+        "SoMa",
+        "Union Square",
+        "Nob Hill",
+        "Civic Center",
+        "Mission District",
+        "Sunset District",
+        "Richmond District",
+        "Marina District",
+        "North Beach",
+        "Hayes Valley",
+        "Castro District"
+      ]
+    },
+    "qe-singapore-clinics": {
+      "queries": [
+        "clinics in Singapore",
+        "medical clinic Singapore",
+        "polyclinic Singapore",
+        "dental clinic Singapore",
+        "general practitioner Singapore"
+      ],
+      "reason": "Varied the clinic type names to cover common business labels in Singapore while keeping the same place.",
+      "sub_localities": [
+        "Ang Mo Kio",
+        "Bedok",
+        "Bukit Batok",
+        "Bukit Merah",
+        "Bukit Panjang",
+        "Clementi",
+        "Hougang",
+        "Jurong East",
+        "Kallang",
+        "Pasir Ris",
+        "Punggol",
+        "Queenstown",
+        "Sengkang",
+        "Tampines",
+        "Toa Payoh",
+        "Woodlands"
+      ]
+    },
+    "qe-sivakasi-printing": {
+      "queries": [
+        "printing presses in Sivakasi",
+        "printing press in Sivakasi",
+        "offset printing presses in Sivakasi",
+        "digital printing press in Sivakasi",
+        "commercial printing press in Sivakasi"
+      ],
+      "reason": "Varied the business type wording while keeping the place fixed to Sivakasi.",
+      "sub_localities": []
+    },
+    "qe-springfield-dental": {
+      "queries": [
+        "dental clinics in Springfield",
+        "dentists in Springfield",
+        "dental surgery in Springfield",
+        "orthodontists in Springfield",
+        "dental implant clinic in Springfield"
+      ],
+      "reason": "Varied the business type terms for dental practices while keeping Springfield unchanged; added common Springfield area names to cover a large city more completely.",
+      "sub_localities": [
+        "Downtown Springfield",
+        "East Springfield",
+        "West Springfield",
+        "North Springfield",
+        "South Springfield",
+        "Springfield Heights",
+        "Springfield Gardens",
+        "Springfield Park",
+        "Springfield Township",
+        "Springfield Village"
+      ]
+    },
+    "qe-surat-ca": {
+      "queries": [
+        "chartered accountants in Surat",
+        "CA firms in Surat",
+        "tax consultants in Surat"
+      ],
+      "reason": "I varied the business name terms for chartered accountancy while keeping Surat fixed.",
+      "sub_localities": [
+        "Adajan",
+        "Athwa",
+        "City Light",
+        "Vesu",
+        "Piplod",
+        "Varachha",
+        "Katargam",
+        "Ring Road",
+        "Sagrampura",
+        "Nanpura",
+        "Udhna",
+        "Mota Varachha"
+      ]
+    },
+    "qe-sydney-cafes": {
+      "queries": [
+        "cafes in Sydney",
+        "coffee shops in Sydney",
+        "coffee houses in Sydney",
+        "espresso bars in Sydney"
+      ],
+      "reason": "Varied the venue type wording for caf\u00e9s in Sydney and added major Sydney sub-localities to cover the city piece by piece.",
+      "sub_localities": [
+        "Sydney CBD",
+        "Surry Hills",
+        "Newtown",
+        "Bondi",
+        "Paddington",
+        "Darlinghurst",
+        "Glebe",
+        "Marrickville",
+        "Alexandria",
+        "Parramatta",
+        "Chatswood",
+        "North Sydney"
+      ]
+    },
+    "qe-thrissur-cctv": {
+      "queries": [
+        "CCTV installers in Thrissur",
+        "CCTV installation in Thrissur",
+        "security camera installers in Thrissur",
+        "CCTV dealer in Thrissur",
+        "surveillance camera installation in Thrissur"
+      ],
+      "reason": "Varied the business type wording for CCTV services while keeping Thrissur fixed, and added common Thrissur local areas to cover the city more completely.",
+      "sub_localities": [
+        "Thrissur East",
+        "Thrissur West",
+        "Punkunnam",
+        "Ayyanthole",
+        "Ollur",
+        "Patturaickal",
+        "Kuriachira",
+        "Mannuthy",
+        "Kuriachira",
+        "Ikkanda Warrior Road",
+        "Round East",
+        "Chembukkavu"
+      ]
+    },
+    "qe-tn-textiles": {
+      "queries": [
+        "textile mills in Tamil Nadu",
+        "textile mill in Tamil Nadu",
+        "spinning mills in Tamil Nadu",
+        "weaving mills in Tamil Nadu",
+        "garment mills in Tamil Nadu"
+      ],
+      "reason": "Varied the business type synonyms and closely related textile factory terms while keeping Tamil Nadu unchanged.",
+      "sub_localities": []
+    },
+    "qe-toronto-barbers": {
+      "queries": [
+        "barbers in Toronto",
+        "barber shop in Toronto",
+        "barbershop in Toronto",
+        "men's barber in Toronto"
+      ],
+      "reason": "Varied the business type wording for barbers while keeping Toronto fixed, and added Toronto sub-areas to cover the city piece by piece.",
+      "sub_localities": [
+        "Downtown Toronto",
+        "North York",
+        "Scarborough",
+        "Etobicoke",
+        "East York",
+        "York",
+        "Old Toronto",
+        "Etobicoke\u2013York",
+        "North Toronto",
+        "Toronto Islands"
+      ]
+    },
+    "qe-udaipur-photographers": {
+      "queries": [
+        "event photographers in Udaipur",
+        "wedding photographers in Udaipur",
+        "photography studio in Udaipur",
+        "photo studio in Udaipur"
+      ],
+      "reason": "Varied the business type terms used for event photography while keeping Udaipur fixed; added common Udaipur sub-areas to help cover the city.",
+      "sub_localities": [
+        "Old City",
+        "Fateh Sagar",
+        "Shobhagpura",
+        "Mali Colony",
+        "Bhopalpura",
+        "Hiran Magri",
+        "Sukher",
+        "Panchwati",
+        "Saheli Nagar",
+        "Titirdi",
+        "Mavli Bypass",
+        "Ambamata"
+      ]
+    },
+    "qe-vadodara-physio": {
+      "queries": [
+        "physiotherapy clinics in Vadodara",
+        "physiotherapy center in Vadodara",
+        "physiotherapy hospital in Vadodara",
+        "physiotherapist in Vadodara",
+        "rehabilitation clinic in Vadodara"
+      ],
+      "reason": "Varied the business type terms for physiotherapy while keeping Vadodara; used common Vadodara neighborhoods to cover the city in map searches.",
+      "sub_localities": [
+        "Alkapuri",
+        "Akota",
+        "Gotri",
+        "Bopal",
+        "Manjalpur",
+        "Old Padra Road",
+        "Sayajigunj",
+        "Waghodia Road",
+        "Fatehgunj",
+        "Ellora Park",
+        "Karelibaug",
+        "Race Course",
+        "Subhanpura",
+        "Atladara",
+        "Tarsali"
+      ]
+    }
+  },
+  "meta": {
+    "cases": 81,
+    "cost_micros": 44125,
+    "field_accuracy": 1.0,
+    "model": "gpt-5.4-mini-2026-03-17",
+    "pass_rate": 1.0,
+    "prompt_version": "query_expand@v1",
+    "recorded_at": "2026-09-23T16:47:40+00:00"
+  }
+}

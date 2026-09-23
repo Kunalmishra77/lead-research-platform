@@ -177,7 +177,83 @@ def _words(value: str) -> frozenset[str]:
     return frozenset(part for part in cleaned.split() if part)
 
 
+#: Expectation keys a `query_expand` case may set. A typo here would silently never be checked,
+#: which is the failure mode `test_the_expectations_only_name_fields_the_scorer_checks` exists for.
+QUERY_EXPAND_CHECKS: tuple[str, ...] = (
+    "queries_include",
+    "queries_max",
+    "sub_localities_any_of",
+    "sub_localities_min",
+    "sub_localities_empty",
+    "must_not",
+)
+
+
+def _check(score: CaseScore, name: str, ok: bool, want: Any, got: Any) -> None:
+    """Records one expectation, so each check below stays a single readable line."""
+    score.checked += 1
+    if ok:
+        score.matched += 1
+    else:
+        score.passed = False
+        score.diffs[name] = (want, got)
+
+
+def score_query_expand(expected: dict[str, Any], actual: dict[str, Any]) -> CaseScore:
+    """Scored on what a wrong expansion would cost, not on wording.
+
+    There is no single right expansion — "dentist" and "dental surgery" are both honest — so
+    pinning exact strings would fail good answers and teach us nothing. What can be pinned is
+    what actually costs money or corrupts a job:
+
+    * a phrase that lost the trade or the place searches for the wrong thing (`queries_include`);
+    * a phrase that widened the place, or smuggled in a filter a maps search cannot read, sends
+      the crawler somewhere the user did not ask about (`must_not`);
+    * sub-localities are how a large city gets covered, and an invented one is a wasted call,
+      so a city is checked for plausible real areas and a non-city for an empty list.
+    """
+    score = CaseScore(case_id="", passed=True)
+    queries = [str(q) for q in actual.get("queries", [])]
+    localities = [str(name) for name in actual.get("sub_localities", [])]
+    query_words = [_words(q) for q in queries]
+    all_words = query_words + [_words(name) for name in localities]
+
+    for terms in expected.get("queries_include", []):
+        want = _words(str(terms))
+        _check(
+            score, f"queries_include:{terms}", any(want <= g for g in query_words), terms, queries
+        )
+
+    for term in expected.get("must_not", []):
+        want = _words(str(term))
+        # Substring would flag "pune" inside "punecity"; word containment is the honest test.
+        absent = not any(want <= g for g in all_words)
+        _check(score, f"must_not:{term}", absent, "absent", queries + localities)
+
+    if (cap := expected.get("queries_max")) is not None:
+        _check(score, "queries_max", len(queries) <= int(cap), cap, len(queries))
+
+    if expected.get("sub_localities_empty"):
+        # A guessed area for a whole state or a small town is a call spent on nothing.
+        _check(score, "sub_localities_empty", not localities, [], localities)
+
+    if (minimum := expected.get("sub_localities_min")) is not None:
+        _check(score, "sub_localities_min", len(localities) >= int(minimum), minimum, localities)
+
+    if allowed := expected.get("sub_localities_any_of"):
+        got = [_words(name) for name in localities]
+        known = [_words(str(name)) for name in allowed]
+        hit = any(want <= g for want in known for g in got)
+        _check(score, "sub_localities_any_of", hit, allowed, localities)
+
+    if not queries:
+        score.passed = False
+        score.diffs["queries"] = ("at least one", [])
+    return score
+
+
 SCORERS = {
     "intent_classify": score_intent_classify,
+    "query_expand": score_query_expand,
     "spec_parse": score_spec_parse,
 }

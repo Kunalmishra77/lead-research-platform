@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "query_expand",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["queries", "sub_localities", "reason"],
+  "properties": {
+    "queries": {
+      "description": "Search phrases to run, most obvious first. Each must be a phrase a person could type into a maps search, not a sentence about one.",
+      "type": "array",
+      "items": { "type": "string", "maxLength": 120 }
+    },
+    "sub_localities": {
+      "description": "Named areas inside the place asked about, empty when the place is not a city or none are known. Never invented, never a whole city or state.",
+      "type": "array",
+      "items": { "type": "string", "maxLength": 80 }
+    },
+    "reason": {
+      "type": "string",
+      "maxLength": 200
+    }
+  }
+}

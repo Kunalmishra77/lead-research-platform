@@ -67,6 +67,10 @@ class Candidate:
     #: needs it: a perishable source is swept on this clock (ADR-0011).
     observed_at: datetime | None = None
     raw: dict[str, Any] = field(default_factory=dict)
+    #: The values this same call already paid for, each with its own provenance. A source whose
+    #: search response carries real fields attaches them here so nothing has to buy them twice;
+    #: one that only returns identifiers leaves it empty and the caller fetches what it needs.
+    values: tuple["FieldValue", ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

@@ -1,16 +1,15 @@
-"""Writing a plan to app.research_tasks (task 2.10).
+"""app.research_tasks: writing a plan (task 2.10) and running it (task 2.11).
 
-Insert-only, deliberately. `app_worker` may UPDATE a task's run state — status, attempts, cost,
-output, error — and nothing else (migration 0013): not its budget, its input, its type or its
-parent. So a plan is decided once and then only executed, and this module has no method that
-could pretend otherwise.
+`app_worker` may UPDATE a task's run state — status, attempts, cost, output, error — and nothing
+else (migration 0013): not its budget, its input, its type or its parent. So a plan is decided
+once and then only executed, and nothing here can pretend otherwise.
 
 Inserts are idempotent against `research_tasks_job_key_uniq` (migration 0018). A redelivered
 `research.plan` envelope re-reads the plan it already bought instead of buying it again.
 """
 
 import json
-from typing import Protocol
+from typing import Any, Protocol
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -44,6 +43,14 @@ class ResearchTasksRepo(Protocol):
     async def save_plan(
         self, org_id: str, job_id: str, tasks: list[PlannedTask]
     ) -> list["SavedTask"]: ...
+    async def mark_running(self, org_id: str, task_id: str, attempt: int) -> bool: ...
+    async def mark_completed(
+        self, org_id: str, task_id: str, output: dict[str, Any], cost_micros: int
+    ) -> bool: ...
+    async def mark_failed(
+        self, org_id: str, task_id: str, error_class: str, cost_micros: int
+    ) -> bool: ...
+    async def mark_cancelled(self, org_id: str, task_id: str) -> bool: ...
 
 
 class SavedTask:
@@ -61,6 +68,61 @@ class SavedTask:
 class SqlResearchTasksRepo:
     def __init__(self, engine: AsyncEngine) -> None:
         self._engine = engine
+
+    async def _update(self, org_id: str, sql: str, params: dict[str, Any]) -> bool:
+        """Never moves a task that has already stopped.
+
+        A redelivered envelope, or a message reclaimed after a worker died, must not set a
+        finished task back to running and must not overwrite the first reason it failed.
+        Returns whether a row actually changed, so a caller can tell "done" from "not mine".
+        """
+        async with tenant_transaction(self._engine, org_id) as conn:
+            result = await conn.execute(text(sql), params)
+            return bool(result.rowcount)
+
+    async def mark_running(self, org_id: str, task_id: str, attempt: int) -> bool:
+        return await self._update(
+            org_id,
+            "update app.research_tasks set status = 'running', attempts = :attempt,"
+            " started_at = coalesce(started_at, now())"
+            " where id = :id and status not in ('completed', 'failed', 'cancelled')",
+            {"id": task_id, "attempt": attempt},
+        )
+
+    async def mark_completed(
+        self, org_id: str, task_id: str, output: dict[str, Any], cost_micros: int
+    ) -> bool:
+        """What the task produced, so the admin view and the critic loop can read it later."""
+        return await self._update(
+            org_id,
+            "update app.research_tasks set status = 'completed',"
+            " output = cast(cast(:output as text) as jsonb), cost_micros = :cost,"
+            " finished_at = now()"
+            " where id = :id and status not in ('completed', 'failed', 'cancelled')",
+            {"id": task_id, "output": json.dumps(output, sort_keys=True), "cost": cost_micros},
+        )
+
+    async def mark_failed(
+        self, org_id: str, task_id: str, error_class: str, cost_micros: int
+    ) -> bool:
+        """Records the cost as well as the failure: a task that died mid-way still spent money."""
+        return await self._update(
+            org_id,
+            "update app.research_tasks set status = 'failed',"
+            " error_class = cast(:error_class as app.error_class), cost_micros = :cost,"
+            " finished_at = now()"
+            " where id = :id and status not in ('completed', 'failed', 'cancelled')",
+            {"id": task_id, "error_class": error_class, "cost": cost_micros},
+        )
+
+    async def mark_cancelled(self, org_id: str, task_id: str) -> bool:
+        """ADR-0008: on a raised flag a worker stops and marks its task cancelled."""
+        return await self._update(
+            org_id,
+            "update app.research_tasks set status = 'cancelled', finished_at = now()"
+            " where id = :id and status not in ('completed', 'failed', 'cancelled')",
+            {"id": task_id},
+        )
 
     async def save_plan(
         self, org_id: str, job_id: str, tasks: list[PlannedTask]

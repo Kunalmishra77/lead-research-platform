@@ -2,14 +2,17 @@
 
 from app.ai.gateway import AiGateway
 from app.connectors.registry import ConnectorRegistry
+from app.db.graph import GraphRepo
 from app.db.job_runs import JobRunsRepo
 from app.db.reference import ReferenceData
 from app.db.research_jobs import ResearchJobsRepo
 from app.db.research_tasks import ResearchTasksRepo
+from app.handlers.discovery import register_discovery_handlers
 from app.handlers.planner import DEFAULT_DISCOVERY_POOL, register_planner_handlers
 from app.handlers.research import register_research_handlers
 from app.handlers.system import register_system_handlers
 from app.jobs.registry import HandlerRegistry
+from app.metering.usage import UsageRecorder
 
 
 def build_registry(
@@ -20,6 +23,8 @@ def build_registry(
     reference: ReferenceData | None = None,
     research_tasks: ResearchTasksRepo | None = None,
     research_jobs: ResearchJobsRepo | None = None,
+    graph: GraphRepo | None = None,
+    usage: UsageRecorder | None = None,
     discovery_pool: str = DEFAULT_DISCOVERY_POOL,
 ) -> HandlerRegistry:
     """Without a gateway the AI handlers are left out, so a key-less worker still runs the
@@ -49,4 +54,16 @@ def build_registry(
             jobs=research_jobs,
             pool=discovery_pool,
         )
+        if graph is not None and usage is not None:
+            # The executor is what turns a plan into leads. It makes no model call at all, so it
+            # is registered whether or not there is a gateway.
+            register_discovery_handlers(
+                registry,
+                connectors=connectors,
+                reference=reference,
+                graph=graph,
+                tasks=research_tasks,
+                jobs=research_jobs,
+                usage=usage,
+            )
     return registry

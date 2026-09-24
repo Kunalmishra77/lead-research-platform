@@ -195,7 +195,7 @@ class GooglePlacesConnector(BaseConnector):
             place = Place.model_validate_json(raw.body)
         except ValueError as exc:
             raise ParseFailedError(f"google_places returned an unreadable place: {exc}") from exc
-        return to_field_values(place, raw)
+        return to_field_values(place, raw.fetched_at)
 
     # ---------------------------------------------------------------- internals
 

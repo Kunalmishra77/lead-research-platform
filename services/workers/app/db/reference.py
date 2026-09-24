@@ -81,6 +81,7 @@ class ReferenceData:
         self._areas: tuple[GeoArea, ...] | None = None
         self._industries: dict[str, Industry] | None = None
         self._sources: dict[str, Source] | None = None
+        self._rates: dict[str, int] | None = None
 
     async def areas(self) -> tuple[GeoArea, ...]:
         if self._areas is None:
@@ -96,6 +97,17 @@ class ReferenceData:
         if self._sources is None:
             self._sources = await self._load_sources()
         return self._sources
+
+    async def credits_per_unit(self, meter: str) -> int:
+        """What one delivered unit of this meter costs the customer (`app.credit_rates`).
+
+        Read from the table rather than hardcoded, because the price of a lead is a commercial
+        decision that changes without a deploy. A meter with no rate charges nothing: billing for
+        something at a price nobody set is worse than not billing for it.
+        """
+        if self._rates is None:
+            self._rates = await self._load_rates()
+        return self._rates.get(meter, 0)
 
     async def source_id(self, key: str) -> str:
         """The uuid to store against a value from this connector.
@@ -166,6 +178,12 @@ class ReferenceData:
             )
             for row in rows
         )
+
+    async def _load_rates(self) -> dict[str, int]:
+        sql = "select meter, credits_per_unit from app.credit_rates"
+        async with self._engine.connect() as conn:
+            rows = (await conn.execute(text(sql))).mappings().all()
+        return {row["meter"]: int(row["credits_per_unit"]) for row in rows}
 
     async def _load_sources(self) -> dict[str, Source]:
         sql = "select id, key, retention_days, default_ttl_days from app.sources"

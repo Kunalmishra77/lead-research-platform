@@ -253,7 +253,7 @@ def test_every_mapped_value_carries_provenance_and_the_time_it_was_seen() -> Non
         url="https://places.googleapis.com/v1/places/x",
     )
 
-    values = to_field_values(place, raw)
+    values = to_field_values(place, raw.fetched_at)
     by_field = {v.field: v for v in values}
 
     assert by_field["name"].value == "Example Dental Studio"
@@ -286,7 +286,9 @@ def test_opening_hours_keep_the_week_and_drop_the_moment() -> None:
         url="https://places.googleapis.com/v1/places/x",
     )
 
-    hours = next(v for v in to_field_values(place, raw) if v.field == "opening_hours").value
+    hours = next(
+        v for v in to_field_values(place, raw.fetched_at) if v.field == "opening_hours"
+    ).value
     assert hours[0] == {"day": 1, "open": "09:30", "close": "19:00"}
     # `openNow` is true only at the instant of the call, so it is not stored as a fact.
     assert all("open_now" not in entry for entry in hours)
@@ -304,7 +306,7 @@ def test_a_place_without_a_field_produces_no_value_for_it() -> None:
         url="https://places.googleapis.com/v1/places/x",
     )
 
-    fields = {v.field for v in to_field_values(place, raw)}
+    fields = {v.field for v in to_field_values(place, raw.fetched_at)}
     # This place has no phone and no rating; inventing an empty one would look like a fact.
     assert "phone" not in fields
     assert "rating" not in fields

@@ -131,7 +131,12 @@ async def build_plan(
     tasks = [
         PlannedTask(
             type=TASK_TYPE_BY_SOURCE[source],
-            input=_with_limits(search, source=source, max_results=per_task_results),
+            input=_with_limits(
+                search,
+                source=source,
+                max_results=per_task_results,
+                depth=str(spec.depth),
+            ),
             credit_budget=budget,
         )
         for search, budget in zip(searches, budgets, strict=True)
@@ -283,8 +288,15 @@ def _search(
     return payload
 
 
-def _with_limits(search: dict[str, Any], *, source: str, max_results: int) -> dict[str, Any]:
-    payload = {**search, "source": source, "query": {**search["query"]}}
+def _with_limits(
+    search: dict[str, Any], *, source: str, max_results: int, depth: str
+) -> dict[str, Any]:
+    """Adds what the budget and the user's chosen depth decide.
+
+    `depth` rides along because the executor bills per delivered lead at a rate that depends on
+    it (`app.credit_rates`), and the executor sees only this input — not the spec.
+    """
+    payload = {**search, "source": source, "query": {**search["query"]}, "depth": depth}
     payload["query"]["max_results"] = max_results
     return payload
 

@@ -15,7 +15,7 @@ from datetime import datetime
 from typing import Any
 
 from app.connectors.google_places.models import Place
-from app.connectors.types import Candidate, FieldValue, RawResult
+from app.connectors.types import Candidate, FieldValue
 
 #: How much we trust a value from this source. Google's own data is good but not verified by us,
 #: and a crawled value from the company's own site should win over it (docs/06 resolution).
@@ -51,11 +51,21 @@ def to_candidate(place: Place, observed_at: datetime) -> Candidate | None:
         source_url=place_url(place),
         observed_at=observed_at,
         raw={"place_id": place.id, "types": place.types},
+        # The search already bought these, so the executor never has to pay for a details call
+        # to write them down with provenance.
+        values=tuple(to_field_values(place, observed_at)),
     )
 
 
-def to_field_values(place: Place, raw: RawResult) -> list[FieldValue]:
-    """Everything this place tells us, each value standing on its own evidence."""
+def to_field_values(place: Place, observed_at: datetime) -> list[FieldValue]:
+    """Everything this place tells us, each value standing on its own evidence.
+
+    Takes a time rather than a `RawResult` because the search response already carries every
+    field below — the mask pays Enterprise rates for `websiteUri`, `nationalPhoneNumber`,
+    `rating`, `userRatingCount` and `businessStatus` precisely so a details call per candidate is
+    not needed. Requiring a `RawResult` here would have forced one, at $20/1000 on top of a
+    search we had already paid for.
+    """
     url = place_url(place)
     values: list[FieldValue] = []
 
@@ -69,8 +79,10 @@ def to_field_values(place: Place, raw: RawResult) -> list[FieldValue]:
                 value=value,
                 source_key=SOURCE_KEY,
                 source_url=url,
-                observed_at=raw.fetched_at,
+                observed_at=observed_at,
                 method="api",
+                # Google stated it; no rule of ours derived it (docs/09 provenance badges).
+                derivation="found",
                 confidence=confidence,
             )
         )

@@ -13,6 +13,7 @@ from app.ai.factory import build_gateway
 from app.config import Settings, get_settings
 from app.connectors.factory import build_connectors, close_clients
 from app.db.engine import create_engine
+from app.db.graph import SqlGraphRepo
 from app.db.job_runs import SqlJobRunsRepo
 from app.db.reference import ReferenceData
 from app.db.research_jobs import SqlResearchJobsRepo
@@ -57,8 +58,9 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
         log.warning("OPENAI_API_KEY is not set; ai handlers are not registered")
     # Without a recorder every paid call raises: NullUsageRecorder refuses anything that
     # costs money, which is the right default for tests and the wrong one for production.
+    usage = SqlUsageRecorder(engine)
     connectors, connector_clients = build_connectors(
-        settings=settings, redis=redis, usage=SqlUsageRecorder(engine), log=log
+        settings=settings, redis=redis, usage=usage, log=log
     )
     registry = build_registry(
         job_runs=SqlJobRunsRepo(engine),
@@ -67,6 +69,8 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
         reference=ReferenceData(engine),
         research_tasks=SqlResearchTasksRepo(engine),
         research_jobs=SqlResearchJobsRepo(engine),
+        graph=SqlGraphRepo(engine),
+        usage=usage,
         discovery_pool=settings.DISCOVERY_POOL,
     )
     name = settings.WORKER_NAME or f"{socket.gethostname()}-{os.getpid()}"

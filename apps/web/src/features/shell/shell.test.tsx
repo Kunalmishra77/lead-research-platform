@@ -14,8 +14,13 @@ describe('SidebarNav', () => {
     render(<SidebarNav showDeveloper={false} />);
     const dashboard = screen.getByRole('link', { name: 'Dashboard' });
     expect(dashboard).toHaveAttribute('aria-current', 'page');
-    expect(screen.queryByRole('link', { name: /New Research/ })).toBeNull();
-    expect(screen.getByText('New Research').closest('[aria-disabled="true"]')).not.toBeNull();
+    // Research ships in phase 2, so these two are real links now.
+    expect(screen.getByRole('link', { name: /New Research/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^Research$/ })).toBeInTheDocument();
+    // Anything a later phase builds is shown but not clickable, so the sidebar never promises a
+    // page that is not there.
+    expect(screen.queryByRole('link', { name: /Lists/ })).toBeNull();
+    expect(screen.getByText('Lists').closest('[aria-disabled="true"]')).not.toBeNull();
     expect(screen.queryByRole('link', { name: 'Job pipeline check' })).toBeNull();
   });
 

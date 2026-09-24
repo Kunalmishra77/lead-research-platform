@@ -27,6 +27,8 @@ import { ParseService } from './parse.service';
 import {
   CreateResearchDto,
   JobIdParamDto,
+  type LeadsPage,
+  LeadsQueryDto,
   ParseResearchDto,
   type ResearchJobView,
   ResearchListQueryDto,
@@ -118,6 +120,23 @@ export class ResearchController {
     @Param() params: JobIdParamDto,
   ): Promise<ResearchJobView> {
     return this.research.get(user, tenant, params.id);
+  }
+
+  /**
+   * The leads this job delivered, with provenance on every value.
+   *
+   * `contacts.view`, like the job itself: reading results is reading contacts. Values carry the
+   * source key so the UI can show the attribution each one requires (ADR-0011, docs/09).
+   */
+  @Get(':id/results')
+  @RequirePermission('contacts.view')
+  results(
+    @CurrentUser() user: AuthUser,
+    @CurrentTenant() tenant: TenantInfo,
+    @Param() params: JobIdParamDto,
+    @Query() query: LeadsQueryDto,
+  ): Promise<LeadsPage> {
+    return this.research.results(user, tenant, params.id, query);
   }
 
   /** SSE: `state`, then live `progress` events, then `done` (docs/05 SSE progress). */

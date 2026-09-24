@@ -6,6 +6,7 @@ import * as billing from '../schema/billing.ts';
 import * as enums from '../schema/enums.ts';
 import * as graph from '../schema/graph.ts';
 import * as jobs from '../schema/jobs.ts';
+import * as leads from '../schema/leads.ts';
 import * as partitioned from '../schema/partitioned.ts';
 import * as research from '../schema/research.ts';
 import * as sources from '../schema/sources.ts';
@@ -15,6 +16,7 @@ export * from '../schema/billing.ts';
 export * from '../schema/enums.ts';
 export * from '../schema/graph.ts';
 export * from '../schema/jobs.ts';
+export * from '../schema/leads.ts';
 export * from '../schema/partitioned.ts';
 export * from '../schema/research.ts';
 export * from '../schema/sources.ts';
@@ -33,6 +35,7 @@ export const schema = {
   ...research,
   ...billing,
   ...jobs,
+  ...leads,
   ...partitioned,
 };
 

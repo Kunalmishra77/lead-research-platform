@@ -2,6 +2,7 @@ import {
   CreditCard,
   FlaskConical,
   Gauge,
+  History,
   List,
   type LucideIcon,
   Plug,
@@ -23,7 +24,8 @@ export interface NavItem {
 /** Sidebar order from docs/09 "App shell". */
 export const PRIMARY_NAV: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: Gauge },
-  { href: '/research/new', label: 'New Research', icon: Sparkles, soon: true },
+  { href: '/research/new', label: 'New Research', icon: Sparkles },
+  { href: '/research/history', label: 'Research', icon: History },
   { href: '/search', label: 'Search', icon: Search, soon: true },
   { href: '/lists', label: 'Lists', icon: List, soon: true },
   { href: '/saved-searches', label: 'Saved Searches', icon: Repeat, soon: true },

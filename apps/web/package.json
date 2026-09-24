@@ -13,6 +13,7 @@
     "e2e": "playwright test"
   },
   "dependencies": {
+    "@leadforge/contracts": "workspace:*",
     "@leadforge/dev-dns": "workspace:*",
     "@leadforge/observability": "workspace:*",
     "@radix-ui/react-slot": "^1.3.3",

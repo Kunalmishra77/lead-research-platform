@@ -57,3 +57,13 @@ test('the admin area requires sign-in', async ({ page }) => {
   await page.goto('/admin/users');
   await expect(page).toHaveURL(/\/login\?next=%2Fadmin%2Fusers$/);
 });
+
+test('research pages require a session', async ({ page }) => {
+  // The API is unreachable in e2e by design, so what is checked here is the guard in front of
+  // these pages rather than what they render.
+  await page.goto('/research/new');
+  await expect(page).toHaveURL(/\/login\?next=%2Fresearch%2Fnew/);
+
+  await page.goto('/research/history');
+  await expect(page).toHaveURL(/\/login\?next=%2Fresearch%2Fhistory/);
+});

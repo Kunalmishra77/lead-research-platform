@@ -1,13 +1,18 @@
 import type { JobEnvelope, ResearchSpec } from '@leadforge/contracts';
 import {
   and,
+  companies,
+  companyLocations,
   desc,
   eq,
+  fieldValues,
   inArray,
   industries,
+  leads,
   lt,
   researchJobs,
   searches,
+  sources,
   sql,
   withTenant,
 } from '@leadforge/db';
@@ -25,7 +30,14 @@ import { REDIS } from '../../infra/redis/redis.module';
 import { JobPublisher } from '../../infra/streams/job-publisher';
 import type { AuthUser, TenantInfo } from '../auth/auth.types';
 import { CreditsService } from '../credits/credits.service';
-import type { ResearchJobListItem, ResearchJobView, ResearchPage } from './research.dto';
+import type {
+  LeadsPage,
+  LeadValue,
+  LeadView,
+  ResearchJobListItem,
+  ResearchJobView,
+  ResearchPage,
+} from './research.dto';
 
 /** The planner picks up this job type (task 2.10); discovery tasks fan out from there. */
 export const RESEARCH_PLAN_JOB_TYPE = 'research.plan';
@@ -210,6 +222,141 @@ export class ResearchService {
   }
 
   /** History for the active workspace, newest first (docs/05 `GET /app/research`). */
+  /**
+   * The leads this job delivered to the active workspace, newest first.
+   *
+   * Reads `leads` rather than the graph: `companies` is shared, and being in it says nothing
+   * about who is entitled to see it (ADR-0012). The join is what scopes this to one workspace,
+   * and RLS is what stops a wrong `research_job_id` reaching another tenant's rows.
+   */
+  async results(
+    user: AuthUser,
+    tenant: TenantInfo,
+    jobId: string,
+    query: { limit: number; cursor?: string },
+  ): Promise<LeadsPage> {
+    // 404 before anything else, so an id from another workspace cannot be probed by the shape
+    // of the answer.
+    await this.get(user, tenant, jobId);
+
+    const rows = await withTenant(this.db, { orgId: tenant.orgId, userId: user.userId }, (tx) =>
+      tx
+        .select({
+          id: leads.id,
+          companyId: leads.companyId,
+          status: leads.status,
+          createdAt: leads.createdAt,
+          name: companies.canonicalName,
+          domain: companies.primaryDomain,
+          city: companies.city,
+          country: companies.country,
+          address: companyLocations.address,
+          phone: companyLocations.phoneE164,
+          googlePlaceId: companyLocations.googlePlaceId,
+        })
+        .from(leads)
+        .innerJoin(companies, eq(companies.id, leads.companyId))
+        .leftJoin(companyLocations, eq(companyLocations.companyId, companies.id))
+        .where(
+          and(
+            eq(leads.researchJobId, jobId),
+            eq(leads.workspaceId, tenant.workspaceId),
+            // UUID v7 ids sort by creation time, so the id alone is a stable cursor.
+            query.cursor ? lt(leads.id, query.cursor) : undefined,
+          ),
+        )
+        .orderBy(desc(leads.id))
+        .limit(query.limit + 1),
+    );
+
+    const page = rows.slice(0, query.limit);
+    const nextCursor = rows.length > query.limit ? (page.at(-1)?.id ?? null) : null;
+    const byCompany = await this.currentValues(
+      user,
+      tenant,
+      page.map((row) => row.companyId),
+    );
+
+    const items: LeadView[] = page.map((row) => ({
+      id: row.id,
+      companyId: row.companyId,
+      status: row.status,
+      createdAt: row.createdAt.toISOString(),
+      name: row.name,
+      domain: row.domain,
+      city: row.city,
+      country: row.country,
+      address: row.address,
+      phone: row.phone,
+      googlePlaceId: row.googlePlaceId,
+      values: byCompany.get(row.companyId) ?? [],
+    }));
+
+    return {
+      items,
+      nextCursor,
+      sources: [...new Set(items.flatMap((item) => item.values.map((v) => v.source)))].sort(),
+    };
+  }
+
+  /**
+   * The current value of every field of these companies, with where each came from.
+   *
+   * One query for the page rather than one per row: a page of 50 leads with fifteen fields each
+   * is 750 values, and asking for them separately is how a results grid becomes slow enough to
+   * be unusable. `is_current` is the filter — `field_values` is append-only, so without it every
+   * value a company has ever had comes back.
+   */
+  private async currentValues(
+    user: AuthUser,
+    tenant: TenantInfo,
+    companyIds: string[],
+  ): Promise<Map<string, LeadValue[]>> {
+    const byCompany = new Map<string, LeadValue[]>();
+    if (companyIds.length === 0) return byCompany;
+
+    const rows = await withTenant(this.db, { orgId: tenant.orgId, userId: user.userId }, (tx) =>
+      tx
+        .select({
+          entityId: fieldValues.entityId,
+          field: fieldValues.field,
+          value: fieldValues.value,
+          source: sources.key,
+          sourceUrl: fieldValues.sourceUrl,
+          observedAt: fieldValues.observedAt,
+          method: fieldValues.method,
+          derivation: fieldValues.derivation,
+          confidence: fieldValues.confidence,
+        })
+        .from(fieldValues)
+        .innerJoin(sources, eq(sources.id, fieldValues.sourceId))
+        .where(
+          and(
+            eq(fieldValues.entityType, 'company'),
+            inArray(fieldValues.entityId, companyIds),
+            eq(fieldValues.isCurrent, true),
+          ),
+        )
+        .orderBy(fieldValues.field),
+    );
+
+    for (const row of rows) {
+      const list = byCompany.get(row.entityId) ?? [];
+      list.push({
+        field: row.field,
+        value: row.value,
+        source: row.source,
+        sourceUrl: row.sourceUrl,
+        observedAt: row.observedAt.toISOString(),
+        method: row.method,
+        derivation: row.derivation,
+        confidence: row.confidence,
+      });
+      byCompany.set(row.entityId, list);
+    }
+    return byCompany;
+  }
+
   async list(
     user: AuthUser,
     tenant: TenantInfo,

@@ -75,3 +75,52 @@ export interface ResearchPage {
   items: ResearchJobListItem[];
   nextCursor: string | null;
 }
+
+export const LeadsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  cursor: z.uuid().optional(),
+});
+export class LeadsQueryDto extends createZodDto(LeadsQuerySchema) {}
+
+/**
+ * One observed value and where it came from. Every field the UI renders carries this, because a
+ * value without its provenance is not something we are willing to show (CLAUDE.md).
+ */
+export interface LeadValue {
+  field: string;
+  value: unknown;
+  /** `app.sources.key`, e.g. `google_places`. What attribution keys on (ADR-0011, docs/09). */
+  source: string;
+  sourceUrl: string;
+  /** When the source showed this, not when we wrote it down. */
+  observedAt: string;
+  method: string;
+  /** found | derived_pattern | provider | user — the badge the UI draws (docs/09). */
+  derivation: string | null;
+  confidence: number;
+}
+
+export interface LeadView {
+  id: string;
+  companyId: string;
+  status: string;
+  createdAt: string;
+  name: string;
+  domain: string | null;
+  city: string | null;
+  country: string | null;
+  address: string | null;
+  phone: string | null;
+  googlePlaceId: string | null;
+  values: LeadValue[];
+}
+
+export interface LeadsPage {
+  items: LeadView[];
+  nextCursor: string | null;
+  /**
+   * Every source that contributed a value on this page. The UI shows one attribution block per
+   * source rather than repeating it on each cell — Google's terms require it visible, not loud.
+   */
+  sources: string[];
+}

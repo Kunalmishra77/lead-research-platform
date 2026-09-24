@@ -14,15 +14,9 @@ from uuid6 import uuid7
 from app.ai.config import ModelPrice, price_for
 from app.ai.types import ProviderResult, TokenUsage
 from app.jobs.errors import BudgetExhaustedError
+from app.metering.budget import SPEND_KEY, SPEND_TTL_S, UNJOBBED_SPEND_TTL_S
 from app.metering.context import CallContext
 from app.metering.usage import UsageRecorder
-
-#: Reserved-then-reconciled model spend for one request, in micros.
-SPEND_KEY = "ai:spend:{job_id}"
-#: A research job runs for hours and may be retried for days.
-SPEND_TTL_S = 7 * 24 * 3600
-#: A parse is over in seconds; keeping one key per parse for a week is just litter.
-UNJOBBED_SPEND_TTL_S = 300
 
 #: Meter name for model spend in `usage_events` (docs/07).
 AI_METER = "ai"
@@ -78,7 +72,9 @@ class JobSpend:
     def __init__(self, redis: Redis, ctx: CallContext) -> None:
         self._redis = redis
         self._ctx = ctx
-        self._key = SPEND_KEY.format(job_id=ctx.budget_key)
+        # The same counter the connectors use: a request's cap is one number
+        # covering everything it does, so models and APIs must draw on one total.
+        self._key = SPEND_KEY.format(scope=ctx.budget_key)
 
     async def reserve(self, micros: int, accrual: Accrual) -> None:
         """Claims `micros` against the cap before the call, so parallel calls cannot all pass.
@@ -92,7 +88,9 @@ class JobSpend:
         cap = self._ctx.cost_cap_micros
         if cap > 0 and total > cap:
             await self.release(micros, accrual)
-            raise BudgetExhaustedError(f"job would spend {total} of {cap} micros on models")
+            raise BudgetExhaustedError(
+                f"this would spend {total} of {cap} micros allowed for {self._ctx.budget_key}"
+            )
 
     async def release(self, micros: int, accrual: Accrual) -> None:
         if not self._ctx.budget_key or micros == 0:

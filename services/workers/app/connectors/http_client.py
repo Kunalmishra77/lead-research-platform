@@ -8,6 +8,12 @@ tracing. (robots.txt belongs to the Phase 3 crawler, not here: these are officia
 Metering covers delivered calls, not attempts: a call that ends in a retry loop, a 429 or an
 oversized body records nothing, so `usage_events` stays a record of what we actually got back.
 A provider that bills failed attempts would need per-attempt metering; none of the Phase 2 ones do.
+
+Spending is bounded here too, and it has to be here rather than in a connector: `cost_cap_micros`
+is a total that callers must not decrement, so only something that sees every call can know what
+is left. The cost is claimed from a shared Redis counter before the request goes out and given
+back if the call turns out not to be billable, which is what stops two tasks running at once from
+both reading a total under the cap and both spending past it.
 """
 
 import asyncio
@@ -23,9 +29,11 @@ import httpx
 import structlog
 from aiolimiter import AsyncLimiter
 from opentelemetry import trace
+from redis.asyncio import Redis
 
 from app.connectors.restrictions import restriction_reason
 from app.connectors.types import RateLimit
+from app.jobs.cancellation import raise_if_cancelled
 from app.jobs.errors import (
     AccessRestrictedError,
     InvalidInputError,
@@ -33,6 +41,7 @@ from app.jobs.errors import (
     RateLimitedError,
     TransientError,
 )
+from app.metering.budget import SpendLedger
 from app.metering.context import CallContext
 from app.metering.usage import NullUsageRecorder, UsageRecorder, call_unit_key
 
@@ -66,6 +75,7 @@ class ConnectorHttpClient:
         rate_limit: RateLimit,
         user_agent: str,
         usage: UsageRecorder | None = None,
+        redis: Redis | None = None,
         timeout_s: float = DEFAULT_TIMEOUT_S,
         max_bytes: int = DEFAULT_MAX_BYTES,
         max_attempts: int = 3,
@@ -74,6 +84,9 @@ class ConnectorHttpClient:
     ) -> None:
         self._source_key = source_key
         self._usage = usage or NullUsageRecorder()
+        # Without Redis nothing bounds a paid call. Tests and free sources pass none; the
+        # factory always passes one, so production is never in that position.
+        self._redis = redis
         self._max_bytes = max_bytes
         self._max_attempts = max_attempts
         self._log = log or structlog.get_logger("leadforge.connectors").bind(source=source_key)
@@ -127,6 +140,15 @@ class ConnectorHttpClient:
             raise InvalidInputError(
                 f"{self._source_key}: a paid call needs an org and research job to meter against"
             )
+        if cost.cost_micros > 0 and self._redis is not None and ctx is not None:
+            # ADR-0008's last checkpoint, placed where it still saves money. The ADR words it as
+            # "before writing a usage_events row", but by the time that row is written the
+            # provider has already been paid: skipping it there would only lose our own record of
+            # real spend, not prevent it. Checked here, a cancelled job makes no further calls at
+            # all -- and anything already in flight is still recorded, which is exactly what the
+            # ADR's consequences describe.
+            await raise_if_cancelled(self._redis, ctx.research_job_id)
+        ledger = SpendLedger(self._redis, ctx) if self._redis and ctx else None
         request = self._client.build_request(
             method, url, headers=dict(headers or {}), params=params, json=json, content=content
         )
@@ -136,13 +158,25 @@ class ConnectorHttpClient:
             job_id=ctx.research_job_id if ctx else None,
             trace_id=ctx.trace_id if ctx else None,
         )
-        with _tracer.start_as_current_span(f"{self._source_key} {method}") as span:
-            span.set_attribute("http.request.method", method)
-            span.set_attribute("server.address", request.url.host)
-            response = await self._send_with_retries(request, span, log)
-        if response.status_code < 400:
+        # Claimed before the call, not recorded after it. Recording after would let every task
+        # of a fanned-out job read a total under the cap at the same moment and all spend past it.
+        if ledger is not None:
+            await ledger.reserve(cost.cost_micros)
+        billable = False
+        try:
+            with _tracer.start_as_current_span(f"{self._source_key} {method}") as span:
+                span.set_attribute("http.request.method", method)
+                span.set_attribute("server.address", request.url.host)
+                response = await self._send_with_retries(request, span, log)
             # A rejected request is not a billed one: providers charge for answers, and
             # recording a 400 as spend would overstate what a job cost.
+            billable = response.status_code < 400
+        finally:
+            if ledger is not None and not billable:
+                # Nothing was bought, so the claim goes back. A failure that raises comes through
+                # here too: a job must not lose budget to a call that never landed.
+                await ledger.release(cost.cost_micros)
+        if billable:
             await self._meter(cost, request, ctx)
         return response
 

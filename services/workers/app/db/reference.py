@@ -1,4 +1,5 @@
-"""Seeded reference data the planner needs: where a place is, and what Google calls a trade.
+"""Seeded reference data the workers need: where a place is, what Google calls a trade, and
+which source a value came from.
 
 Both tables are part of the global graph (ADR-0007), not tenant data, so these read without a
 tenant context. They are read once per process and cached: the seed changes when someone runs
@@ -14,6 +15,8 @@ from dataclasses import dataclass
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
+
+from app.jobs.errors import InvalidInputError
 
 #: Kinds small enough that one search covers them. Tiling within a city is the Places connector's
 #: job — it subdivides when a tile returns the page cap — so this only says what is a city at all.
@@ -42,6 +45,23 @@ class GeoArea:
 
 
 @dataclass(frozen=True, slots=True)
+class Source:
+    """A row of `app.sources`, which every stored value has to point at.
+
+    `field_values.source_id` is a NOT NULL foreign key, so nothing can be written without one,
+    and the uuid is generated at seed time rather than fixed — the stable handle is the `key` a
+    connector declares (`BaseConnector.key`).
+    """
+
+    id: str
+    key: str
+    #: When a value from this source must be deleted, where the provider's terms require it
+    #: (ADR-0011). Null means ours to keep.
+    retention_days: int | None
+    default_ttl_days: int
+
+
+@dataclass(frozen=True, slots=True)
 class Industry:
     slug: str
     name: str
@@ -60,6 +80,7 @@ class ReferenceData:
         self._engine = engine
         self._areas: tuple[GeoArea, ...] | None = None
         self._industries: dict[str, Industry] | None = None
+        self._sources: dict[str, Source] | None = None
 
     async def areas(self) -> tuple[GeoArea, ...]:
         if self._areas is None:
@@ -70,6 +91,27 @@ class ReferenceData:
         if self._industries is None:
             self._industries = await self._load_industries()
         return self._industries
+
+    async def sources(self) -> dict[str, Source]:
+        if self._sources is None:
+            self._sources = await self._load_sources()
+        return self._sources
+
+    async def source_id(self, key: str) -> str:
+        """The uuid to store against a value from this connector.
+
+        Fails loudly rather than inventing one: `field_values.source_id` is a foreign key, so a
+        wrong guess is rejected by the database anyway, and a missing row means the seed has not
+        been run against this environment — which is worth saying plainly once rather than
+        discovering as a constraint violation on every candidate.
+        """
+        known = await self.sources()
+        source = known.get(key)
+        if source is None:
+            raise InvalidInputError(
+                f"no app.sources row for {key!r}; run `pnpm db:seed` (known: {sorted(known)})"
+            )
+        return source.id
 
     async def find_area(self, name: str, *, country: str | None = None) -> GeoArea | None:
         """A place by the words the user used, or None when the seed has never heard of it.
@@ -124,6 +166,20 @@ class ReferenceData:
             )
             for row in rows
         )
+
+    async def _load_sources(self) -> dict[str, Source]:
+        sql = "select id, key, retention_days, default_ttl_days from app.sources"
+        async with self._engine.connect() as conn:
+            rows = (await conn.execute(text(sql))).mappings().all()
+        return {
+            row["key"]: Source(
+                id=str(row["id"]),
+                key=row["key"],
+                retention_days=row["retention_days"],
+                default_ttl_days=row["default_ttl_days"],
+            )
+            for row in rows
+        }
 
     async def _load_industries(self) -> dict[str, Industry]:
         sql = "select slug, name, google_types, synonyms from app.industries"

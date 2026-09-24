@@ -24,6 +24,7 @@ from app.jobs.consumer import ConsumerSettings, StreamConsumer
 from app.jobs.envelope import stream_for
 from app.jobs.retry import promote_due
 from app.logging import configure_logging, get_logger
+from app.metering.usage import SqlUsageRecorder
 from app.telemetry import configure_tracing
 
 log = get_logger("leadforge.workers")
@@ -54,7 +55,11 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
         # The process still runs: only the pools whose jobs need a model are left unhandled,
         # and the consumer reports that per job rather than failing at startup (ADR-0009).
         log.warning("OPENAI_API_KEY is not set; ai handlers are not registered")
-    connectors, connector_clients = build_connectors(settings=settings, redis=redis)
+    # Without a recorder every paid call raises: NullUsageRecorder refuses anything that
+    # costs money, which is the right default for tests and the wrong one for production.
+    connectors, connector_clients = build_connectors(
+        settings=settings, redis=redis, usage=SqlUsageRecorder(engine), log=log
+    )
     registry = build_registry(
         job_runs=SqlJobRunsRepo(engine),
         gateway=gateway,

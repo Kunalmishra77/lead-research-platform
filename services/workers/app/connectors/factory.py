@@ -37,6 +37,7 @@ def build_connectors(
             rate_limit=GooglePlacesConnector.rate_limit,
             user_agent=USER_AGENT,
             usage=usage,
+            redis=redis,
             log=logger.bind(source=GooglePlacesConnector.key),
         )
         clients.append(client)
@@ -63,6 +64,7 @@ def build_connectors(
             rate_limit=SerpConnector.rate_limit,
             user_agent=USER_AGENT,
             usage=usage,
+            redis=redis,
             log=logger.bind(source=SerpConnector.key),
         )
         clients.append(serp_client)

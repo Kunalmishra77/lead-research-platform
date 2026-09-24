@@ -27,8 +27,8 @@ class CallContext:
     #: Ceiling on what this whole request may spend internally, in micros (0 = uncapped).
     #: It is a total, not a remainder: callers must not decrement it as spending happens.
     cost_cap_micros: int = 0
-    #: What the cap accumulates against. A research job for job work; the envelope's own id for
-    #: work with no job behind it, so a parse is capped too and its retries share one counter.
+    #: What the cap accumulates against: this envelope's own id. Retries of it share one counter,
+    #: which is right — the first attempt's spend really did happen.
     spend_id: str = ""
 
     def __post_init__(self) -> None:
@@ -39,7 +39,16 @@ class CallContext:
 
     @property
     def budget_key(self) -> str:
-        return self.research_job_id or self.spend_id
+        """The scope the running spend total is kept under.
+
+        The envelope's own id, not the research job's. These were the same thing until the
+        planner began fanning a job out into tasks with a share of its budget each: the cap now
+        on a `CallContext` belongs to one task, so counting a whole job against it would cross it
+        almost immediately and fail every task after the first as `budget_exhausted`. The key and
+        the cap have to describe the same thing. The job-wide bound comes from the planner
+        dividing the reservation, so the caps cannot add up to more than was reserved.
+        """
+        return self.spend_id or self.research_job_id or ""
 
     @classmethod
     def from_job(cls, ctx: "JobContext") -> "CallContext":

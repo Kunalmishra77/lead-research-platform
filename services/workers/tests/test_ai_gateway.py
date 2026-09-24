@@ -183,7 +183,7 @@ async def test_output_that_stays_invalid_fails_the_task_and_is_still_paid_for(
     # Nothing usable came back, but the tokens were spent: the job's cost must still show it.
     assert len(usage.calls) == 1
     assert usage.calls[0]["cost_micros"] > 0
-    assert int(await redis.get(SPEND_KEY.format(job_id=JOB)) or 0) > 0
+    assert int(await redis.get(SPEND_KEY.format(scope=ENVELOPE)) or 0) > 0
 
 
 async def test_a_non_object_answer_is_treated_as_invalid(redis: Redis) -> None:
@@ -225,7 +225,7 @@ async def test_a_rejected_request_is_not_retried_on_another_model(redis: Redis) 
 
 
 async def test_a_job_that_hit_its_cost_cap_stops_before_calling_the_model(redis: Redis) -> None:
-    await redis.set(SPEND_KEY.format(job_id=JOB), 500_000)
+    await redis.set(SPEND_KEY.format(scope=ENVELOPE), 500_000)
     provider = ScriptedProvider(answer())
     gateway = make_gateway(redis, provider)
 
@@ -234,7 +234,7 @@ async def test_a_job_that_hit_its_cost_cap_stops_before_calling_the_model(redis:
 
     assert provider.calls == []
     # The refused reservation is given back, so the counter still reflects real spending.
-    assert int(await redis.get(SPEND_KEY.format(job_id=JOB))) == 500_000
+    assert int(await redis.get(SPEND_KEY.format(scope=ENVELOPE))) == 500_000
 
 
 async def test_spend_accumulates_per_job(redis: Redis) -> None:
@@ -244,14 +244,14 @@ async def test_spend_accumulates_per_job(redis: Redis) -> None:
     first = await gateway.run(TASK, PAYLOAD, make_ctx())
     second = await gateway.run(TASK, {"query": "Dentists in Pune"}, make_ctx())
 
-    spent = int(await redis.get(SPEND_KEY.format(job_id=JOB)) or 0)
+    spent = int(await redis.get(SPEND_KEY.format(scope=ENVELOPE)) or 0)
     # Reservations are reconciled down to what was actually spent, not left inflated.
     assert spent == first.cost_micros + second.cost_micros
-    assert await redis.ttl(SPEND_KEY.format(job_id=JOB)) > 0
+    assert await redis.ttl(SPEND_KEY.format(scope=ENVELOPE)) > 0
 
 
 async def test_an_uncapped_job_is_not_blocked(redis: Redis) -> None:
-    await redis.set(SPEND_KEY.format(job_id=JOB), 10_000_000)
+    await redis.set(SPEND_KEY.format(scope=ENVELOPE), 10_000_000)
     provider = ScriptedProvider(answer())
     gateway = make_gateway(redis, provider)
 
@@ -275,7 +275,7 @@ async def test_a_second_paid_call_is_a_second_row(redis: Redis) -> None:
     assert all(str(c["unit_key"]).startswith(KEY_PREFIX) for c in usage.calls)
 
     booked = sum(int(c["cost_micros"]) for c in usage.calls)
-    spent = int(await redis.get(SPEND_KEY.format(job_id=JOB)) or 0)
+    spent = int(await redis.get(SPEND_KEY.format(scope=ENVELOPE)) or 0)
     # The invariant that matters: the cost cap counter and the ledger never disagree.
     assert booked == spent == first.cost_micros + second.cost_micros
 
@@ -306,7 +306,7 @@ async def test_a_call_with_no_job_is_metered_against_the_org(redis: Redis) -> No
     assert usage.calls[0]["research_job_id"] is None
     assert usage.calls[0]["cost_micros"] > 0
     # With no research job the cap still applies, against the envelope's own id.
-    assert int(await redis.get(SPEND_KEY.format(job_id=ENVELOPE)) or 0) == result.cost_micros
+    assert int(await redis.get(SPEND_KEY.format(scope=ENVELOPE)) or 0) == result.cost_micros
 
 
 async def test_an_unknown_task_fails_fast_rather_than_looking_transient(redis: Redis) -> None:
@@ -355,7 +355,7 @@ async def test_a_refusal_is_recorded_as_spend_and_fails_the_task(redis: Redis) -
     # Refused answers are billed by the provider, so they must reach usage_events.
     assert len(usage.calls) == 1
     assert usage.calls[0]["cost_micros"] > 0
-    assert int(await redis.get(SPEND_KEY.format(job_id=JOB))) == usage.calls[0]["cost_micros"]
+    assert int(await redis.get(SPEND_KEY.format(scope=ENVELOPE))) == usage.calls[0]["cost_micros"]
 
 
 async def test_a_truncated_answer_is_recorded_as_spend(redis: Redis) -> None:
@@ -382,7 +382,21 @@ async def test_spend_on_a_first_attempt_survives_a_failure_on_the_repair_turn(
     # The first attempt's tokens were spent even though the call ended in an exception.
     assert len(usage.calls) == 1
     assert usage.calls[0]["cost_micros"] > 0
-    assert int(await redis.get(SPEND_KEY.format(job_id=JOB))) == usage.calls[0]["cost_micros"]
+    assert int(await redis.get(SPEND_KEY.format(scope=ENVELOPE))) == usage.calls[0]["cost_micros"]
+
+
+async def test_the_running_total_is_kept_per_envelope_not_per_research_job(
+    redis: Redis,
+) -> None:
+    gateway = make_gateway(redis, ScriptedProvider(answer()))
+    await gateway.run(TASK, PAYLOAD, make_ctx(cost_cap_micros=1_000_000))
+
+    # The cap on a CallContext belongs to one envelope -- since the planner began fanning a job
+    # out into tasks with a share of its budget each, a job-wide total would cross any single
+    # task's cap almost at once and fail every task after the first as budget_exhausted. The key
+    # and the cap have to describe the same thing.
+    assert int(await redis.get(SPEND_KEY.format(scope=ENVELOPE)) or 0) > 0
+    assert await redis.get(SPEND_KEY.format(scope=JOB)) is None
 
 
 async def test_the_fallback_model_reports_one_combined_cost(redis: Redis) -> None:
@@ -397,7 +411,7 @@ async def test_the_fallback_model_reports_one_combined_cost(redis: Redis) -> Non
     assert len(usage.calls) == 1
     assert result.model == MODEL_MEDIUM
     assert result.usage.input_tokens == 200
-    assert int(await redis.get(SPEND_KEY.format(job_id=JOB))) == result.cost_micros
+    assert int(await redis.get(SPEND_KEY.format(scope=ENVELOPE))) == result.cost_micros
 
 
 async def test_two_failures_in_one_job_are_two_charges(redis: Redis) -> None:
@@ -434,7 +448,7 @@ async def test_a_reservation_is_released_when_the_provider_never_answers(redis: 
         await gateway.run(TASK, PAYLOAD, make_ctx())
 
     # Nothing was billed, so nothing may stay claimed against the job's cap.
-    assert int(await redis.get(SPEND_KEY.format(job_id=JOB)) or 0) == 0
+    assert int(await redis.get(SPEND_KEY.format(scope=ENVELOPE)) or 0) == 0
 
 
 async def test_a_call_that_would_break_the_cap_is_refused_before_it_is_made(
@@ -513,7 +527,7 @@ async def test_cancelling_a_job_still_books_what_it_already_spent(redis: Redis) 
     # and left the reservation claimed against the cap for a week.
     assert len(usage.calls) == 1
     assert usage.calls[0]["cost_micros"] > 0
-    spent = int(await redis.get(SPEND_KEY.format(job_id=JOB)) or 0)
+    spent = int(await redis.get(SPEND_KEY.format(scope=ENVELOPE)) or 0)
     assert spent == usage.calls[0]["cost_micros"]
 
 
@@ -526,7 +540,7 @@ async def test_a_cancelled_call_that_never_landed_frees_its_reservation(redis: R
         await gateway.run(TASK, PAYLOAD, make_ctx(cost_cap_micros=1_000_000))
 
     assert usage.calls == []
-    assert int(await redis.get(SPEND_KEY.format(job_id=JOB)) or 0) == 0
+    assert int(await redis.get(SPEND_KEY.format(scope=ENVELOPE)) or 0) == 0
 
 
 async def test_a_repair_turn_does_not_hold_the_first_attempts_reservation(
@@ -540,7 +554,7 @@ async def test_a_repair_turn_does_not_hold_the_first_attempts_reservation(
     result = await gateway.run(TASK, PAYLOAD, make_ctx(cost_cap_micros=4_000))
 
     assert result.data == VALID
-    assert int(await redis.get(SPEND_KEY.format(job_id=JOB))) == result.cost_micros
+    assert int(await redis.get(SPEND_KEY.format(scope=ENVELOPE))) == result.cost_micros
 
 
 async def test_a_cache_hit_reports_when_the_answer_was_actually_observed(

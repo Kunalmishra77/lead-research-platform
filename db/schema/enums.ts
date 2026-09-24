@@ -24,6 +24,14 @@ export const researchJobStatus = app.enum('research_job_status', [
 
 export const researchDepth = app.enum('research_depth', ['quick', 'standard', 'deep']);
 
+/**
+ * Where a lead has got to with the customer. docs/04 names the column but not its values, and
+ * docs/09 only shows it as a grid column, so this is the smallest progression that is
+ * uncontroversial. Phase 4 owns the lead workflow and may add values, which is an additive
+ * `ALTER TYPE`; removing one is not, so the set starts small on purpose (ADR-0012).
+ */
+export const leadStatus = app.enum('lead_status', ['new', 'contacted', 'qualified', 'rejected']);
+
 export const errorClass = app.enum('error_class', [
   'transient',
   'rate_limited',

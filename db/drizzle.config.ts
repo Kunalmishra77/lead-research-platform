@@ -16,6 +16,7 @@ export default defineConfig({
     './schema/sources.ts',
     './schema/graph.ts',
     './schema/research.ts',
+    './schema/leads.ts',
     './schema/billing.ts',
     './schema/jobs.ts',
   ],

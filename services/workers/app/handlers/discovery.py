@@ -127,12 +127,15 @@ def register_discovery_handlers(
                     await jobs.finish_if_done(org_id, research_job_id)
                     return
                 await jobs.mark_running(org_id, research_job_id)
+                workspace_id = await _workspace(jobs, org_id, research_job_id)
 
                 found = await _search(ctx, payload, connectors=connectors, org_id=org_id)
                 stored = await graph.store(
                     org_id,
                     found,
                     source_id=await reference.source_id(payload.source),
+                    workspace_id=workspace_id,
+                    research_job_id=research_job_id,
                 )
             except JobCancelledError:
                 # The user stopped it and the API has already released the credits. Nothing
@@ -194,6 +197,21 @@ def register_discovery_handlers(
             )
 
 
+async def _workspace(jobs: ResearchJobsRepo, org_id: str, research_job_id: str) -> str:
+    """The workspace a job's leads belong to.
+
+    Read from the job row rather than the envelope, and required: a lead with no workspace is a
+    lead nobody can see, and retrying cannot conjure one, so this fails fast rather than looking
+    transient.
+    """
+    workspace_id = await jobs.workspace_of(org_id, research_job_id)
+    if workspace_id is None:
+        raise InvalidInputError(
+            f"research job {research_job_id} has no workspace to deliver leads to"
+        )
+    return workspace_id
+
+
 async def _search(
     ctx: JobContext,
     payload: DiscoveryPayload,
@@ -226,8 +244,9 @@ async def _charge(
 ) -> int:
     """Bills the job for the businesses it actually found.
 
-    Per delivered lead, not per search and not per candidate already in the graph: a job that
-    rediscovers the same shop through five phrasings has found one lead and pays for one. The
+    Per lead delivered to this workspace, not per search and not per candidate: a job that
+    rediscovers the same shop through five phrasings has delivered one lead and pays for one, and
+    a company another customer found first is still a lead this one did not have (ADR-0012). The
     unit key is the task's own id, so a redelivered or retried task cannot charge twice.
     """
     if new_leads <= 0:

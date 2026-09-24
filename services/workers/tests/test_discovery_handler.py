@@ -24,6 +24,7 @@ from app.jobs.registry import HandlerRegistry
 ORG = "018f4a9a-0000-7000-8000-000000000001"
 JOB = "018f4a9a-0000-7000-8000-000000000002"
 TASK = "018f4a9a-0000-7000-8000-000000000003"
+WORKSPACE = "018f4a9a-0000-7000-8000-000000000004"
 TASK_TYPE = "discovery.places_text_search"
 
 PAYLOAD = {
@@ -93,16 +94,25 @@ class FakeGraph:
     def __init__(self, new: int | None = None) -> None:
         self._new = new
         self.stored: list[list[Candidate]] = []
+        self.workspaces: list[str] = []
 
     async def store(
-        self, org_id: str, candidates: list[Candidate], *, source_id: str
+        self,
+        org_id: str,
+        candidates: list[Candidate],
+        *,
+        source_id: str,
+        workspace_id: str,
+        research_job_id: str,
     ) -> list[Stored]:
         self.stored.append(list(candidates))
+        self.workspaces.append(workspace_id)
         new = len(candidates) if self._new is None else self._new
         return [
             Stored(
                 company_id=f"c{i}",
                 location_id=f"l{i}",
+                lead_id=f"lead{i}",
                 is_new=i < new,
                 values_written=len(c.values),
             )
@@ -156,6 +166,9 @@ class FakeJobs:
     async def finish_if_done(self, org_id: str, job_id: str) -> bool:
         self.finished += 1
         return True
+
+    async def workspace_of(self, org_id: str, job_id: str) -> str | None:
+        return WORKSPACE
 
     async def mark_failed(self, org_id: str, job_id: str, error_class: str, message: str) -> bool:
         return True
@@ -288,6 +301,34 @@ async def test_the_price_of_a_lead_follows_the_depth_the_user_chose(
     assert usage.calls[0]["credits"] == credits
 
 
+async def test_leads_are_delivered_to_the_workspace_that_asked_for_them(
+    redis: Redis, make_envelope: Any
+) -> None:
+    connectors = FakeConnectors([candidate("p1", "A")])
+
+    graph, _, _, _ = await run(redis, make_envelope, connectors=connectors)
+
+    # Read from the job row, not taken from the envelope: a lead delivered to the wrong
+    # workspace is another tenant's data appearing in someone's list.
+    assert graph.workspaces == [WORKSPACE]
+
+
+async def test_a_company_another_customer_found_first_is_still_a_new_lead_here(
+    redis: Redis, make_envelope: Any
+) -> None:
+    connectors = FakeConnectors([candidate("p1", "A"), candidate("p2", "B")])
+    # The graph already held both businesses; this workspace had been given neither.
+    graph = FakeGraph(new=2)
+
+    _, tasks, _, usage = await run(redis, make_envelope, connectors=connectors, graph=graph)
+
+    # "Delivered new lead" is delivered to a workspace (docs/11, ADR-0012). Counting against the
+    # global graph meant a second customer searching the same market received nothing and paid
+    # nothing -- they ran a search, we spent their budget, and withheld the answer.
+    assert usage.calls[0]["units"] == 2
+    assert tasks.completed[0]["leads"] == 2
+
+
 async def test_a_search_that_found_nothing_new_charges_nothing(
     redis: Redis, make_envelope: Any
 ) -> None:
@@ -297,6 +338,8 @@ async def test_a_search_that_found_nothing_new_charges_nothing(
         redis, make_envelope, connectors=connectors, graph=FakeGraph(new=0)
     )
 
+    # A workspace re-running its own search already holds these leads, so there is nothing to
+    # deliver and nothing to charge for.
     assert usage.calls == []
     assert tasks.completed[0]["credits"] == 0
     # The task still succeeded: finding nothing new is a real answer, not a failure.

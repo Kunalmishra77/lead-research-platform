@@ -59,6 +59,7 @@ class ResearchJobsRepo(Protocol):
     async def mark_running(self, org_id: str, job_id: str) -> bool: ...
     async def add_progress(self, org_id: str, job_id: str, counts: dict[str, int]) -> bool: ...
     async def finish_if_done(self, org_id: str, job_id: str) -> bool: ...
+    async def workspace_of(self, org_id: str, job_id: str) -> str | None: ...
 
 
 class SqlResearchJobsRepo:
@@ -125,6 +126,22 @@ class SqlResearchJobsRepo:
             "     where research_job_id = :id and status in ('queued', 'running'))",
             {"id": job_id},
         )
+
+    async def workspace_of(self, org_id: str, job_id: str) -> str | None:
+        """Which workspace this job belongs to.
+
+        Read from the job row rather than taken from the envelope: the row is what the API wrote
+        when the user pressed run, and a lead delivered to the wrong workspace would be another
+        tenant's data appearing in someone's list.
+        """
+        async with tenant_transaction(self._engine, org_id) as conn:
+            row = (
+                await conn.execute(
+                    text("select workspace_id from app.research_jobs where id = :id"),
+                    {"id": job_id},
+                )
+            ).first()
+        return str(row[0]) if row else None
 
     async def mark_cancelled(self, org_id: str, job_id: str) -> bool:
         """Records what the cancel flag already told us (ADR-0008).

@@ -12,10 +12,18 @@ Three tables, and the difference between them matters:
   (migration 0013). That is what lets a value keep the evidence it was true on a given day even
   after it changes.
 
-None of these is tenant data. The graph is shared and filled only from public sources, so a
-customer's own imports never reach it (ADR-0007). The policies are `USING (true)` for
-`app_worker`, but everything still runs inside `tenant_transaction` so a task's own row and the
-graph rows it produces commit or fail together.
+A fourth table, and it is the one that makes any of this visible: `leads` says which workspace
+was handed which company, by which job (ADR-0012). The graph is shared and holds only what public
+sources reported, so nothing in it belongs to anyone; without a `leads` row a job's results cannot
+be read back at all, and a second workspace searching the same market would find every business
+already present and be given none of them.
+
+It is also what billing counts. `app.credit_rates` prices a "delivered new lead" (docs/11), and a
+lead is delivered to a *workspace* — so a company already in the graph is still a new lead for a
+customer who has not been given it before, and one they already hold is not.
+
+Everything runs inside `tenant_transaction`, which the graph policies do not need (`USING (true)`)
+but `leads` does, and which keeps a task's rows committing or failing together.
 """
 
 import json
@@ -41,14 +49,24 @@ class Stored:
 
     company_id: str
     location_id: str | None
-    #: False when this place was already in the graph. Only a new one is worth charging for.
+    lead_id: str | None
+    #: True when this workspace had not been given this company before — which is what a
+    #: "delivered new lead" means and what the job is charged for. Deliberately not "new to the
+    #: graph": a company another customer discovered first is still new to this one, and they
+    #: received it just the same.
     is_new: bool
     values_written: int
 
 
 class GraphRepo(Protocol):
     async def store(
-        self, org_id: str, candidates: list[Candidate], *, source_id: str
+        self,
+        org_id: str,
+        candidates: list[Candidate],
+        *,
+        source_id: str,
+        workspace_id: str,
+        research_job_id: str,
     ) -> list[Stored]: ...
 
 
@@ -57,21 +75,43 @@ class SqlGraphRepo:
         self._engine = engine
 
     async def store(
-        self, org_id: str, candidates: list[Candidate], *, source_id: str
+        self,
+        org_id: str,
+        candidates: list[Candidate],
+        *,
+        source_id: str,
+        workspace_id: str,
+        research_job_id: str,
     ) -> list[Stored]:
         """Writes a batch of candidates, one transaction for the batch.
 
         One transaction so a task that dies halfway leaves nothing behind to reconcile: either
-        the search's results are in the graph or they are not.
+        the search's results are in the graph and delivered, or neither.
         """
         stored: list[Stored] = []
         async with tenant_transaction(self._engine, org_id) as conn:
             for candidate in candidates:
-                stored.append(await self._store_one(conn, candidate, source_id=source_id))
+                stored.append(
+                    await self._store_one(
+                        conn,
+                        candidate,
+                        source_id=source_id,
+                        org_id=org_id,
+                        workspace_id=workspace_id,
+                        research_job_id=research_job_id,
+                    )
+                )
         return stored
 
     async def _store_one(
-        self, conn: AsyncConnection, candidate: Candidate, *, source_id: str
+        self,
+        conn: AsyncConnection,
+        candidate: Candidate,
+        *,
+        source_id: str,
+        org_id: str,
+        workspace_id: str,
+        research_job_id: str,
     ) -> Stored:
         place_id = candidate.external_id
         existing = await self._location_company(conn, place_id)
@@ -82,11 +122,11 @@ class SqlGraphRepo:
         on_platform = is_platform_host(candidate.url)
         domain = None if on_platform else host
 
-        if existing is not None:
-            company_id, is_new = existing, False
-        else:
-            company_id = await self._resolve_company(conn, candidate, domain=domain)
-            is_new = True
+        company_id = (
+            existing
+            if existing is not None
+            else await self._resolve_company(conn, candidate, domain=domain)
+        )
 
         location_id = await self._upsert_location(
             conn, candidate, company_id=company_id, place_id=place_id
@@ -96,12 +136,71 @@ class SqlGraphRepo:
         written = await self._write_values(
             conn, candidate, company_id=company_id, source_id=source_id
         )
+        lead_id, is_new = await self._deliver(
+            conn,
+            company_id=company_id,
+            org_id=org_id,
+            workspace_id=workspace_id,
+            research_job_id=research_job_id,
+        )
         return Stored(
             company_id=company_id,
             location_id=location_id,
+            lead_id=lead_id,
             is_new=is_new,
             values_written=written,
         )
+
+    async def _deliver(
+        self,
+        conn: AsyncConnection,
+        *,
+        company_id: str,
+        org_id: str,
+        workspace_id: str,
+        research_job_id: str,
+    ) -> tuple[str | None, bool]:
+        """Hands this company to the workspace, and says whether that was new.
+
+        `DO NOTHING` rather than an update: a workspace that already holds this lead may have
+        changed its status, assigned it or corrected a value, and a search running again must not
+        undo any of that. It is also why `app_worker` has no UPDATE grant on the table at all.
+
+        The returned flag is what the job is charged on, so it has to mean "this customer did not
+        have this before" — not "nobody had it".
+        """
+        inserted = (
+            await conn.execute(
+                text(
+                    "insert into app.leads"
+                    " (id, org_id, workspace_id, company_id, research_job_id)"
+                    " values (:id, :org, :workspace, :company, :job)"
+                    " on conflict do nothing"
+                    " returning id"
+                ),
+                {
+                    "id": str(uuid7()),
+                    "org": org_id,
+                    "workspace": workspace_id,
+                    "company": company_id,
+                    "job": research_job_id,
+                },
+            )
+        ).first()
+        if inserted is not None:
+            return str(inserted[0]), True
+
+        existing = (
+            await conn.execute(
+                text(
+                    "select id from app.leads"
+                    " where workspace_id = :workspace and company_id = :company"
+                    "   and person_id is null"
+                ),
+                {"workspace": workspace_id, "company": company_id},
+            )
+        ).first()
+        return (str(existing[0]) if existing else None), False
 
     async def _location_company(self, conn: AsyncConnection, place_id: str) -> str | None:
         """The company this place already belongs to, if we have seen it before."""

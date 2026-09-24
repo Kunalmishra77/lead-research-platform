@@ -7,7 +7,7 @@ actually reachable, and — the part that matters to the user — what is not re
 the job says so instead of quietly returning fewer columns than were paid for.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from app.connectors.base import BaseConnector
 from app.connectors.registry import ConnectorRegistry
@@ -33,6 +33,9 @@ class Capabilities:
     """The capability map for one spec."""
 
     by_field: dict[str, FieldPlan]
+    #: What one call of each source costs internally, in micros. The planner needs it to fund a
+    #: task enough to make at least one: a budget below that buys nothing at all.
+    cost_by_source: dict[str, int] = field(default_factory=dict)
 
     @property
     def unsatisfiable(self) -> tuple[str, ...]:
@@ -64,6 +67,11 @@ def build_capabilities(
     a discovery plan and the job would find nothing (`discovers`, docs/08).
     """
     return Capabilities(
+        cost_by_source={
+            c.key: c.cost_per_call_micros
+            for c in registry
+            if c.usable_in_production(legal_approved=legal_approved)
+        },
         by_field={
             field: FieldPlan(
                 field=field,
@@ -73,7 +81,7 @@ def build_capabilities(
                 enrichment=_keys(registry.providing(field, legal_approved=legal_approved)),
             )
             for field in fields
-        }
+        },
     )
 
 

@@ -161,14 +161,37 @@ class GooglePlacesConnector(BaseConnector):
         self._max_tile_km = max_tile_km
 
     async def search(self, query: DiscoveryQuery, ctx: CallContext) -> list[Candidate]:
-        """Covers the query's area with tiles and returns every distinct business found."""
+        """Covers the query's area with tiles and returns every distinct business found.
+
+        A budget that runs out mid-way ends the tiling and returns what has been paid for. It
+        used to end the whole search: the error escaped from the second tile and took the first
+        tile's businesses with it, so a job could spend its money and keep none of the results.
+        Only a budget that never covered even one call is an error — there the caller genuinely
+        got nothing, and saying "no businesses here" instead would be a lie.
+        """
         tiles = self._tiles_for(query)
         budget = _Budget(ctx.cost_cap_micros)
         found: dict[str, Candidate] = {}
-        for tile in tiles[:MAX_TILES_PER_QUERY]:
+        for index, tile in enumerate(tiles[:MAX_TILES_PER_QUERY]):
+            if not budget.can_afford(SEARCH_COST_MICROS):
+                ctx.log.info(
+                    "google_places stopped early on budget",
+                    spent=budget.spent,
+                    cap=ctx.cost_cap_micros,
+                    found=len(found),
+                    covered=f"{index}/{len(tiles)} tiles",
+                )
+                break
             await self._search_tile(query, tile, ctx, found, budget, depth=0)
             if len(found) >= query.max_results:
                 break
+        if not found and budget.spent == 0:
+            # Never made a call at all. Returning an empty list would be indistinguishable from
+            # "there are no businesses here", which is a very different thing to tell a user.
+            raise BudgetExhaustedError(
+                f"google_places needs {SEARCH_COST_MICROS} micros for one search,"
+                f" this task has {ctx.cost_cap_micros}"
+            )
         return list(found.values())[: query.max_results]
 
     async def fetch(self, ref: SourceRef, ctx: CallContext) -> RawResult:
@@ -253,6 +276,11 @@ class GooglePlacesConnector(BaseConnector):
         pages = 0
         more_to_come = False
         while pages < MAX_PAGES:
+            if not budget.can_afford(SEARCH_COST_MICROS):
+                # Out of money, not out of results. Saying so keeps whatever the earlier pages
+                # already bought and tells the caller the area is only partly covered.
+                more_to_come = True
+                break
             budget.spend(SEARCH_COST_MICROS)
             body = self._search_body(query, tile, page_token)
             response = await self._client.post(
@@ -350,13 +378,18 @@ class _TileResult:
 class _Budget:
     """Stops a tiled search before it spends more than the job allows.
 
-    Bounds one search within one process. The job-wide ceiling is the executor's (task 2.11);
-    this is what keeps a single query over a large city from becoming an unbounded bill.
+    Bounds one search within one process; the shared client bounds the whole request. Callers ask
+    `can_afford` and stop, rather than calling `spend` and catching: a search that raises from
+    deep inside its paging loses the pages it already paid for, which is exactly how a live Delhi
+    run spent $0.63 and stored nothing.
     """
 
     def __init__(self, cap_micros: int) -> None:
         self._cap = cap_micros
         self._spent = 0
+
+    def can_afford(self, micros: int) -> bool:
+        return self._cap <= 0 or self._spent + micros <= self._cap
 
     def spend(self, micros: int) -> None:
         if self._cap > 0 and self._spent + micros > self._cap:

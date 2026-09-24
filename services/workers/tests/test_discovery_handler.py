@@ -303,6 +303,45 @@ async def test_a_search_that_found_nothing_new_charges_nothing(
     assert tasks.failed == []
 
 
+async def test_reporting_failure_does_not_undo_a_task_that_worked(
+    redis: Redis, make_envelope: Any
+) -> None:
+    class BrokenJobs(FakeJobs):
+        async def add_progress(self, org_id: str, job_id: str, counts: dict[str, int]) -> bool:
+            raise RuntimeError('syntax error at or near ":"')
+
+    connectors = FakeConnectors([candidate("p1", "A")])
+    jobs = BrokenJobs()
+    _, tasks, _, usage = await run(redis, make_envelope, connectors=connectors, jobs=jobs)
+
+    # Everything before the counters is paid for and stored. A live Delhi run let a broken
+    # counter statement take seventeen such tasks down with it -- each one had already found its
+    # businesses, written them, and charged for them.
+    assert tasks.completed
+    assert tasks.failed == []
+    assert usage.calls
+    # And the job still gets its chance to finish.
+    assert jobs.finished == 1
+
+
+async def test_a_retry_of_a_finished_task_can_still_close_the_job(
+    redis: Redis, make_envelope: Any
+) -> None:
+    connectors = FakeConnectors([candidate("p1", "A")])
+    jobs = FakeJobs()
+
+    _, _, _, usage = await run(
+        redis, make_envelope, connectors=connectors, tasks=FakeTasks(claimable=False), jobs=jobs
+    )
+
+    # The attempt that finished this task may have died before checking whether it was the last
+    # one. If no later attempt ever checks either, the job sits at `running` for ever with the
+    # user's credits reserved.
+    assert connectors.searches == 0
+    assert usage.calls == []
+    assert jobs.finished == 1
+
+
 async def test_a_task_that_already_finished_is_not_run_again(
     redis: Redis, make_envelope: Any
 ) -> None:

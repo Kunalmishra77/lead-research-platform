@@ -8,7 +8,12 @@ that has to happen before a value can be offered to the column at all.
 
 import pytest
 
-from app.db.graph import normalized_name, registrable_domain, to_e164
+from app.db.graph import normalized_name, to_e164
+from app.normalize.domains import (
+    is_platform_host,
+    registrable_domain,
+    registrable_stem,
+)
 
 
 @pytest.mark.parametrize(
@@ -77,3 +82,46 @@ def test_a_name_is_normalised_for_matching_not_for_display() -> None:
     assert normalized_name("Dr. Sanap's Clinic") == "dr sanap s clinic"
     assert normalized_name("  BLUE   Tokai  ") == "blue tokai"
     assert normalized_name("Café Müller") == "café müller"
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://sites.google.com/view/teeth-care-clinic",
+        "https://teethcare.business.site/",
+        "https://drsharma.wixsite.com/clinic",
+        "https://www.instagram.com/avidentalcare/",
+        "https://www.facebook.com/bhagatdental",
+        "https://linktr.ee/smilestudio",
+        "https://drsmile.blogspot.com/",
+        "https://wa.me/919812345678",
+    ],
+)
+def test_a_platform_address_never_identifies_a_business(url: str) -> None:
+    # companies.primary_domain is UNIQUE, so it is an identity claim. The second clinic to arrive
+    # with sites.google.com would not get its own company -- it would be merged into the first
+    # one's, and nothing downstream could tell they had ever been separate.
+    assert is_platform_host(url)
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://drrashisdentalclinic.com/",
+        "https://www.32smiles.co.in/",
+        "https://dantiki.com/about",
+        "https://sgtdentalxpertz.com",
+    ],
+)
+def test_a_business_that_owns_its_domain_still_does(url: str) -> None:
+    assert not is_platform_host(url)
+    assert registrable_domain(url)
+
+
+def test_the_registrable_name_is_the_one_that_was_registered() -> None:
+    # Reading the leftmost label instead gets these exactly backwards: the first belongs to
+    # Justdial, and the second's owner is 32smiles rather than "co".
+    assert registrable_stem("https://dentalgalaxy.justdial.com/") == "justdial"
+    assert registrable_stem("https://32smiles.co.in/") == "32smiles"
+    assert registrable_stem("https://www.example-dental.test/x") == "exampledental"
+    assert registrable_stem("") == ""

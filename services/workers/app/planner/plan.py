@@ -41,9 +41,16 @@ TASK_TYPE_BY_SOURCE: Final[dict[str, str]] = {
 #: the Places connector pages and tiles internally, and each page is billed.
 MAX_RESULTS_PER_TASK: Final[int] = 200
 
-#: Below this a task cannot buy anything useful, so the plan drops it rather than queueing work
-#: that will stop on `budget_exhausted` after its first call.
+#: The floor under a task's budget when nothing better is known. The real floor is one call of
+#: the source it will use, which `_min_task_credits` works out: a task funded below that makes no
+#: call at all and fails as `budget_exhausted` having bought nothing. A live Delhi run found
+#: exactly that — eighteen tasks, three credits each, every one refused because one Places search
+#: costs closer to two, and $0.63 spent for no leads.
 MIN_TASK_CREDITS: Final[int] = 1
+
+#: What the API turns one credit into internally (`COST_CAP_MICROS_PER_CREDIT`). Only a fallback:
+#: the real ratio comes from the envelope, because it is configurable.
+DEFAULT_MICROS_PER_CREDIT: Final[int] = 20_000
 
 
 def text_of(value: object) -> str:
@@ -76,6 +83,10 @@ class Plan:
     #: bounding box would search the wrong part of the world.
     unknown_places: tuple[str, ...] = ()
     notes: tuple[str, ...] = ()
+    #: True when money, rather than the request, is why there is less here than there could be.
+    #: A flag rather than a phrase in `notes`: the handler classifies the failure from this, and
+    #: reading it out of prose would make the error class depend on the wording.
+    budget_limited: bool = False
 
     @property
     def total_credits(self) -> int:
@@ -98,12 +109,17 @@ async def build_plan(
     reference: ReferenceData,
     expansion: Expansion,
     credits: int,
+    micros_per_credit: int = DEFAULT_MICROS_PER_CREDIT,
 ) -> Plan:
     """The plan for one spec, inside `credits` reserved credits.
 
     `credits` is `budget.credits_remaining` from the job envelope — what the API actually took
     from the ledger — never `spec.limits.max_credits`, which is only the user's ceiling and is
     routinely higher than the reservation.
+
+    `micros_per_credit` is that envelope's own rate, used to work out how few tasks the budget
+    can actually fund. Spreading a budget across more searches than it can pay for is worse than
+    running fewer: each underfunded task spends nothing and returns nothing.
     """
     source = _discovery_source(capabilities)
     if source is None:
@@ -126,6 +142,9 @@ async def build_plan(
     searches, dropped = _searches(
         spec, template=template, expansion=expansion, areas=areas, google_types=google_types
     )
+    floor = _min_task_credits(capabilities, source, micros_per_credit)
+    searches, unfunded = _affordable(searches, credits=credits, template=template, floor=floor)
+    dropped += unfunded
     budgets = _split_budget(credits, template=template, count=len(searches))
     per_task_results = _results_per_task(spec, count=len(searches))
     tasks = [
@@ -140,14 +159,14 @@ async def build_plan(
             credit_budget=budget,
         )
         for search, budget in zip(searches, budgets, strict=True)
-        if budget >= MIN_TASK_CREDITS
+        if budget >= floor
     ]
 
     notes: list[str] = []
     if dropped:
         notes.append(
-            f"{dropped} searches not planned: this request needs more than the "
-            f"{template.max_discovery_tasks} a {template.intent} job may run"
+            f"{dropped} searches not planned: {credits} credits fund {len(searches)} of them, "
+            f"and a {template.intent} job may run at most {template.max_discovery_tasks}"
         )
     if len(tasks) < len(searches):
         notes.append(
@@ -158,7 +177,37 @@ async def build_plan(
         unsatisfiable=capabilities.unsatisfiable,
         unknown_places=unknown,
         notes=tuple(notes),
+        budget_limited=bool(unfunded) or len(tasks) < len(searches),
     )
+
+
+def _min_task_credits(capabilities: Capabilities, source: str, micros_per_credit: int) -> int:
+    """The least a task can be given and still make one call of its source.
+
+    Rounded up: a task funded at exactly the cost of a call can make it, one funded a micro under
+    cannot make any. Falls back to one credit when the rate or the cost is unknown, which is the
+    old behaviour and is only reached when a source declares no cost at all.
+    """
+    cost = capabilities.cost_by_source.get(source, 0)
+    if cost <= 0 or micros_per_credit <= 0:
+        return MIN_TASK_CREDITS
+    return max(MIN_TASK_CREDITS, ceil(cost / micros_per_credit))
+
+
+def _affordable(
+    searches: list[dict[str, Any]], *, credits: int, template: PlanTemplate, floor: int
+) -> tuple[list[dict[str, Any]], int]:
+    """As many searches as the discovery budget can actually pay for, and how many were cut.
+
+    Fewer, properly funded searches beat many starved ones. The starved version is not merely
+    less good: a task that cannot afford a single call spends nothing, finds nothing, and fails
+    as `budget_exhausted`, which reads to the user as a broken job rather than a small budget.
+    """
+    pot = int(max(credits, 0) * min(template.discovery_share, 1.0))
+    affordable = pot // floor if floor > 0 else len(searches)
+    if affordable >= len(searches):
+        return searches, 0
+    return searches[:affordable], len(searches) - affordable
 
 
 def _discovery_source(capabilities: Capabilities) -> str | None:

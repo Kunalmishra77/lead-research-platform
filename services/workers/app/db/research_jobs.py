@@ -27,6 +27,30 @@ PROGRESS_COUNTERS: frozenset[str] = frozenset({"candidates", "leads", "values"})
 # cancelled, nor overwrite the first reason it failed with a later, vaguer one.
 
 
+def progress_sql(counts: dict[str, int]) -> str:
+    """The statement `add_progress` runs, built separately so a test can read it.
+
+    Two things about it are easy to get wrong and impossible to see from the outside. The counter
+    names are interpolated, so they are checked against a closed set rather than escaped: a new
+    counter should be a deliberate addition here, not whatever a caller happened to pass. And
+    every value is bound with `cast(:name as bigint)`, never `:name::bigint` — SQLAlchemy refuses
+    to bind a parameter that a colon follows, so it cannot mistake PostgreSQL's `::` cast for
+    one, and the placeholder would reach Postgres verbatim.
+    """
+    unknown = set(counts) - PROGRESS_COUNTERS
+    if unknown:
+        raise InvalidInputError(f"unknown progress counters: {sorted(unknown)}")
+    additions = " || ".join(
+        f"jsonb_build_object('{name}',"
+        f" coalesce(cast(progress->>'{name}' as bigint), 0) + cast(:{name} as bigint))"
+        for name in counts
+    )
+    return (
+        f"update app.research_jobs set progress = progress || {additions}"  # noqa: S608
+        " where id = :id and status not in ('completed', 'failed', 'cancelled')"
+    )
+
+
 class ResearchJobsRepo(Protocol):
     async def mark_failed(
         self, org_id: str, job_id: str, error_class: str, message: str
@@ -81,23 +105,7 @@ class SqlResearchJobsRepo:
         """
         if not counts:
             return False
-        unknown = set(counts) - PROGRESS_COUNTERS
-        if unknown:
-            # The counter names are interpolated into SQL, so they may only ever be names this
-            # module already knows. Checked rather than escaped: a new counter should be a
-            # deliberate addition here, not whatever a caller happened to pass.
-            raise InvalidInputError(f"unknown progress counters: {sorted(unknown)}")
-        additions = " || ".join(
-            f"jsonb_build_object('{name}',"
-            f" coalesce((progress->>'{name}')::bigint, 0) + :{name}::bigint)"
-            for name in counts
-        )
-        return await self._update(
-            org_id,
-            f"update app.research_jobs set progress = progress || {additions}"  # noqa: S608
-            " where id = :id and status not in ('completed', 'failed', 'cancelled')",
-            {"id": job_id, **counts},
-        )
+        return await self._update(org_id, progress_sql(counts), {"id": job_id, **counts})
 
     async def finish_if_done(self, org_id: str, job_id: str) -> bool:
         """Completes the job once no task of it is still queued or running.

@@ -9,7 +9,9 @@ expires on exactly that clock, so this cache sweeps itself, and nothing here may
 longer life than `PLACES_CONTENT_TTL_S`.
 
 Keyed by everything that changes the answer — the term, the filters and the tile — because two
-different questions must never share an entry, least of all across orgs.
+different questions must never share an entry, least of all across orgs. The key also carries a
+version of what an entry *contains*, because an entry that is merely out of shape is worse than
+no entry: see `SCHEMA_VERSION`.
 """
 
 import json
@@ -21,9 +23,17 @@ from typing import Any
 from redis.asyncio import Redis
 
 from app.connectors.google_places.tiling import Tile
-from app.connectors.types import Candidate
+from app.connectors.types import Candidate, FieldValue
 
 KEY_PREFIX = "places:search:"
+
+#: Bumped whenever what a cached candidate holds changes. Without it, an entry written by an
+#: older deploy is read back by a newer one and quietly loses whatever the old shape did not
+#: know about — which is precisely what happened when candidates began carrying their own field
+#: values: every cache hit produced a business with no name, address or phone behind it, no
+#: provenance at all, and the job was charged for it as a new lead. A wrong answer that looks
+#: right is worse than paying for the search again.
+SCHEMA_VERSION = 2
 
 #: The longest Places content may be kept (ADR-0011). Not a tuning knob.
 PLACES_CONTENT_TTL_S = 30 * 24 * 3600
@@ -51,7 +61,7 @@ def cache_key(source_key: str, fingerprint: str, tile: Tile) -> str:
     digest = sha256(
         "\x1f".join((source_key, fingerprint, *(str(c) for c in corners))).encode()
     ).hexdigest()
-    return f"{KEY_PREFIX}{source_key}:{digest[:32]}"
+    return f"{KEY_PREFIX}v{SCHEMA_VERSION}:{source_key}:{digest[:32]}"
 
 
 class PlaceSearchCache:
@@ -110,7 +120,42 @@ def _as_dict(candidate: Candidate) -> dict[str, Any]:
         "source_url": candidate.source_url,
         "observed_at": candidate.observed_at.isoformat() if candidate.observed_at else None,
         "raw": candidate.raw,
+        # The values this search already paid for. Dropping them here was not a smaller cache,
+        # it was a lead with nothing behind it (CLAUDE.md: no value without provenance).
+        "values": [_value_as_dict(v) for v in candidate.values],
     }
+
+
+def _value_as_dict(value: FieldValue) -> dict[str, Any]:
+    return {
+        "entity_type": value.entity_type,
+        "field": value.field,
+        "value": value.value,
+        "source_key": value.source_key,
+        "source_url": value.source_url,
+        "observed_at": value.observed_at.isoformat(),
+        "method": value.method,
+        "confidence": value.confidence,
+        "derivation": value.derivation,
+        "model": value.model,
+        "prompt_version": value.prompt_version,
+    }
+
+
+def _value(data: dict[str, Any]) -> FieldValue:
+    return FieldValue(
+        entity_type=data["entity_type"],
+        field=data["field"],
+        value=data["value"],
+        source_key=data["source_key"],
+        source_url=data["source_url"],
+        observed_at=datetime.fromisoformat(data["observed_at"]),
+        method=data["method"],
+        confidence=data["confidence"],
+        derivation=data.get("derivation"),
+        model=data.get("model"),
+        prompt_version=data.get("prompt_version"),
+    )
 
 
 def _candidate(data: dict[str, Any]) -> Candidate:
@@ -129,4 +174,5 @@ def _candidate(data: dict[str, Any]) -> Candidate:
         source_url=data.get("source_url", ""),
         observed_at=datetime.fromisoformat(observed) if observed else None,
         raw=data.get("raw", {}),
+        values=tuple(_value(v) for v in data.get("values", ())),
     )

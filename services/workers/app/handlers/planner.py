@@ -39,7 +39,13 @@ from app.jobs.redact import redact
 from app.jobs.registry import HandlerRegistry
 from app.metering.context import CallContext
 from app.planner.capability import build_capabilities
-from app.planner.plan import Expansion, Plan, build_plan, text_of
+from app.planner.plan import (
+    DEFAULT_MICROS_PER_CREDIT,
+    Expansion,
+    Plan,
+    build_plan,
+    text_of,
+)
 from app.planner.templates import template_for
 
 #: Where discovery envelopes go. Defaults to the pool the plan itself arrived on, so a worker
@@ -103,6 +109,7 @@ def register_planner_handlers(
                 connectors=connectors,
                 ref=reference,
                 credits=ctx.envelope.budget.credits_remaining,
+                micros_per_credit=_micros_for(1, ctx.envelope.budget),
             )
             # Checked before the write, not after: a plan written for a job the user has already
             # stopped is a set of rows nobody will ever run, and it left them `queued` for ever.
@@ -170,6 +177,7 @@ async def _plan(
     connectors: ConnectorRegistry,
     ref: ReferenceData,
     credits: int,
+    micros_per_credit: int,
 ) -> Plan:
     capabilities = build_capabilities(connectors, [str(f) for f in spec.fields])
     expansion = await _expand(ctx, spec, gateway)
@@ -180,6 +188,7 @@ async def _plan(
         reference=ref,
         expansion=expansion,
         credits=credits,
+        micros_per_credit=micros_per_credit or DEFAULT_MICROS_PER_CREDIT,
     )
 
 
@@ -337,7 +346,7 @@ def _error_class(plan: Plan) -> str:
     wants rewording, where a budget too small for even one search is `budget_exhausted` and
     wants more credits.
     """
-    if any("could not fund" in note for note in plan.notes):
+    if plan.budget_limited:
         return "budget_exhausted"
     return "invalid_input"
 

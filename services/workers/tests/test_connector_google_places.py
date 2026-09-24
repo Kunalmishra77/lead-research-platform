@@ -24,6 +24,7 @@ from app.connectors.google_places import (
 )
 from app.connectors.google_places.cache import (
     PLACES_CONTENT_TTL_S,
+    SCHEMA_VERSION,
     CachedSearch,
     cache_key,
 )
@@ -428,16 +429,38 @@ async def test_our_own_result_limit_is_not_mistaken_for_google_running_out() -> 
 
 
 @respx.mock
-async def test_a_tiled_search_stops_at_the_jobs_cost_cap() -> None:
+async def test_a_tiled_search_stops_at_the_jobs_cost_cap_and_keeps_what_it_bought() -> None:
+    twenty = load_json("google_places", "search_success")["places"] * 7
+    respx.post(SEARCH_URL).mock(return_value=httpx.Response(200, json=_paged(twenty, "MORE")))
+    connector, usage = make_connector()
+    try:
+        # Two searches' worth of budget: the third would be over the cap.
+        found = await connector.search(
+            DiscoveryQuery(text="cafes", bbox=SMALL_BBOX, max_results=500),
+            make_ctx(cost_cap_micros=SEARCH_COST_MICROS * 2),
+        )
+    finally:
+        await connector._client.aclose()
+
+    # This used to raise, and the raise escaped `search()` carrying off everything the earlier
+    # calls had already been billed for. A live Delhi run spent $0.63 that way and stored
+    # nothing: every task paid for its first tile, hit the cap on its second, and threw both away.
+    assert found
+    assert len(usage.calls) == 2
+
+
+@respx.mock
+async def test_a_budget_too_small_for_even_one_call_is_still_an_error() -> None:
     twenty = load_json("google_places", "search_success")["places"] * 7
     respx.post(SEARCH_URL).mock(return_value=httpx.Response(200, json=_paged(twenty, "MORE")))
     connector, _ = make_connector()
     try:
-        # Two searches' worth of budget: the third would be over the cap.
+        # Nothing was bought, so there is nothing to keep. Returning an empty list here would be
+        # indistinguishable from "there are no cafes here", which is a different thing to say.
         with pytest.raises(BudgetExhaustedError):
             await connector.search(
                 DiscoveryQuery(text="cafes", bbox=SMALL_BBOX, max_results=500),
-                make_ctx(cost_cap_micros=SEARCH_COST_MICROS * 2),
+                make_ctx(cost_cap_micros=SEARCH_COST_MICROS - 1),
             )
     finally:
         await connector._client.aclose()
@@ -464,6 +487,24 @@ async def test_the_cache_keeps_whole_candidates_and_expires_within_the_terms() -
     # A place id alone is not a result: rehydrating one costs more than the search it saved.
     assert hit.candidates[0].name == candidate.name
     assert hit.candidates[0].observed_at == candidate.observed_at
+
+    # And a candidate is not a result either, without the values behind it. Dropping these on
+    # the way through the cache is what a live Delhi run exposed: 44 of 113 businesses came back
+    # from cache with a name on the company row and no field values at all -- no provenance for
+    # any of it -- and the job was charged for each one as a new lead.
+    assert hit.candidates[0].values
+    assert {v.field for v in hit.candidates[0].values} == {v.field for v in candidate.values}
+    original = {v.field: v for v in candidate.values}
+    for value in hit.candidates[0].values:
+        was = original[value.field]
+        assert (value.value, value.source_url, value.method, value.derivation) == (
+            was.value,
+            was.source_url,
+            was.method,
+            was.derivation,
+        )
+        assert value.observed_at == was.observed_at
+        assert value.confidence == pytest.approx(was.confidence)
 
     ttl = await redis.ttl(cache_key("google_places", "dentists", tile))
     # Places content may be kept for 30 days, so the cache deletes itself on that clock.
@@ -618,3 +659,21 @@ async def test_an_unusable_bounding_box_is_an_error_not_an_empty_answer() -> Non
             )
     finally:
         await connector._client.aclose()
+
+
+async def test_a_cache_entry_from_an_older_shape_is_never_read_back() -> None:
+    redis = fakeredis.FakeAsyncRedis()
+    cache = PlaceSearchCache(redis)
+    tile = Tile(*SMALL_BBOX)
+
+    # An entry that is merely out of shape is worse than no entry: it is served as a real answer
+    # and silently lacks whatever the old shape did not carry. The key states which shape wrote
+    # it, so a bump simply misses and the search is paid for again.
+    assert f"v{SCHEMA_VERSION}:" in cache_key("google_places", "dentists", tile)
+    stale = cache_key("google_places", "dentists", tile).replace(
+        f"v{SCHEMA_VERSION}:", f"v{SCHEMA_VERSION - 1}:"
+    )
+    await redis.set(stale, '{"candidates": [], "truncated": false}')
+
+    assert await cache.get("google_places", "dentists", tile) is None
+    await redis.aclose()

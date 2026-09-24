@@ -21,7 +21,6 @@ graph rows it produces commit or fail together.
 import json
 from dataclasses import dataclass
 from typing import Any, Protocol
-from urllib.parse import urlparse
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
@@ -29,10 +28,7 @@ from uuid6 import uuid7
 
 from app.connectors.types import Candidate
 from app.db.tenant import tenant_transaction
-
-#: `companies.primary_domain` and `company_domains.domain` share a CHECK that rules out a
-#: leading "www." and anything that is not a bare host. A URL has to be reduced before it fits.
-_BAD_DOMAIN_PREFIX = "www."
+from app.normalize.domains import is_platform_host, registrable_domain
 
 #: `company_locations.phone_e164` is CHECKed against this shape — no spaces, no punctuation.
 _E164_MIN_DIGITS = 7
@@ -79,7 +75,12 @@ class SqlGraphRepo:
     ) -> Stored:
         place_id = candidate.external_id
         existing = await self._location_company(conn, place_id)
-        domain = registrable_domain(candidate.url)
+        host = registrable_domain(candidate.url)
+        # A platform host identifies the platform, not the business. `primary_domain` is UNIQUE,
+        # so storing one would merge every business that builds its site there into whichever
+        # arrived first -- two unrelated clinics becoming one company, unrecoverably.
+        on_platform = is_platform_host(candidate.url)
+        domain = None if on_platform else host
 
         if existing is not None:
             company_id, is_new = existing, False
@@ -90,8 +91,8 @@ class SqlGraphRepo:
         location_id = await self._upsert_location(
             conn, candidate, company_id=company_id, place_id=place_id
         )
-        if domain:
-            await self._record_domain(conn, company_id, domain)
+        if host:
+            await self._record_domain(conn, company_id, host, is_platform=on_platform)
         written = await self._write_values(
             conn, candidate, company_id=company_id, source_id=source_id
         )
@@ -202,14 +203,28 @@ class SqlGraphRepo:
         ).one()
         return str(row[0])
 
-    async def _record_domain(self, conn: AsyncConnection, company_id: str, domain: str) -> None:
+    async def _record_domain(
+        self, conn: AsyncConnection, company_id: str, domain: str, *, is_platform: bool
+    ) -> None:
+        """Every domain we saw, flagged with whether it can identify this business.
+
+        The unique index on `domain` is partial on `not is_platform`, so a hundred businesses may
+        each have their own `sites.google.com` row while a real domain still belongs to one.
+        """
         await conn.execute(
             text(
-                "insert into app.company_domains (id, company_id, domain, is_primary)"
-                " values (:id, :company, :domain, true)"
+                "insert into app.company_domains"
+                " (id, company_id, domain, is_primary, is_platform)"
+                " values (:id, :company, :domain, :primary, :platform)"
                 " on conflict (company_id, domain) do nothing"
             ),
-            {"id": str(uuid7()), "company": company_id, "domain": domain},
+            {
+                "id": str(uuid7()),
+                "company": company_id,
+                "domain": domain,
+                "primary": not is_platform,
+                "platform": is_platform,
+            },
         )
 
     async def _write_values(
@@ -256,23 +271,6 @@ class SqlGraphRepo:
             )
             written += 1
         return written
-
-
-def registrable_domain(url: str | None) -> str | None:
-    """The bare host a company's website lives on, or None if there is nothing usable.
-
-    `companies.primary_domain` is the dedupe key and carries a CHECK that rejects a leading
-    "www.", so a URL straight from a source cannot be stored as it stands. None rather than a
-    guess: a wrong domain here merges two unrelated businesses into one company.
-    """
-    if not url:
-        return None
-    parsed = urlparse(url if "//" in url else f"//{url}", scheme="https")
-    host = (parsed.netloc or "").lower().split("@")[-1].split(":")[0]
-    host = host.removeprefix(_BAD_DOMAIN_PREFIX).strip(".")
-    if not host or "." not in host or " " in host:
-        return None
-    return host
 
 
 def to_e164(phone: str | None) -> str | None:

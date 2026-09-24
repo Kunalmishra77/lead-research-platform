@@ -161,7 +161,52 @@ async def test_searches_the_budget_cannot_fund_are_dropped_rather_than_queued() 
     # which reads to the user as a failure rather than as a budget that was always too small.
     assert all(t.credit_budget >= 1 for t in plan.tasks)
     assert len(plan.tasks) < 6
-    assert any("could not fund" in note for note in plan.notes)
+    # Said as a flag, not as a phrase: the handler classifies the failure from this, and reading
+    # it back out of prose would make the error class depend on the wording.
+    assert plan.budget_limited
+    assert plan.notes
+
+
+async def test_a_task_is_funded_enough_to_make_one_call_of_its_source() -> None:
+    # A live Delhi run planned 18 tasks at 3 credits each and every one was refused: one Places
+    # search costs 35_000 micros and 3 credits buys 60_000, which does not cover the two tiles
+    # Delhi needs. $0.63 went out and no leads came back. Fewer, funded searches beat many
+    # starved ones -- a starved task spends nothing, finds nothing, and reads as a broken job.
+    caps = capabilities_for(["name"])
+    plan = await build_plan(
+        make_spec(cities=["Pune"]),
+        capabilities=caps,
+        template=TEMPLATES["prospecting"],
+        reference=FakeReference(),
+        expansion=Expansion(queries=tuple(f"q{i}" for i in range(8))),
+        credits=20,
+        micros_per_credit=20_000,
+    )
+
+    per_call = caps.cost_by_source["google_places"]
+    assert plan.tasks
+    for task in plan.tasks:
+        assert task.credit_budget * 20_000 >= per_call, "a task that cannot call buys nothing"
+    assert len(plan.tasks) < 8
+    assert plan.budget_limited
+
+
+async def test_a_cheaper_rate_per_credit_funds_more_searches() -> None:
+    async def count(micros_per_credit: int) -> int:
+        plan = await build_plan(
+            make_spec(cities=["Pune"]),
+            capabilities=capabilities_for(["name"]),
+            template=TEMPLATES["prospecting"],
+            reference=FakeReference(),
+            expansion=Expansion(queries=tuple(f"q{i}" for i in range(8))),
+            credits=20,
+            micros_per_credit=micros_per_credit,
+        )
+        return len(plan.tasks)
+
+    # The rate is configurable on the API side, so the planner reads it from the envelope rather
+    # than assuming 20_000. At twice the rate a credit buys twice the calls.
+    assert await count(40_000) > await count(20_000)
 
 
 async def test_a_market_map_spends_more_on_finding_rows_than_a_competitor_scan() -> None:

@@ -28,6 +28,7 @@ from app.db.research_tasks import ResearchTasksRepo
 from app.jobs.cancellation import JobCancelledError, raise_if_cancelled
 from app.jobs.context import JobContext
 from app.jobs.errors import ErrorClass, InvalidInputError, classify
+from app.jobs.redact import redact
 from app.jobs.registry import HandlerRegistry
 from app.metering.context import CallContext
 from app.metering.usage import UsageRecorder
@@ -120,6 +121,10 @@ def register_discovery_handlers(
                     # Already finished — a redelivery, or a message reclaimed after this task
                     # had completed. Running it again would pay for the same search twice.
                     ctx.log.info("discovery task already finished; nothing to do", task=task_id)
+                    # Still ask whether the job is over. The attempt that finished this task may
+                    # have died before it got to check, and if no later task ever checks either
+                    # the job sits at `running` for ever with its credits reserved.
+                    await jobs.finish_if_done(org_id, research_job_id)
                     return
                 await jobs.mark_running(org_id, research_job_id)
 
@@ -155,18 +160,30 @@ def register_discovery_handlers(
 
             counts = {"candidates": len(found), "leads": new_leads, "values": values}
             await tasks.mark_completed(org_id, task_id, {**counts, "credits": credits}, 0)
-            await jobs.add_progress(org_id, research_job_id, counts)
-            await ctx.progress.publish(
-                job_id=research_job_id,
-                org_id=org_id,
-                trace_id=ctx.envelope.trace_id,
-                stage="discovery",
-                # Never "completed": one task finishing is not the job finishing, and the API's
-                # SSE stream closes on a terminal status (`progress-stream.ts`).
-                status="running",
-                counts=counts,
-                credits_used=credits,
-            )
+
+            # Reporting must not undo a task that worked. Everything above this line is paid for
+            # and stored; letting a counter update take it down would mark successful, charged
+            # work as failed — which is exactly what a live Delhi run did to seventeen tasks.
+            try:
+                await jobs.add_progress(org_id, research_job_id, counts)
+                await ctx.progress.publish(
+                    job_id=research_job_id,
+                    org_id=org_id,
+                    trace_id=ctx.envelope.trace_id,
+                    stage="discovery",
+                    # Never "completed": one task finishing is not the job finishing, and the
+                    # API's SSE stream closes on a terminal status (`progress-stream.ts`).
+                    status="running",
+                    counts=counts,
+                    credits_used=credits,
+                )
+            except Exception as exc:
+                ctx.log.warning(
+                    "discovery task finished but its progress could not be reported",
+                    task=task_id,
+                    error_class=classify(exc).value,
+                    error=redact(str(exc)),
+                )
             await jobs.finish_if_done(org_id, research_job_id)
             ctx.log.info(
                 "discovery task done",

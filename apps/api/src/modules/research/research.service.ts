@@ -241,7 +241,11 @@ export class ResearchService {
 
     const rows = await withTenant(this.db, { orgId: tenant.orgId, userId: user.userId }, (tx) =>
       tx
-        .select({
+        // One row per lead, not per location. A chain resolved to one company keeps a location
+        // for each branch (graph.py _resolve_company), so a plain join returns that company once
+        // per branch: the page repeats the same lead, and `limit` counts rows rather than leads,
+        // so a page can end mid-company and the cursor skips the rest of it.
+        .selectDistinctOn([leads.id], {
           id: leads.id,
           companyId: leads.companyId,
           status: leads.status,
@@ -265,7 +269,9 @@ export class ResearchService {
             query.cursor ? lt(leads.id, query.cursor) : undefined,
           ),
         )
-        .orderBy(desc(leads.id))
+        // DISTINCT ON keeps the first row per lead in this order, so the tie-break decides which
+        // branch is shown: the oldest location, which is the one the job saw first.
+        .orderBy(desc(leads.id), companyLocations.id)
         .limit(query.limit + 1),
     );
 

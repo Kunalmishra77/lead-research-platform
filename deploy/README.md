@@ -178,6 +178,16 @@ Each check only means something if the one before it passed.
 
 The likely places, in order:
 
+- **[WARN] Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.18.0","pnpm":"11.11.0"})
+[WARN] Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.18.0","pnpm":"11.11.0"})
+undefined
+[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command "build:packages" not found
+
+Did you mean "pnpm build:packages"? exits 1 with almost no output.** turbo publishes glibc binaries only
+  (,  — no musl build), and these images are Alpine. Each one
+  installs  for that reason; without it the turbo binary cannot start and the failure
+  looks like a compile error with no compiler output.
+
 - **`lstat /artifacts/deploy: no such file or directory`**, with "Dockerfile not found for service
   api at ../deploy/Dockerfile.api" just above it. A build context is relative to the project
   directory, not to the compose file, and Coolify sets the project directory to the repo root. Every

@@ -7,6 +7,11 @@
 # In Coolify: run this as a pre-deploy command or a one-off job, with DATABASE_URL_MIGRATIONS set.
 
 FROM node:24-alpine
+# turbo ships only glibc binaries -- the lockfile has @turbo/linux-64 and @turbo/linux-arm64 and no
+# musl build -- and this image is Alpine, which is musl. Without libc6-compat the turbo binary exits
+# 1 with almost no output, so `pnpm build:packages` fails before a single file is compiled. Next.js
+# asks for the same package on Alpine.
+RUN apk add --no-cache libc6-compat
 RUN corepack enable
 WORKDIR /repo
 

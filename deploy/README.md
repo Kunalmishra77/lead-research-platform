@@ -183,6 +183,13 @@ The likely places, in order:
   directory, not to the compose file, and Coolify sets the project directory to the repo root. Every
   `context:` must therefore be `.`, never `..`.
 
+- **The install succeeds and the next step cannot find `turbo`, `tsc`, `nest` or `next`.**
+  Something put `NODE_ENV=production` into the build environment, so pnpm installed a
+  production-only tree. On Coolify this is not hypothetical: it injects an ARG declaration for every
+  environment variable before building, and an ARG is visible to RUN as an environment variable —
+  its own build log warns about this. Every install here passes `--prod=false` for that reason;
+  do not remove it.
+
 - **`pnpm install --frozen-lockfile` fails.** The lockfile and the manifests disagree — usually
   because a `package.json` was edited without running `pnpm install`. Run it locally, commit the
   lockfile, redeploy.

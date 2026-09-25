@@ -30,7 +30,12 @@ COPY packages/contracts/package.json packages/contracts/
 COPY packages/dev-dns/package.json packages/dev-dns/
 COPY packages/observability/package.json packages/observability/
 COPY infra/setup/package.json infra/setup/
-RUN pnpm install --frozen-lockfile
+# --prod=false because the build needs devDependencies -- turbo, typescript, nest, next all live
+# there. Without it the install silently succeeds with a production-only tree and the build fails a
+# step later looking for a compiler. NODE_ENV cannot be relied on to be unset here: Coolify injects
+# an ARG declaration for every environment variable before building, and an ARG is visible to RUN
+# as an environment variable, so NODE_ENV=production arrives whether or not this file asks for it.
+RUN pnpm install --frozen-lockfile --prod=false
 
 COPY . .
 # Workspace packages ship as compiled ESM, so they build before anything that imports them.

@@ -89,6 +89,89 @@ Each step only makes sense if the one before it passed.
 5. **Turn on `GOOGLE_PLACES_ENABLED=true`** and redeploy the workers.
 6. **Run one search.** Watch the counters move on the job page, then read the leads.
 
+---
+
+## The click path, in order
+
+Coolify's exact menu wording changes between versions, so this says what has to happen rather
+than pretending to know which button says it. If a label does not match, look for the thing that
+does the same job.
+
+### Step 0 — before Coolify, gather the values
+
+Almost all of them are already in your local `.env` and already work. Copy them across rather
+than making new ones:
+
+`SUPABASE_URL`, `SUPABASE_JWKS_URL`, `SUPABASE_PUBLISHABLE_KEY`, `DATABASE_URL`,
+`DATABASE_URL_WORKERS`, `DATABASE_URL_MIGRATIONS`, all six `S3_*`, `OPENAI_API_KEY`,
+`GOOGLE_PLACES_API_KEY`, `SERPER_API_KEY`.
+
+Two you must **not** copy, because they decide what the public site thinks it is:
+
+- `APP_URL` — the public https URL, exactly as the browser will show it, no trailing slash.
+- `API_URL` — the same public URL.
+
+You also need a domain (or subdomain) with an A record pointing at the VPS. Coolify issues the
+certificate once DNS resolves.
+
+### Step 1 — point Coolify at the repo
+
+New project → new resource → the **Docker Compose from a Git repository** option.
+
+- Repository: your GitHub repo, branch `main`
+- Compose file: `deploy/docker-compose.yml`
+- Build context / base directory: the **repository root**, not `deploy/`. The Dockerfiles copy
+  workspace packages from outside `apps/`, so a context of `deploy/` cannot see them.
+
+Coolify will read the compose file and show four services: `redis`, `api`, `workers`, `web`.
+
+### Step 2 — environment
+
+Paste `deploy/env.production.template`, filled in, into the environment for the **resource**, so
+every service gets it. Compose passes each service only the keys it needs.
+
+Keep `GOOGLE_PLACES_ENABLED=false` for the first deploy.
+
+### Step 3 — the domain goes on `web` only
+
+Give the domain to the `web` service. Leave `api`, `workers` and `redis` without one: the browser
+never calls the API directly, it goes through the app's own `/api/app` proxy (ADR-0002).
+
+**`APP_URL` must equal that domain exactly, including `https://`.** This is the single most
+likely thing to break the first deploy, and the symptom is confusing: pages load, then every
+sign-in or form submit returns 403. The app compares the browser's `Origin` header against
+`APP_URL` as a CSRF check, and `https://app.example.com` does not equal `https://app.example.com/`
+or the `http://` version. The cookie's `secure` flag is decided by the same value, so a mismatch
+also breaks staying signed in.
+
+### Step 4 — the database, once
+
+If your Supabase project is the same one you have been developing against, **this is already
+done** — you have run `pnpm db:migrate` and `pnpm db:seed` against it. Skip to step 5.
+
+If it is a fresh project, run `deploy/migrate.Dockerfile` as a one-off job with
+`DATABASE_URL_MIGRATIONS` set, before the first deploy of the stack.
+
+A note worth making deliberately rather than by accident: using your dev Supabase project as
+production means demo data, test orgs and real data live in one database, and a mistake made
+while developing lands on the live site. For a demo today that is a reasonable trade. It is not
+one to leave in place.
+
+### Step 5 — deploy, then check in this order
+
+Each check only means something if the one before it passed.
+
+1. `api` healthy — `/health/ready`. A failure here is almost always a missing required variable,
+   and the log says which.
+2. `workers` log shows `workers starting` with
+   `job_types=['discovery.places_text_search', 'research.plan', 'system.ping']`.
+   If `discovery.places_text_search` is absent, a job will never find anything.
+3. Open the domain, sign up, create an org. The free plan grants 50 credits.
+4. `/research/new` → type a request → **Understand this**. No credits are charged. A failure here
+   means `OPENAI_API_KEY` or the `interactive` worker pool.
+5. Only now set `GOOGLE_PLACES_ENABLED=true` and redeploy the workers.
+6. Run one search at **quick** depth, which is 1 credit a lead rather than 3.
+
 ## When a build fails
 
 The likely places, in order:

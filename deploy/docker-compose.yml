@@ -122,6 +122,11 @@ services:
       SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY}
       SENTRY_DSN_WEB: ${SENTRY_DSN_WEB:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+    # The only service that should get a public domain in Coolify. `api`, `workers` and `redis`
+    # stay on the internal network; the browser reaches the API through this app's own
+    # /api/app proxy, which is what keeps the Supabase token server-side (ADR-0002).
+    expose:
+      - '3000'
     depends_on:
       api:
         condition: service_healthy

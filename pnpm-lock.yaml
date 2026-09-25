@@ -144,6 +144,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@leadforge/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@leadforge/dev-dns':
         specifier: workspace:*
         version: link:../../packages/dev-dns

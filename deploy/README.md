@@ -178,6 +178,12 @@ Each check only means something if the one before it passed.
 
 The likely places, in order:
 
+- **`Cannot find module '@leadforge/db'`, dozens of times.** Something built only `packages/*`.
+  `@leadforge/db` lives in `db/`, outside that glob, and `.dockerignore` excludes `dist/` — so a
+  local checkout hides the problem (it already has `db/dist`) and the image does not. The images
+  build with `turbo run build --filter=<package>`, which walks the dependency graph, rather than
+  with `build:packages`.
+
 - **`pnpm build:packages` exits 1 with almost no compiler output.** turbo publishes glibc
   binaries only — the lockfile carries `@turbo/linux-64` and `@turbo/linux-arm64` and no musl
   build — while these images are Alpine, which is musl. Each one installs `libc6-compat` for that

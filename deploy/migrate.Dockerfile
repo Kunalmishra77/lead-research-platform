@@ -32,7 +32,13 @@ COPY infra/setup/package.json infra/setup/
 RUN pnpm install --frozen-lockfile --prod=false
 
 COPY . .
-RUN pnpm build:packages
+# Build through turbo's dependency graph rather than `build:packages`, which only covers
+# packages/*. Migrating and seeding depends on @leadforge/db, which lives in db/ and so was never built here; the
+# image failed with 44 "Cannot find module '@leadforge/db'" errors while every local build passed,
+# because a local checkout already has db/dist on disk and .dockerignore excludes it. turbo.json
+# declares `build` as dependsOn ["^build"], so a filter on one package builds its whole closure --
+# and keeps doing so when a new workspace dependency is added.
+RUN pnpm exec turbo run build --filter=@leadforge/db --filter=./packages/*
 
 # Bootstrap is idempotent (schema, extensions, roles); migrate applies what is pending; seed is
 # idempotent and fills sources, plans, credit rates, industries and geography.

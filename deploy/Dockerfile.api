@@ -33,7 +33,13 @@ COPY infra/setup/package.json infra/setup/
 RUN pnpm install --frozen-lockfile --prod=false
 
 COPY . .
-RUN pnpm build:packages && pnpm --filter @leadforge/api build
+# Build through turbo's dependency graph rather than `build:packages`, which only covers
+# packages/*. The API depends on @leadforge/db, which lives in db/ and so was never built here; the
+# image failed with 44 "Cannot find module '@leadforge/db'" errors while every local build passed,
+# because a local checkout already has db/dist on disk and .dockerignore excludes it. turbo.json
+# declares `build` as dependsOn ["^build"], so a filter on one package builds its whole closure --
+# and keeps doing so when a new workspace dependency is added.
+RUN pnpm exec turbo run build --filter=@leadforge/api
 
 ENV NODE_ENV=production
 ENV PORT=4000

@@ -35,6 +35,10 @@ const securityHeaders = [
 const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Emits `.next/standalone`: a server plus only the files it imports. The deploy image does not
+  // use it yet — it runs `next start` from the built workspace, because that has fewer ways to
+  // fail on a first deploy — but this is what it slims down to once the stack is proven.
+  output: 'standalone',
   // Workspace packages are published as compiled ESM (dist/); nothing to transpile.
   headers: () => Promise.resolve([{ source: '/:path*', headers: securityHeaders }]),
   // A Sentry DSN is public by design; only the browser copy is inlined into client bundles. It is

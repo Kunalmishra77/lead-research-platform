@@ -1,0 +1,19 @@
+# Everything a build does not need. Keeping this tight is most of the image size, and it is also
+# what stops a local .env or a Playwright trace ending up in a published image.
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/.venv
+**/__pycache__
+**/*.pyc
+.git
+.env
+.env.*
+!.env.example
+**/test-results
+**/playwright-report
+**/coverage
+services/workers/.pytest_cache
+services/workers/.mypy_cache
+services/workers/.ruff_cache

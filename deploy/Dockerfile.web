@@ -1,0 +1,42 @@
+# The Next.js app.
+#
+# Deliberately simple: one build stage, then run from it. A slimmer image is possible (Next's
+# standalone output, a pruned production install) and this was written that way first — but these
+# files could not be built and tested on the machine that wrote them, and in a pnpm workspace the
+# clever version fails in ways that only show up on the host. Fewer moving parts is worth more
+# than a smaller image on a first deploy. Slim it once it is running.
+#
+# Build context is the repo root, not apps/web: the app imports workspace packages from outside it.
+
+FROM node:24-alpine
+RUN corepack enable
+ENV NEXT_TELEMETRY_DISABLED=1
+WORKDIR /repo
+
+# `NEXT_PUBLIC_SENTRY_DSN` is inlined into client bundles at build time, so Sentry has to arrive
+# as a build argument. Everything else is read from the environment at runtime.
+ARG SENTRY_DSN_WEB=""
+ARG SENTRY_ENVIRONMENT="production"
+ENV SENTRY_DSN_WEB=$SENTRY_DSN_WEB
+ENV SENTRY_ENVIRONMENT=$SENTRY_ENVIRONMENT
+
+# Manifests first, so editing a component does not re-resolve the dependency tree.
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY apps/web/package.json apps/web/
+COPY apps/api/package.json apps/api/
+COPY db/package.json db/
+COPY packages/config/package.json packages/config/
+COPY packages/contracts/package.json packages/contracts/
+COPY packages/dev-dns/package.json packages/dev-dns/
+COPY packages/observability/package.json packages/observability/
+COPY infra/setup/package.json infra/setup/
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+# Workspace packages ship as compiled ESM, so they build before anything that imports them.
+RUN pnpm build:packages && pnpm --filter @leadforge/web build
+
+ENV NODE_ENV=production
+ENV PORT=3000
+EXPOSE 3000
+CMD ["pnpm", "--filter", "@leadforge/web", "start"]

@@ -1,0 +1,33 @@
+# The NestJS API (REST + SSE).
+#
+# Same reasoning as Dockerfile.web: one build stage, run from it. These files could not be built
+# and tested where they were written, so they are written to work on the first try rather than to
+# be small. Slim them once the stack is up.
+#
+# This process is why the stack needs a host that runs processes rather than functions: it holds
+# SSE connections open for minutes while a research job runs.
+
+FROM node:24-alpine
+RUN corepack enable
+WORKDIR /repo
+
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY apps/web/package.json apps/web/
+COPY apps/api/package.json apps/api/
+COPY db/package.json db/
+COPY packages/config/package.json packages/config/
+COPY packages/contracts/package.json packages/contracts/
+COPY packages/dev-dns/package.json packages/dev-dns/
+COPY packages/observability/package.json packages/observability/
+COPY infra/setup/package.json infra/setup/
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+RUN pnpm build:packages && pnpm --filter @leadforge/api build
+
+ENV NODE_ENV=production
+ENV PORT=4000
+EXPOSE 4000
+# /health/ready is what Coolify should watch: it checks the database and Redis, so a container
+# that is up but cannot reach either is reported unhealthy rather than quietly failing requests.
+CMD ["node", "apps/api/dist/main.js"]

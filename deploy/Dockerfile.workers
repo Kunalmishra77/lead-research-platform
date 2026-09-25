@@ -1,0 +1,41 @@
+# The Python workers: the planner and the discovery executor.
+#
+# This is the process Vercel cannot host. It is a consumer sitting on Redis streams — it blocks,
+# waits, claims a message, runs a job that may take minutes, and goes back to waiting. Without it
+# a research job is created and nothing ever runs it, so the product finds nothing at all.
+
+FROM python:3.12-slim AS base
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONIOENCODING=utf-8 \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
+COPY --from=ghcr.io/astral-sh/uv:0.12.7 /uv /usr/local/bin/uv
+WORKDIR /app
+
+# ---- dependencies ------------------------------------------------------------------------------
+# The workers depend on the generated contracts package, which lives outside services/workers.
+FROM base AS deps
+COPY services/workers/pyproject.toml services/workers/uv.lock ./services/workers/
+COPY packages/contracts/pyproject.toml ./packages/contracts/
+COPY packages/contracts/generated ./packages/contracts/generated
+WORKDIR /app/services/workers
+RUN uv sync --frozen --no-dev --no-install-project
+
+# ---- runtime -----------------------------------------------------------------------------------
+FROM base AS runtime
+COPY --from=deps /app/services/workers/.venv /app/services/workers/.venv
+COPY packages/contracts/generated /app/packages/contracts/generated
+COPY packages/contracts/pyproject.toml /app/packages/contracts/
+COPY services/workers /app/services/workers
+
+# Not root, and the venv on PATH so `python` is the one with the dependencies.
+RUN useradd --uid 1001 --create-home worker && chown -R worker:worker /app
+USER worker
+ENV PATH="/app/services/workers/.venv/bin:$PATH"
+WORKDIR /app/services/workers
+
+# Which queues this container consumes. `discovery` is the one that finds businesses;
+# `interactive` answers the parse endpoint; `system` is health and pings.
+ENV WORKER_POOLS=system,interactive,discovery
+CMD ["python", "-m", "app.main"]

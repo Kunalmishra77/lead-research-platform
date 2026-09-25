@@ -1,0 +1,131 @@
+# The whole stack, for Coolify (or any Docker host).
+#
+# Four things run, and each one is here because the product does not work without it:
+#
+#   redis    the job queue and the caches. Jobs are Redis streams; losing it loses queued work.
+#   workers  the consumer that plans and runs research. Without it a job is created and nothing
+#            ever runs it — the screen shows a job that never finishes and no leads at all.
+#   api      REST plus the SSE progress stream, which stays open for minutes at a time.
+#   web      the Next.js app people actually look at.
+#
+# Postgres is not here: it is Supabase, already hosted (ADR-0002).
+#
+# Set the variables in `deploy/env.production.template` in Coolify's environment for this stack.
+# Coolify injects them into every service, so each one below takes only what it needs.
+
+name: leadforge
+
+services:
+  redis:
+    image: redis:8-alpine
+    # appendonly so a restart does not drop queued jobs; no RDB snapshots, which would only
+    # duplicate that at a cost.
+    command: redis-server --appendonly yes --save "" --maxmemory-policy noeviction
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.api
+    environment:
+      NODE_ENV: production
+      PORT: '4000'
+      APP_URL: ${APP_URL}
+      API_URL: ${API_URL}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: redis://redis:6379
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_JWKS_URL: ${SUPABASE_JWKS_URL}
+      # Required, no defaults: the API will not start without them (apps/api env.schema.ts).
+      # These are Supabase Storage's S3-compatible credentials.
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_REGION: ${S3_REGION}
+      S3_BUCKET_RAW: ${S3_BUCKET_RAW}
+      S3_BUCKET_EXPORTS: ${S3_BUCKET_EXPORTS}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+      # Behind Coolify's proxy, so the real client IP arrives in a forwarded header. Without
+      # this the per-org rate limits would all see the proxy as one client.
+      TRUST_PROXY: ${TRUST_PROXY:-}
+      COST_CAP_MICROS_PER_CREDIT: ${COST_CAP_MICROS_PER_CREDIT:-20000}
+      PARSE_RATE_PER_MINUTE: ${PARSE_RATE_PER_MINUTE:-30}
+      JOBS_DISCOVERY_POOL: ${JOBS_DISCOVERY_POOL:-discovery}
+      SENTRY_DSN_API: ${SENTRY_DSN_API:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      # Checks the database and Redis, so a container that is up but cannot reach either is
+      # reported unhealthy instead of quietly failing every request.
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:4000/health/ready']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  workers:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.workers
+    environment:
+      WORKER_POOLS: system,interactive,discovery
+      DATABASE_URL_WORKERS: ${DATABASE_URL_WORKERS}
+      REDIS_URL: redis://redis:6379
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY}
+      # Off by default. Turning it on is what lets a search spend real money at Google, so it is
+      # a deliberate act rather than a default (ADR-0011).
+      GOOGLE_PLACES_ENABLED: ${GOOGLE_PLACES_ENABLED:-false}
+      SERPER_API_KEY: ${SERPER_API_KEY:-}
+      DISCOVERY_POOL: ${JOBS_DISCOVERY_POOL:-discovery}
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_REGION: ${S3_REGION}
+      S3_BUCKET_RAW: ${S3_BUCKET_RAW}
+      S3_BUCKET_EXPORTS: ${S3_BUCKET_EXPORTS}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+      SENTRY_DSN_WORKERS: ${SENTRY_DSN_WORKERS:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+    depends_on:
+      redis:
+        condition: service_healthy
+    # More than one is safe: jobs are claimed from a consumer group and every task is idempotent.
+    # Start with one until the stack is proven.
+    deploy:
+      replicas: 1
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+      args:
+        SENTRY_DSN_WEB: ${SENTRY_DSN_WEB:-}
+        SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+      APP_URL: ${APP_URL}
+      # Server-to-server inside the compose network: the browser never calls the API directly,
+      # it goes through the app's own /api/app proxy (ADR-0002).
+      API_URL: http://api:4000
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY}
+      SENTRY_DSN_WEB: ${SENTRY_DSN_WEB:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  redis-data:

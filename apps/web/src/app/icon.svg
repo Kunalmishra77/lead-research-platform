@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="LeadForge">
+  <!--
+    The wordmark is "Lead" in the foreground colour and "Forge" in the primary indigo
+    (app-shell.tsx). At favicon size only one letter survives, so this is the F on a filled tile:
+    the indigo is what people recognise in a tab strip, not the glyph.
+
+    Colours are literal rather than var(--primary): a favicon is fetched outside the document and
+    inherits none of its custom properties. They match globals.css --primary (light).
+  -->
+  <rect width="32" height="32" rx="7" fill="#4b3ff0" />
+  <path
+    d="M11 8.5h11v3.6h-7.1v3.7h6.3v3.6h-6.3V24H11z"
+    fill="#ffffff"
+  />
+</svg>

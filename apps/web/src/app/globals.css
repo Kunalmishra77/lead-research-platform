@@ -91,4 +91,27 @@
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
+  /*
+   * Tailwind v4 dropped `cursor: pointer` on buttons from preflight, matching the browser default
+   * rather than overriding it. The result is that everything clickable in this app shows a text or
+   * arrow cursor, which reads as "not clickable" before anyone tries. Restored here rather than as
+   * a class on each component, so a new button is right without remembering.
+   *
+   * `label:has(input)` covers the depth cards, whose label wraps its radio and so has no `for`.
+   */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  select:not(:disabled),
+  summary,
+  label[for],
+  label:has(input:not(:disabled)),
+  input[type='radio']:not(:disabled),
+  input[type='checkbox']:not(:disabled) {
+    cursor: pointer;
+  }
+  button:disabled,
+  select:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
 }

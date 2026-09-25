@@ -120,7 +120,9 @@ New project → new resource → the **Docker Compose from a Git repository** op
 
 - Repository: your GitHub repo, branch `main`
 - Compose file: `deploy/docker-compose.yml`
-- Build context / base directory: the **repository root**, not `deploy/`. The Dockerfiles copy
+- Build context / base directory: the **repository root**, not `deploy/`. Compose resolves a
+  relative build context against the project directory, which Coolify sets to the repo root, so
+  every `context:` in the compose file is `.`. The Dockerfiles copy
   workspace packages from outside `apps/`, so a context of `deploy/` cannot see them.
 
 Coolify will read the compose file and show four services: `redis`, `api`, `workers`, `web`.
@@ -175,6 +177,11 @@ Each check only means something if the one before it passed.
 ## When a build fails
 
 The likely places, in order:
+
+- **`lstat /artifacts/deploy: no such file or directory`**, with "Dockerfile not found for service
+  api at ../deploy/Dockerfile.api" just above it. A build context is relative to the project
+  directory, not to the compose file, and Coolify sets the project directory to the repo root. Every
+  `context:` must therefore be `.`, never `..`.
 
 - **`pnpm install --frozen-lockfile` fails.** The lockfile and the manifests disagree — usually
   because a `package.json` was edited without running `pnpm install`. Run it locally, commit the

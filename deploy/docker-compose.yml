@@ -21,6 +21,16 @@
 # deploy/Dockerfile.web defaults its build arg, so nothing reads them. To turn Sentry on, add the
 # line back to the service that needs it.
 
+# Every build context below is `.`, not `..`, even though this file sits in deploy/. Compose
+# resolves a relative context against the PROJECT DIRECTORY, not against the directory holding the
+# compose file, and Coolify invokes it as
+#   docker compose --project-directory <repo root> -f <repo root>/deploy/docker-compose.yml build
+# so `.` is the repo root and `..` is its parent, where nothing exists. Running this by hand needs
+# the same project directory:
+#   docker compose -f deploy/docker-compose.yml --project-directory . build
+# The context has to be the repo root either way: the Dockerfiles copy workspace packages from
+# outside apps/, so a context of deploy/ cannot see them.
+
 name: leadforge
 
 services:
@@ -40,7 +50,7 @@ services:
 
   api:
     build:
-      context: ..
+      context: .
       dockerfile: deploy/Dockerfile.api
     environment:
       NODE_ENV: production
@@ -81,7 +91,7 @@ services:
 
   workers:
     build:
-      context: ..
+      context: .
       dockerfile: deploy/Dockerfile.workers
     environment:
       WORKER_POOLS: system,interactive,discovery
@@ -112,7 +122,7 @@ services:
 
   web:
     build:
-      context: ..
+      context: .
       dockerfile: deploy/Dockerfile.web
       args:
         SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}

@@ -1,6 +1,6 @@
 # ADR-0013: Scrapling supplies the Phase 3 parser, not the Phase 3 fetcher
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-07
 
 ## Context

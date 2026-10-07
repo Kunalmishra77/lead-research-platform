@@ -13,6 +13,35 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-07 — Phase 2 — Task 2.12 web UI, first real deploy, and what the live site found
+
+- Done: task 2.12 (New Research with SpecChips + feasibility badges + depth selector + credit
+  estimate, job page with SSE counters, history, OSM and Google attribution). Deployed the whole
+  stack to Coolify on the owner's VPS and ran a real search end to end on the public URL: 12
+  businesses seen, 7 leads delivered, 164 values stored, every value carrying
+  `google_places / api / found / 0.85`.
+- Decisions (link ADRs): ADR-0013 — Scrapling supplies the Phase 3 parser only, with no extras, so
+  `curl_cffi` (TLS impersonation) and `patchright` (undetected Chromium) are absent from the
+  image rather than merely unused; fetching stays in `ConnectorHttpClient`. Deploy runs on Docker
+  Compose rather than Vercel because the workers are a Redis-stream consumer and the SSE stream
+  stays open for minutes.
+- Tests/checks status: web 49 tests, api 91 tests, lint and typecheck green. The deploy itself took
+  six builds, each failing differently: compose resolves a relative build context against the
+  project directory and Coolify sets that to the repo root (`context: ..` pointed above it); a
+  lockfile entry for `@leadforge/contracts` in `apps/web` had never been committed; Coolify
+  injects an ARG for every environment variable and an ARG reaches RUN as an environment variable,
+  so `NODE_ENV=production` made pnpm install a production-only tree; turbo ships glibc binaries
+  only and the images are Alpine, so it needed `libc6-compat`; and `build:packages` covers only
+  `packages/*`, so `@leadforge/db` was never built — all six invisible locally.
+- Open issues / blockers: **a completed job reports `credits_used` 0 and its reservation is never
+  released.** The worker's grant excludes the credit columns and `app.credit_settle` is granted to
+  `app_api` only, so nothing settles a job the worker finished — the held credits do not come back.
+  Visible on the live run (balance 50 -> 30 with 7 leads billed as 0); the same gap recorded against
+  2.11, now confirmed in production. The credits pill and both dashboard counters are unwired
+  placeholders. Task 2.13 is the last open Phase 2 item.
+- Next step: task 2.13 (admin jobs list, task DAG view, connector health), then close Phase 2 and
+  start Phase 3.
+
 ### 2026-09-24 — Phase 2 — Task 2.11 discovery executor
 
 - Done: `app/handlers/discovery.py` runs a planned search and keeps what it finds — `app/db/graph.py` writes companies, locations and `field_values` with provenance on every value; `app/db/research_jobs.py` and `research_tasks.py` gained run-state methods; `app/metering/budget.py` bounds what one request may spend; `app/normalize/domains.py` holds the shared judgement about what a web address says about who owns it. Also wired the usage recorder and Redis into `build_connectors`, which production had never had. **A job now goes from a sentence to real leads in the database end to end.** Verified live against Google Places: 22 of 22 tasks ok, 86 Delhi businesses, every one with provenance behind its name, job status `completed`.

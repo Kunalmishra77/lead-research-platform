@@ -13,6 +13,41 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-07 — Phase 2 — ADR-0014: a finished job settles itself; four of five criteria now met
+
+- Done: ADR-0014 accepted and built. Migration 0023 splits `credit_settle` into an owner-only
+  worker taking the org as an argument and an unchanged tenant-facing wrapper, adds
+  `app.settle_finished_jobs` on pg_cron (every minute, following the 0017 sweeper), and a partial
+  index for its due-set. The job page says "settling" instead of printing a zero for a run that has
+  finished but not closed. Also added `leads` to `rls.live.test.ts`, which had never been
+  categorised since ADR-0012 and so was failing the "every table in schema app is covered"
+  assertion.
+- Decisions (link ADRs): ADR-0014. Granting `credit_settle` to `app_worker` was rejected: the
+  worker handles third-party responses all day, so it is the process most likely to be fed something
+  hostile, and that boundary is worth more than the bug cost. Two facts had to be asked of the live
+  server rather than assumed — PostgreSQL refuses transaction control inside a SECURITY DEFINER
+  routine, so the sweeper is a plain procedure revoked from PUBLIC and run by pg_cron as
+  `postgres`; and this database has no UUID v7 generator, so the sweeper's ledger ids are v4,
+  which is fine because a ledger row's id is never a cursor.
+- Tests/checks status: db 161 live tests (3 new for the sweeper), api 96, web 56; lint and typecheck
+  green. Run against the live data, the sweeper settled all three outstanding jobs: the one with a
+  real reservation charged 7 for 7 leads and returned 13 (balance 2030 -> 2043, and the ledger now
+  reads reserve -20, consume -7, release +20), and the two development jobs with no ledger reserve
+  closed charging nothing, because usage is capped by the reservation.
+- Open issues / blockers: **Phase 2 now meets four of its five acceptance criteria.** Criterion 1
+  (parse >= 90%) holds at 91.5–100% over six runs of spec_parse v4 at medium reasoning. Criterion 3
+  now works and is proven. Criterion 4 is covered by the reclaim tests in `test_consumer.py`
+  (`test_stale_message_of_a_dead_consumer_is_reclaimed`,
+  `test_crash_after_claiming_is_taken_over_by_the_reclaimer`) and by the live SSE run. Criterion 5
+  holds: both connectors ship success, empty, rate-limited and error fixtures.
+  **Criterion 2 is the one left: >= 200 unique candidates for Delhi, against 175 on the best run** —
+  and that run was bounded by its own 80-credit reservation, not by coverage. It is a measurement
+  now rather than a build: one standard-depth Delhi run with a real budget would settle it, at
+  roughly a dollar of Places. `research_tasks.cost_micros` is still written as 0 by the discovery
+  handler, so per-task cost stays unavailable (migration 0022).
+- Next step: fund one Delhi run to measure criterion 2, then `/review-phase 2` and close the
+  phase; after that Phase 3, where emails come from.
+
 ### 2026-10-07 — Phase 2 — Task 2.13 admin visibility; Phase 2 cannot close yet
 
 - Done: task 2.13. Migrations 0021 and 0022 add four SECURITY DEFINER reads in the shape of the

@@ -62,3 +62,103 @@ export function listOrgs(cursor: unknown): Promise<Page<AdminOrg>> {
 export function listUsers(cursor: unknown): Promise<Page<AdminUser>> {
   return adminFetch<Page<AdminUser>>(`/admin/users?${query(cursor)}`);
 }
+
+export const RESEARCH_JOB_STATUSES = [
+  'queued',
+  'planning',
+  'running',
+  'paused',
+  'completed',
+  'failed',
+  'cancelled',
+] as const;
+export type ResearchJobStatus = (typeof RESEARCH_JOB_STATUSES)[number];
+
+export interface AdminJob {
+  id: string;
+  orgId: string;
+  orgName: string;
+  status: ResearchJobStatus;
+  depth: string;
+  creditBudget: number;
+  creditsReserved: number;
+  creditsUsed: number;
+  costMicros: number;
+  progress: Record<string, unknown>;
+  errorClass: string | null;
+  createdAt: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+  settledAt: string | null;
+  tasksTotal: number;
+  tasksFailed: number;
+}
+
+export interface AdminTask {
+  id: string;
+  parentTaskId: string | null;
+  type: string;
+  status: string;
+  attempts: number;
+  creditBudget: number;
+  costMicros: number;
+  errorClass: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  durationMs: number | null;
+  input: Record<string, unknown>;
+}
+
+export interface AdminConnector {
+  source: string;
+  total: number;
+  completed: number;
+  failed: number;
+  running: number;
+  queued: number;
+  transient: number;
+  rateLimited: number;
+  accessRestricted: number;
+  parseFailed: number;
+  invalidInput: number;
+  budgetExhausted: number;
+  avgMs: number | null;
+  lastRunAt: string | null;
+}
+
+export interface AdminMeter {
+  meter: string;
+  events: number;
+  units: number;
+  credits: number;
+  costMicros: number;
+  orgs: number;
+  lastEventAt: string | null;
+}
+
+/** A status from the URL is only forwarded when it is one we know; anything else means "all". */
+export function asJobStatus(value: unknown): ResearchJobStatus | undefined {
+  return RESEARCH_JOB_STATUSES.find((s) => s === value);
+}
+
+/** Staff-only, audited on every call (app.admin_list_jobs). */
+export function listJobs(cursor: unknown, status?: ResearchJobStatus): Promise<Page<AdminJob>> {
+  const params = new URLSearchParams(query(cursor));
+  if (status) params.set('status', status);
+  return adminFetch<Page<AdminJob>>(`/admin/jobs?${params.toString()}`);
+}
+
+/** Staff-only, audited on every call (app.admin_job_tasks). */
+export function jobTasks(jobId: string): Promise<AdminTask[]> {
+  return adminFetch<AdminTask[]>(`/admin/jobs/${encodeURIComponent(jobId)}/tasks`);
+}
+
+/** Staff-only, audited on every call (app.admin_connector_health). */
+export function connectorHealth(): Promise<AdminConnector[]> {
+  return adminFetch<AdminConnector[]>('/admin/connectors');
+}
+
+/** Staff-only, audited on every call (app.admin_usage_by_meter). */
+export function usageByMeter(): Promise<AdminMeter[]> {
+  return adminFetch<AdminMeter[]>('/admin/usage');
+}

@@ -22,6 +22,12 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             Lead<span className="text-primary">Forge</span> Admin
           </span>
           <nav aria-label="Admin" className="flex gap-4 text-sm">
+            <Link href="/admin/jobs" className="hover:underline">
+              Jobs
+            </Link>
+            <Link href="/admin/connectors" className="hover:underline">
+              Connectors
+            </Link>
             <Link href="/admin/orgs" className="hover:underline">
               Organizations
             </Link>

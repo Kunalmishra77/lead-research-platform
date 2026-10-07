@@ -148,6 +148,20 @@
       "when": 1790272230121,
       "tag": "0020_leads_security",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791372032351,
+      "tag": "0021_admin_jobs_and_connector_health",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1791372261528,
+      "tag": "0022_connector_health_reads_real_money",
+      "breakpoints": true
     }
   ]
 }

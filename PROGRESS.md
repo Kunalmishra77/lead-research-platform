@@ -13,6 +13,34 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-07 — Phase 2 — Task 2.13 admin visibility; Phase 2 cannot close yet
+
+- Done: task 2.13. Migrations 0021 and 0022 add four SECURITY DEFINER reads in the shape of the
+  admin reads in 0011 — staff flag checked and audit row written in the same transaction as the
+  query — plus API endpoints and three pages: `/admin/jobs`, `/admin/jobs/[id]` (the task tree
+  with each task's input under it) and `/admin/connectors`. Admin now lands on jobs, not orgs.
+- Decisions (link ADRs): ADR-0014 proposed — a finished job settles itself in Postgres on pg_cron,
+  following the 0017 sweeper pattern, with `credit_settle` split into an owner-only worker and an
+  unchanged tenant-facing wrapper. 0022 exists because a smoke run caught 0021 reporting cost from
+  `research_tasks.cost_micros`, which the discovery handler writes as a hardcoded 0: 45 paid
+  Places calls showed a cost of nothing. Cost now comes from `usage_events`, through its own read,
+  because a task's type is the connector while a usage row's meter is what was billed and joining
+  them on a guess would invent a number.
+- Tests/checks status: api 96 tests, web 56 tests (12 new), lint, typecheck and web build green.
+  Migrations applied to the live database and verified: six admin functions, `app_api` can execute
+  each. The connector-health query was run against real data before being trusted — 45 Places
+  tasks, 43 ok, 2 failed, 74s average.
+- Open issues / blockers: **Phase 2 does not meet its own acceptance criteria and is staying open.**
+  Criterion 3 (credits consumed per delivered candidate, unused released) fails outright: all three
+  jobs ever run show `credits_used = 0` and `settled_at = never`; `usage_events` holds 589
+  credits of metered usage and `credit_ledger` has one reserve and no consume or release at all.
+  `credit_settle` is correct and nothing calls it for a job the worker finished. ADR-0014 is the
+  fix. Criterion 2 (>= 200 unique candidates for Delhi) reads 175 on the best run, bounded by that
+  run's credit budget rather than by coverage, and should be re-measured once a run can be funded
+  honestly. `research_tasks.cost_micros` is still hardcoded 0.
+- Next step: ADR-0014 — split `credit_settle`, add `app.settle_finished_jobs` on pg_cron, then
+  re-check Phase 2's criteria against the ledger before closing the phase.
+
 ### 2026-10-07 — Phase 2 — Task 2.12 web UI, first real deploy, and what the live site found
 
 - Done: task 2.12 (New Research with SpecChips + feasibility badges + depth selector + credit

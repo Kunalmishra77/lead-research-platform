@@ -64,6 +64,13 @@ const TENANT_TABLES = [
   'research_tasks',
 ] as const;
 type TenantTable = (typeof TENANT_TABLES)[number];
+/**
+ * Tenant tables whose grants differ from the rest, so they are isolated by RLS like any tenant
+ * table but cannot be exercised by the INSERT and UPDATE/DELETE loops below. `leads` is
+ * worker-insert, api-update-on-seven-columns and delete-for-nobody (ADR-0012), so a refusal there
+ * would come from the grant rather than from the policy and would prove nothing about isolation.
+ */
+const WORKFLOW_TABLES = ['leads'] as const;
 const USER_SCOPED_TABLES = ['user_profiles'] as const;
 const GLOBAL_TABLES = ['sources'] as const;
 /** Shared company graph: both roles read, only app_worker writes (ADR-0007). */
@@ -78,6 +85,8 @@ interface Org {
   job: string;
   search: string;
   task: string;
+  company: string;
+  lead: string;
 }
 
 // UUID v7 is time-ordered: anything created by this run sorts after this marker.
@@ -89,6 +98,8 @@ const newOrg = (): Org => ({
   job: uuidv7(),
   search: uuidv7(),
   task: uuidv7(),
+  company: uuidv7(),
+  lead: uuidv7(),
 });
 
 /** An INSERT into `table` for `target`, written from the point of view of `actor` (the context). */
@@ -170,6 +181,12 @@ describe.skipIf(!live)('RLS isolation between organizations', () => {
                 values (${uuidv7()}, ${o.org}, ${o.user}, 'test.seeded')`;
     await owner`insert into app.job_runs (id, org_id, workspace_id, type)
                 values (${uuidv7()}, ${o.org}, ${o.workspace}, 'system.ping')`;
+    // The company is global graph, not tenant data (ADR-0007), so it is removed explicitly in
+    // afterAll: deleting the org cascades to the lead but leaves the company behind.
+    await owner`insert into app.companies (id, canonical_name, normalized_name)
+                values (${o.company}, ${`${label} dental`}, ${`${label} dental`})`;
+    await owner`insert into app.leads (id, org_id, workspace_id, company_id, research_job_id)
+                values (${o.lead}, ${o.org}, ${o.workspace}, ${o.company}, ${o.job})`;
   }
 
   beforeAll(async () => {
@@ -187,6 +204,7 @@ describe.skipIf(!live)('RLS isolation between organizations', () => {
     const users = [a.user, b.user, teammate, consultant];
     try {
       await owner`delete from app.organizations where id = any(${orgs}::uuid[])`;
+      await owner`delete from app.companies where id = any(${[a.company, b.company]}::uuid[])`;
       await owner`delete from app.audit_logs where actor_user_id = any(${users}::uuid[]) or org_id = any(${orgs}::uuid[])`;
       await owner`delete from auth.users where id = any(${users}::uuid[])`;
     } finally {
@@ -207,6 +225,7 @@ describe.skipIf(!live)('RLS isolation between organizations', () => {
     ).toEqual(
       [
         ...TENANT_TABLES,
+        ...WORKFLOW_TABLES,
         ...USER_SCOPED_TABLES,
         ...GLOBAL_TABLES,
         ...GRAPH_TABLES,
@@ -222,19 +241,22 @@ describe.skipIf(!live)('RLS isolation between organizations', () => {
   ] as const)('as %s in org A context', (role, db, user) => {
     const ctx = () => ({ orgId: a.org, userId: user() });
 
-    it.each(TENANT_TABLES)('%s: SELECT returns org A rows only', async (table) => {
-      const column = table === 'organizations' ? 'id' : 'org_id';
-      const rows = await withTenant(db(), ctx(), (tx) =>
-        tx.execute<{ owner: string | null }>(
-          sql.raw(`select ${column}::text as owner from app.${table}`),
-        ),
-      );
-      expect(rows.length, table).toBeGreaterThan(0);
-      expect(
-        rows.every((r) => r.owner === a.org),
-        table,
-      ).toBe(true);
-    });
+    it.each([...TENANT_TABLES, ...WORKFLOW_TABLES])(
+      '%s: SELECT returns org A rows only',
+      async (table) => {
+        const column = table === 'organizations' ? 'id' : 'org_id';
+        const rows = await withTenant(db(), ctx(), (tx) =>
+          tx.execute<{ owner: string | null }>(
+            sql.raw(`select ${column}::text as owner from app.${table}`),
+          ),
+        );
+        expect(rows.length, table).toBeGreaterThan(0);
+        expect(
+          rows.every((r) => r.owner === a.org),
+          table,
+        ).toBe(true);
+      },
+    );
 
     it.each(TENANT_TABLES.filter((t) => t !== 'organizations'))(
       '%s: INSERT for org B fails for the right reason (with own-org control)',

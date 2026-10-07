@@ -1,6 +1,6 @@
 # ADR-0014: A finished job settles itself in Postgres, not in an app process
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-07
 
 ## Context

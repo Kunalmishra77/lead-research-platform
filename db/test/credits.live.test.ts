@@ -42,6 +42,10 @@ describe.skipIf(!live)('credit ledger operations', () => {
                 values (${id}, ${orgId}, ${workspaceId}, 'standard')`;
     return id;
   };
+  const grant = async (credits: number, orgId = org): Promise<void> => {
+    await owner`select app.credit_post(${uuidv7()}::uuid, ${orgId}::uuid, ${credits}::bigint,
+                                       'grant', 'test_topup', null, null)`;
+  };
   const deliver = async (jobId: string, orgId: string, credits: number, unitKey: string) => {
     const eventId = uuidv7();
     await owner`insert into app.usage_events (id, org_id, research_job_id, meter, units, credits, unit_key)
@@ -187,6 +191,79 @@ describe.skipIf(!live)('credit ledger operations', () => {
     // A second settle is a no-op.
     expect((await settle())[0]).toMatchObject({ consumed: '0', released: '0' });
     expect(await balance()).toBe(before - 5);
+  });
+
+  // ---------------------------------------------------------------- ADR-0014
+  // The case that was never covered and never worked: a job the worker finished. The worker
+  // cannot settle (its grant excludes the credit columns) and the API only settles on cancel and
+  // on failure, so before this sweeper existed a completed job kept its reservation for ever.
+
+  it('the sweeper settles a job the worker finished, with no API call at all', async () => {
+    await grant(50);
+    const job = await newJob();
+    const before = await balance();
+    await withTenant(api, { orgId: org, userId: user }, (tx) =>
+      tx.execute(sql`select app.credit_reserve(${job}::uuid, 20, ${uuidv7()}::uuid)`),
+    );
+    await deliver(job, org, 7, `sweep-${job}`);
+    // What the worker can do: say the job stopped. Nothing more.
+    await owner`update app.research_jobs set status = 'completed', finished_at = now()
+                where id = ${job}`;
+
+    await owner.unsafe('call app.settle_finished_jobs(200)');
+
+    const [row] = await owner<
+      { credits_used: number; credits_reserved: number; settled_at: Date | null }[]
+    >`select credits_used, credits_reserved, settled_at from app.research_jobs
+       where id = ${job}`;
+    expect(row).toMatchObject({ credits_used: 7, credits_reserved: 0 });
+    expect(row?.settled_at).not.toBeNull();
+    // 20 held, 7 delivered, 13 back.
+    expect(await balance()).toBe(before - 7);
+    // `order by reason` sorts by the enum's own order, not alphabetically: reserve, consume, release.
+    expect(await ledger(job)).toEqual([
+      { reason: 'reserve', delta: -20 },
+      { reason: 'consume', delta: -7 },
+      { reason: 'release', delta: 20 },
+    ]);
+  });
+
+  it('the sweeper leaves a job alone until it is terminal', async () => {
+    await grant(50);
+    const job = await newJob();
+    await withTenant(api, { orgId: org, userId: user }, (tx) =>
+      tx.execute(sql`select app.credit_reserve(${job}::uuid, 20, ${uuidv7()}::uuid)`),
+    );
+    await deliver(job, org, 5, `running-${job}`);
+    // Default status is 'queued'. A job still running must keep its reservation: settling it would
+    // release credits the rest of its tasks are about to spend.
+    await owner.unsafe('call app.settle_finished_jobs(200)');
+    const [row] = await owner<{ credits_reserved: number; settled_at: Date | null }[]>`
+      select credits_reserved, settled_at from app.research_jobs where id = ${job}`;
+    expect(row).toMatchObject({ credits_reserved: 20 });
+    expect(row?.settled_at).toBeNull();
+  });
+
+  it('the sweeper does not choke on a terminal job that never reserved', async () => {
+    // Two such jobs existed in the live database, from development before the ledger was wired.
+    // credit_settle raises on them, correctly, for an API caller naming a specific job; a sweeper
+    // that raised would fail on its first row for ever and settle nothing behind it.
+    const job = await newJob();
+    await deliver(job, org, 9, `unreserved-${job}`);
+    await owner`update app.research_jobs set status = 'failed', finished_at = now()
+                where id = ${job}`;
+    const before = await balance();
+
+    await owner.unsafe('call app.settle_finished_jobs(200)');
+
+    const [row] = await owner<{ credits_used: number; settled_at: Date | null }[]>`
+      select credits_used, settled_at from app.research_jobs where id = ${job}`;
+    expect(row?.settled_at).not.toBeNull();
+    // Nothing was held, so nothing is charged: usage is capped by the reservation. Charging for
+    // work whose credits were never reserved would be the wrong repair.
+    expect(row?.credits_used).toBe(0);
+    expect(await balance()).toBe(before);
+    expect(await ledger(job)).toEqual([]);
   });
 
   it('settle refuses a job that never reserved', async () => {

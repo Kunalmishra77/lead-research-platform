@@ -83,7 +83,14 @@ export function JobLive({ initial }: { initial: ResearchJobView }) {
         <Counter label="Businesses seen" value={job.progress?.candidates} />
         <Counter label="Leads delivered" value={job.progress?.leads} />
         <Counter label="Values stored" value={job.progress?.values} />
-        <Counter label="Credits used" value={job.credits.used} />
+        <Counter
+          label="Credits used"
+          value={job.credits.used}
+          // A finished job keeps credits_used at 0 until the books close, which happens in the
+          // database within about a minute (ADR-0014). Printing that 0 would read as "this run was
+          // free", so the number waits for the settlement rather than pretending to be final.
+          pending={done && job.credits.settledAt === null ? 'settling' : undefined}
+        />
       </dl>
 
       {job.progress?.message && (
@@ -128,11 +135,24 @@ function countsOf(event: ProgressMessage): JobProgress {
   return next;
 }
 
-function Counter({ label, value }: { label: string; value: number | undefined }) {
+function Counter({
+  label,
+  value,
+  pending,
+}: {
+  label: string;
+  value: number | undefined;
+  /** Shown instead of the number while the number is not yet final. */
+  pending?: string;
+}) {
   return (
     <div className="border-border rounded-lg border p-3">
       <dt className="text-muted-foreground text-xs">{label}</dt>
-      <dd className="text-xl font-medium tabular-nums">{(value ?? 0).toLocaleString('en-IN')}</dd>
+      <dd
+        className={pending ? 'text-muted-foreground text-xl' : 'text-xl font-medium tabular-nums'}
+      >
+        {pending ?? (value ?? 0).toLocaleString('en-IN')}
+      </dd>
     </div>
   );
 }

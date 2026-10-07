@@ -44,6 +44,12 @@ export interface ResearchCredits {
   used: number;
   /** Workspace balance after the reservation. */
   balance: number;
+  /**
+   * When the books closed on this run. Null on a terminal job means the sweeper has not reached it
+   * yet (ADR-0014, within a minute), so `used` is not final — the UI must say so rather than
+   * print a zero that looks like "this run was free".
+   */
+  settledAt: string | null;
 }
 
 export interface ResearchJobView {

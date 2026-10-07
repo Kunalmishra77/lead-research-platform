@@ -162,6 +162,13 @@
       "when": 1791372261528,
       "tag": "0022_connector_health_reads_real_money",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791376197568,
+      "tag": "0023_settlement_sweeper",
+      "breakpoints": true
     }
   ]
 }

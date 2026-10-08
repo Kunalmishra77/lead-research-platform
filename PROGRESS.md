@@ -13,6 +13,38 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-08 — Phase 3 — Scrapling in, and the two checks that decide what we are allowed to fetch
+
+- Done: `scrapling` 0.4.15 and `protego` 0.7.0 added to the workers with **no extras** — 8
+  packages, none of them `curl_cffi`, `patchright` or `playwright`, exactly as ADR-0013 said.
+  `tests/test_scrapling_boundary.py` asserts their absence, so `scrapling[fetchers]` arriving
+  later fails loudly instead of leaving a `StealthyFetcher` one import away. Then the two
+  compliance checks the rest of Phase 3 sits on: `app/crawl/safety.py` (task 3.3's SSRF guard) and
+  `app/crawl/robots.py` (task 3.2, protego, 24h Redis cache, crawl-delay). Tasks 3.2 and 3.4
+  ticked; 3.4 turned out to be already built in Phase 2 as `app/connectors/restrictions.py`,
+  whose own comment anticipated Phase 3, and is now counted per connector by
+  `app.admin_connector_health`. `docs/02-TECH-STACK.md` records scrapling in place of selectolax
+  and why the extras stay out.
+- Decisions (link ADRs): ADR-0013. **An unavailable robots.txt allows nothing, a missing one allows
+  everything** — RFC 9309 draws that line at the status code, and reading 5xx as permission would
+  mean crawling a site during its outage precisely because it was broken. The cached thing is the
+  robots text, not the parse, because a parse cannot be shared between processes or survive a
+  restart. **Redis being unreadable is a cache miss, never a licence.** The SSRF guard raises
+  `invalid_input`, not `access_restricted`: nothing out there is refusing us.
+- Tests/checks status: 533 worker tests pass (59 new), ruff and mypy clean. Two findings came from
+  running the code rather than reading it. **Python classifies 100.64.0.0/10 as neither private nor
+  reserved**, so every named-range check missed CGNAT — which is where Tailscale hosts and this
+  project's own Coolify box live (100.87.108.105), so a URL resolving there would have been fetched
+  from inside our network. The guard now ends on `not is_global`, which is the question actually
+  being asked. And `scrapling.Selector` has no `css_first` in 0.4.15: it is
+  `.css("sel::attr(href)").get()`, found by asking the installed package.
+- Open issues / blockers: Phase 2 stays open on criterion 2 (175 of 200 candidates), which needs one
+  funded Delhi run and nothing else; PHASES.md records why two phases are in progress at once.
+  Phase 3 tasks 3.1 (frontier), 3.3 (the fetcher itself), 3.5–3.16 remain.
+  `research_tasks.cost_micros` is still hardcoded 0 in the discovery handler.
+- Next step: task 3.3's fetcher on httpx — conditional GET, 5 MB body cap, redirect cap of 5, honest
+  UA — then 3.1's frontier, then 3.7 and 3.8, where emails start arriving.
+
 ### 2026-10-07 — Phase 2 — ADR-0014: a finished job settles itself; four of five criteria now met
 
 - Done: ADR-0014 accepted and built. Migration 0023 splits `credit_settle` into an owner-only

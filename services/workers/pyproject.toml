@@ -23,6 +23,8 @@ dependencies = [
   "jsonschema>=4.26,<5",
   "openai>=3.19,<4",
   "httpx2>=2.12,<3",
+  "scrapling>=0.4.15",
+  "protego>=0.7.0",
 ]
 
 [dependency-groups]

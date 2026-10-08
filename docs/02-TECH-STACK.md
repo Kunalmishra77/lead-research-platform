@@ -41,8 +41,8 @@ Always install the latest stable version and record it in the lockfile. Verify A
 | Queue | Redis Streams (redis-py asyncio) behind own small `jobs` package |
 | HTTP | httpx (HTTP/2) |
 | Browser | Playwright (Chromium), small pool, only when needed |
-| robots.txt | protego |
-| HTML parsing | selectolax; extruct (JSON-LD, microdata, OpenGraph); trafilatura (main text) |
+| robots.txt | protego, as a direct dependency — Scrapling bundles it only in its `fetchers` extra, which we do not install |
+| HTML parsing | scrapling (core only, no extras — ADR-0013); extruct (JSON-LD, microdata, OpenGraph); trafilatura (main text) |
 | Normalization | phonenumbers, email-validator, tldextract (PSL), postal (libpostal) or a lighter address parser in MVP, rapidfuzz, unidecode |
 | Entity resolution | rapidfuzz rules in MVP; Splink later |
 | DB | SQLAlchemy Core (async, psycopg) — no ORM models, no migrations |
@@ -51,6 +51,14 @@ Always install the latest stable version and record it in the lockfile. Verify A
 | AI | Provider SDKs behind `app/ai/gateway.py`; LiteLLM optional |
 | Tests | pytest, pytest-asyncio, respx (HTTP mocking), recorded fixtures |
 | Quality | ruff, mypy |
+
+**Scrapling is installed without extras, and that is load-bearing.** `scrapling[fetchers]` pulls
+`curl_cffi` (TLS fingerprint impersonation) and `patchright` (a Playwright patched to be
+undetected), and its `StealthyFetcher` advertises bypassing Cloudflare challenges — which CLAUDE.md
+rules out in the same sentence as CAPTCHAs and logins. Leaving those packages out of the image makes
+the boundary a fact rather than an intention; `tests/test_scrapling_boundary.py` fails if one
+reappears. Fetching stays in `ConnectorHttpClient`, where the cancel check, the spend reservation
+and the restriction classification already live (ADR-0013).
 
 ## Data & infra
 | Need | Local | Production (initial) |

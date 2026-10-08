@@ -9,10 +9,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-import type { LeadsPage } from '../types';
+import type { LeadsPage, LeadView } from '../types';
 import { valueOf } from '../types';
 import { SourceAttribution } from './attribution';
+import { LeadDetails } from './lead-details';
 import { ProvenanceLegend, ValueCell } from './provenance';
+import { SocialsCell } from './socials-cell';
 
 /**
  * The leads a job delivered.
@@ -40,8 +42,10 @@ export function ResultsTable({ page, jobId }: { page: LeadsPage; jobId: string }
             <TableRow>
               <TableHead scope="col">Business</TableHead>
               <TableHead scope="col">City</TableHead>
+              <TableHead scope="col">Email</TableHead>
               <TableHead scope="col">Phone</TableHead>
               <TableHead scope="col">Website</TableHead>
+              <TableHead scope="col">Profiles</TableHead>
               <TableHead className="text-right" scope="col">
                 Rating
               </TableHead>
@@ -52,16 +56,24 @@ export function ResultsTable({ page, jobId }: { page: LeadsPage; jobId: string }
               const website = valueOf(lead, 'website');
               return (
                 <TableRow key={lead.id}>
-                  <TableCell className="font-medium">
-                    <ValueCell value={valueOf(lead, 'name')} />
+                  {/* The name opens the drawer: the grid shows what a person scans, and the
+                      rest -- including the full provenance of every value -- lives one click away
+                      rather than in a row nobody can read. */}
+                  <TableCell className="align-top">
+                    <LeadDetails lead={lead} />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="align-top">
                     <ValueCell value={valueOf(lead, 'city')} />
                   </TableCell>
-                  <TableCell className="tabular-nums">
+                  {/* The column this phase was for. A maps listing never carries an email; this
+                      one came off the company's own contact page. */}
+                  <TableCell className="max-w-56 truncate align-top">
+                    <EmailCell lead={lead} />
+                  </TableCell>
+                  <TableCell className="align-top tabular-nums">
                     <ValueCell value={valueOf(lead, 'phone')} />
                   </TableCell>
-                  <TableCell className="max-w-56 truncate">
+                  <TableCell className="max-w-56 truncate align-top">
                     {website ? (
                       <a
                         className="hover:text-foreground underline underline-offset-2"
@@ -75,7 +87,10 @@ export function ResultsTable({ page, jobId }: { page: LeadsPage; jobId: string }
                       <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">
+                  <TableCell className="align-top">
+                    <SocialsCell lead={lead} />
+                  </TableCell>
+                  <TableCell className="align-top text-right tabular-nums">
                     <ValueCell value={valueOf(lead, 'rating')} />
                   </TableCell>
                 </TableRow>
@@ -99,5 +114,25 @@ export function ResultsTable({ page, jobId }: { page: LeadsPage; jobId: string }
 
       <SourceAttribution geography sources={page.sources} />
     </div>
+  );
+}
+
+/**
+ * The email, as a link to compose one.
+ *
+ * `mailto:` because the next thing anyone does with an address is write to it, and the dot stays
+ * on the value: an address linked from a contact page and one decoded out of `info [at] clinic`
+ * are both found, but a reader can still see which page each came from in the drawer.
+ */
+function EmailCell({ lead }: { lead: LeadView }) {
+  const email = valueOf(lead, 'email');
+  if (!email) return <span className="text-muted-foreground">—</span>;
+  return (
+    <a
+      className="hover:text-foreground underline underline-offset-2"
+      href={`mailto:${String(email.value)}`}
+    >
+      <ValueCell value={email} />
+    </a>
   );
 }

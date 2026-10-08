@@ -21,7 +21,7 @@ docs/06 sections 4-6, 07 (field_extract, page_classify, grounding), 08 (policy),
 - [ ] 3.12 Normalizers: phone, email, URL/domain (+platform domains list), name, social handles, address basic, industry mapping
 - [ ] 3.13 Best-value computation for companies after each batch
 - [ ] 3.14 Golden dataset (50 saved sites) + quality report command
-- [ ] 3.15 Web: results grid shows website, emails, phones, socials, tech with provenance badges and popover; company drawer basic
+- [x] 3.15 Web: results grid shows website, emails, phones, socials, tech with provenance badges and popover; company drawer basic — Email and Profiles columns, and a `<details>` drawer per lead carrying every field with its source, date, confidence and a link to the page it was read from. Tech waits for 3.9
 - [ ] 3.16 Metrics: crawl success ratio, restricted count, stage durations, cost per candidate
 
 ## Acceptance criteria

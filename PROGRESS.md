@@ -13,6 +13,36 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-08 — Phase 3 — Task 3.15: an email on screen, and the evidence behind it
+
+- Done: task 3.15. The results grid gains an **Email** column (a `mailto:` link) and a
+  **Profiles** column, and the business name opens a `<details>` drawer listing every field with
+  its source, the date it was observed, the confidence, and a link to the page it was read from.
+  Nothing changed server-side: `currentValues()` already returned every current field value with
+  its provenance, so emails appear the moment they exist in `field_values`.
+- Decisions (link ADRs): **a native `<details>`, not a dialog.** It needs no client JavaScript,
+  works before hydration and with it off, and the keyboard and screen-reader behaviour is the
+  browser's rather than ours to get wrong. "Basic" is what the phase asked for and this is honestly
+  that. **The evidence link is the point** — "every value says where it came from" is a claim, and
+  a claim nobody can check is marketing, so the drawer links the page rather than naming it.
+  **Confidence is shown as a percentage**: 0.85 from a maps listing and 0.55 from a string matched
+  in running text are different claims, and rounding both to "verified" would hide exactly the
+  difference the provenance dot exists to show. **Social links are built from the stored handle**,
+  because docs/08 row 50 allows the handle and nothing inside the platform — and two letters rather
+  than brand icons, which imply an endorsement and need a licence. **A field with no group is shown
+  under "Other" rather than dropped:** a value stored and then hidden is worse than one under an
+  ugly heading, because the second is fixable by reading the list.
+- Tests/checks status: web 67 tests pass (12 new), lint, typecheck and build green; workers 728.
+  The new tests check the evidence link resolves to the contact page, that a value with no page
+  still says where it came from, and that an ungrouped field is visible.
+- Open issues / blockers: **the whole path is now built and still unproven on the live site.** A
+  deploy and one search would show it; the search costs Places calls against a free allowance of
+  1,000 a month of which 42 are used. Tech detection (3.9) is not built, so the grid has no Tech
+  column yet. Phase 2 still open on criterion 2 (175 of 200 candidates). Phase 3 remaining: 3.5,
+  3.6, 3.9–3.14, 3.16.
+- Next step: redeploy and run one search end to end, which is the first time an email will appear
+  in the product. Then a CSV export, the smallest remaining thing that makes it sellable.
+
 ### 2026-10-08 — Phase 3 — The search now queues the crawl, so emails have a path to the product
 
 - Done: the discovery executor enqueues `crawl.company_site` for every delivered business whose own

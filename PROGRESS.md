@@ -13,6 +13,35 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-08 — Phase 3 — Task 3.3: the page fetcher, and the redirect that would have walked past every check
+
+- Done: task 3.3. `app/crawl/fetcher.py` wraps `ConnectorHttpClient` (ADR-0013) with the policy a
+  crawler needs and an API connector does not: conditional requests (`If-None-Match` /
+  `If-Modified-Since`, with 304 carrying the validators forward), robots and the SSRF guard on
+  every redirect hop, per-host politeness, and a refusal rather than a wait when robots asks for a
+  delay longer than a task can honour. `crawl_http_client()` exists so `follow_redirects=False`
+  cannot be left on by accident. HTTP/2, the streamed 5 MB cap, the honest UA, transient-only
+  retries, `Retry-After` and the restriction detector were already in the shared client and are
+  not duplicated.
+- Decisions (link ADRs): **redirects are followed one hop at a time, by us.** robots.txt and the
+  SSRF guard both answer questions about a URL, so checking the URL we were handed and letting
+  httpx follow wherever it leads checks the wrong thing — `https://example.com/go` redirecting to
+  `http://127.0.0.1/` passes every check and then fetches from inside our own network. There is a
+  test for exactly that. Conditional validators are dropped at a hop, because they describe the
+  copy the first server sent and the second one never sent it. Politeness is per host, not per
+  connector: a connector talks to one API, a crawl talks to thousands of sites at once.
+- Tests/checks status: 549 worker tests pass (16 new), ruff and mypy clean. One of the new tests
+  found a real bug before it shipped: with a small host memory and a busy host, the pacer's
+  eviction could drop the host it had just inserted and then `KeyError` on it. It now never
+  forgets the host being added, nor one whose lock is held — dropping a held lock would let two
+  requests to one host overlap, which is the single thing the pacer exists to prevent.
+- Open issues / blockers: Phase 2 still open on criterion 2 (175 of 200 candidates), needing one
+  funded Delhi run. Phase 3 tasks remaining: 3.1 (frontier), 3.5 (browser fallback), 3.6 (raw store
+  to S3), 3.7 (page discovery), 3.8 onwards (the extractors, where emails appear).
+  `research_tasks.cost_micros` is still hardcoded 0 in the discovery handler.
+- Next step: task 3.7's page discovery (homepage links + sitemap, choosing contact/about/team), then
+  3.8's extractors — JSON-LD via extruct, then emails, phones and social links.
+
 ### 2026-10-08 — Phase 3 — Scrapling in, and the two checks that decide what we are allowed to fetch
 
 - Done: `scrapling` 0.4.15 and `protego` 0.7.0 added to the workers with **no extras** — 8

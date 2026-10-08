@@ -9,7 +9,7 @@ docs/06 sections 4-6, 07 (field_extract, page_classify, grounding), 08 (policy),
 ## Tasks
 - [ ] 3.1 Crawl frontier (Redis), per-domain politeness, global concurrency per pool
 - [x] 3.2 robots.txt fetch/cache/evaluate with protego; crawl-delay support
-- [ ] 3.3 HTTP fetcher: httpx HTTP/2, timeouts, body cap, conditional GET, redirects cap, SSRF guard, honest UA — **SSRF guard done** (`app/crawl/safety.py`); the fetcher itself is not
+- [x] 3.3 HTTP fetcher: httpx HTTP/2, timeouts, body cap, conditional GET, redirects cap, SSRF guard, honest UA — `app/crawl/fetcher.py` over `ConnectorHttpClient` (ADR-0013), with redirects followed by hand so robots and the SSRF guard run on every hop
 - [x] 3.4 Restriction detector (401/403, challenge pages, CAPTCHA markers, login forms, paywalls) -> `access_restricted`, no retry, counted in metrics — built in Phase 2 as `app/connectors/restrictions.py` (strong interstitial markers, weak login/captcha/paywall markers needing corroboration) and counted per connector by `app.admin_connector_health` (task 2.13)
 - [ ] 3.5 Browser fetcher (Playwright pool) used only on SPA-shell heuristic; resource blocking; timeouts
 - [ ] 3.6 Raw store to S3 with content-hash dedupe; raw_documents rows (partitioned)

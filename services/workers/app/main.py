@@ -12,6 +12,10 @@ from redis.asyncio import Redis
 from app.ai.factory import build_gateway
 from app.config import Settings, get_settings
 from app.connectors.factory import build_connectors, close_clients
+from app.connectors.http_client import CallCost, ConnectorHttpClient
+from app.crawl.fetcher import CrawlFetcher, crawl_http_client
+from app.crawl.frontier import Frontier
+from app.crawl.robots import RobotsFetcher, RobotsPolicy
 from app.db.engine import create_engine
 from app.db.graph import SqlGraphRepo
 from app.db.job_runs import SqlJobRunsRepo
@@ -30,6 +34,9 @@ from app.telemetry import configure_tracing
 
 log = get_logger("leadforge.workers")
 
+#: Crawling is free, so nothing is metered and no spend is reserved.
+ROBOTS_COST = CallCost(meter="crawl_robots", cost_micros=0)
+
 
 async def _promote_loop(redis: Redis, streams: list[str], stop: asyncio.Event) -> None:
     """Moves due retries from each stream's delayed ZSET back onto the stream."""
@@ -42,6 +49,21 @@ async def _promote_loop(redis: Redis, streams: list[str], stop: asyncio.Event) -
             report_exception(exc, error_class="transient", component="retry_promotion")
         with contextlib.suppress(asyncio.TimeoutError):
             await asyncio.wait_for(stop.wait(), timeout=1.0)
+
+
+def _robots_fetch(client: ConnectorHttpClient) -> RobotsFetcher:
+    """Fetches robots.txt through the crawl client, without consulting robots.txt to do it.
+
+    A 4xx or 5xx is an answer, not an error, so the status is returned rather than raised on:
+    `RobotsPolicy` reads 4xx as "no rules" and 5xx as "cannot say", and those mean opposite
+    things.
+    """
+
+    async def fetch(url: str) -> tuple[int, bytes]:
+        response = await client.get(url, cost=ROBOTS_COST)
+        return response.status_code, response.content
+
+    return fetch
 
 
 async def run(settings: Settings, stop: asyncio.Event) -> None:
@@ -62,6 +84,14 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
     connectors, connector_clients = build_connectors(
         settings=settings, redis=redis, usage=usage, log=log
     )
+    # One client for every site we crawl, built so `follow_redirects` cannot be left on:
+    # CrawlFetcher checks robots and the SSRF guard on each hop, which only works if httpx has
+    # not already followed them.
+    crawl_client = crawl_http_client()
+    crawler = CrawlFetcher(
+        crawl_client,
+        RobotsPolicy(redis, _robots_fetch(crawl_client)),
+    )
     registry = build_registry(
         job_runs=SqlJobRunsRepo(engine),
         gateway=gateway,
@@ -71,6 +101,8 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
         research_jobs=SqlResearchJobsRepo(engine),
         graph=SqlGraphRepo(engine),
         usage=usage,
+        crawler=crawler,
+        frontier=Frontier(redis),
         discovery_pool=settings.DISCOVERY_POOL,
     )
     name = settings.WORKER_NAME or f"{socket.gethostname()}-{os.getpid()}"

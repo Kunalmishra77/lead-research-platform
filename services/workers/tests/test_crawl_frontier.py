@@ -179,3 +179,40 @@ async def test_an_empty_batch_and_a_url_with_no_host_cost_nothing(redis: Redis) 
 @pytest.mark.asyncio
 async def test_an_empty_frontier_claims_nothing(redis: Redis) -> None:
     assert await Frontier(redis).claim() is None
+
+
+@pytest.mark.asyncio
+async def test_a_host_slot_can_be_taken_once_and_then_cools_down(redis: Redis) -> None:
+    # The clock without the queue: a crawl task already knows its pages, so what it needs from the
+    # frontier is only the promise that no other worker is fetching this host right now.
+    frontier = Frontier(redis, cooldown_s=60.0)
+    assert await frontier.take_host_slot("clinic.example") is True
+    assert await frontier.take_host_slot("clinic.example") is False
+
+
+@pytest.mark.asyncio
+async def test_two_workers_cannot_take_the_same_host_slot(redis: Redis) -> None:
+    frontier = Frontier(redis, cooldown_s=60.0)
+    results = await asyncio.gather(*[frontier.take_host_slot("clinic.example") for _ in range(5)])
+    assert sum(1 for taken in results if taken) == 1
+
+
+@pytest.mark.asyncio
+async def test_a_free_host_slot_is_taken_immediately(redis: Redis) -> None:
+    frontier = Frontier(redis, cooldown_s=0.0)
+    assert await frontier.wait_for_host("clinic.example", timeout_s=1.0) is True
+
+
+@pytest.mark.asyncio
+async def test_waiting_gives_up_rather_than_blocking_a_task_for_ever(redis: Redis) -> None:
+    # A site asking for a minute between requests must not hold a worker for a minute.
+    frontier = Frontier(redis, cooldown_s=60.0)
+    await frontier.take_host_slot("slow.example")
+    assert await frontier.wait_for_host("slow.example", timeout_s=0.6) is False
+
+
+@pytest.mark.asyncio
+async def test_a_slot_becomes_free_once_the_cooldown_passes(redis: Redis) -> None:
+    frontier = Frontier(redis, cooldown_s=0.2)
+    assert await frontier.take_host_slot("clinic.example") is True
+    assert await frontier.wait_for_host("clinic.example", timeout_s=3.0) is True

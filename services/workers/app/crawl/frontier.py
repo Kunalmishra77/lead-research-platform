@@ -23,6 +23,7 @@ The seen set is per job and expires: a job must not fetch one page twice, and a 
 must not inherit this one's memory of having already done so.
 """
 
+import asyncio
 import time
 from dataclasses import dataclass
 from urllib.parse import urlsplit
@@ -71,6 +72,21 @@ for _ = 1, tonumber(ARGV[4]) do
   end
 end
 return nil
+"""
+
+
+# KEYS[1] = hosts ZSET. ARGV[1] = now ms, ARGV[2] = cooldown ms, ARGV[3] = host.
+#
+# The clock without the queue. A crawl task is handed its own pages by `choose_pages`, so it has
+# no use for the frontier's URL lists -- but it still must not fetch a host another worker is
+# fetching. Check-and-bump in one script is what makes that true; checking and then bumping would
+# let two workers both read a due host in the same millisecond.
+_TAKE_SLOT = """
+local now = tonumber(ARGV[1])
+local due = redis.call('ZSCORE', KEYS[1], ARGV[3])
+if due and tonumber(due) > now then return 0 end
+redis.call('ZADD', KEYS[1], now + tonumber(ARGV[2]), ARGV[3])
+return 1
 """
 
 
@@ -170,6 +186,35 @@ class Frontier:
             return None
         host, url = (_text(result[0]), _text(result[1]))
         return Claimed(host, url)
+
+    async def take_host_slot(self, host: str, *, cooldown_s: float | None = None) -> bool:
+        """Claims the right to fetch `host` now, or says no because it is cooling down.
+
+        For a caller that already knows which pages it wants: a crawl task gets its page list from
+        `choose_pages`, so it needs the shared clock and not the queue. A `False` means wait and
+        ask again, not that the host is unreachable.
+        """
+        cooldown_ms = self._cooldown_ms if cooldown_s is None else int(cooldown_s * 1000)
+        taken = await self._redis.eval(
+            _TAKE_SLOT, 1, HOSTS_KEY, int(time.time() * 1000), cooldown_ms, host
+        )
+        return bool(int(taken or 0))
+
+    async def wait_for_host(
+        self, host: str, *, cooldown_s: float | None = None, timeout_s: float = 30.0
+    ) -> bool:
+        """Waits until this host may be fetched, up to `timeout_s`. False means it gave up.
+
+        Polls rather than subscribes: the wait is a second or two, there is one waiter per host per
+        worker, and a notification channel for that is machinery nobody would thank us for.
+        """
+        deadline = time.monotonic() + timeout_s
+        while True:
+            if await self.take_host_slot(host, cooldown_s=cooldown_s):
+                return True
+            if time.monotonic() >= deadline:
+                return False
+            await asyncio.sleep(0.25)
 
     async def defer(self, host: str, delay_s: float) -> None:
         """Pushes one host's clock further out, for a robots.txt `Crawl-delay` longer than ours."""

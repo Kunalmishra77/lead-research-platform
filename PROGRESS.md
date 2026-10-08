@@ -13,6 +13,39 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-08 — Phase 3 — The crawl handler: an email reaches the database
+
+- Done: `crawl.company_site` (`app/handlers/crawl.py`) joins everything Phase 3 built — frontier,
+  fetcher, page discovery, contacts, structured data, mapping — and writes the result onto a company
+  that already exists. `SqlGraphRepo.add_company_values()` is the new way in: `_write_values` now
+  takes values rather than a Candidate, because a crawl has no company to create, no location and no
+  lead to deliver. `Frontier.take_host_slot()` / `wait_for_host()` added. Registered in
+  `build_registry` and wired in `app/main.py` with a robots fetcher that does not consult
+  robots.txt to read robots.txt.
+- Decisions (link ADRs): **a crawl costs nothing and charges nothing.** The business was found by a
+  search and paid for then; this is its own site telling us more. That matters beyond tidiness — it
+  means crawling can run freely on an account with no budget. **Being turned away is an outcome,
+  not a failure:** a 403, a login wall, a `robots.txt` disallow each end that page, are counted,
+  and the task still completes. Failing it would retry a refusal three times and then mark a job
+  broken because a site did what it is entitled to do. **The frontier is used for its clock, not
+  its queue** — `choose_pages` has already decided which pages this company gets, so what is still
+  needed is the promise that no other worker is on this host.
+- Tests/checks status: 722 worker tests pass (26 new), ruff and mypy clean. The handler test asserts
+  the thing the product is for: an email, with `source_url` pointing at the contact page it was on,
+  `method=crawl`, `derivation=found`. It also covers a 403 completing rather than failing, a
+  robots disallow fetching nothing at all, a cancelled job reading nothing, a redelivery not
+  crawling twice, and — the ordering a live Delhi run taught us — progress failing without undoing
+  a finished crawl. One finding: `email-validator` refuses addresses at `.test`, `.invalid`
+  and `.localhost`, which is correct (nobody's inbox is at a reserved name) and meant my own test
+  site was the thing that was wrong. It now has a test of its own.
+- Open issues / blockers: **nothing enqueues a crawl task yet.** The handler runs when given an
+  envelope, and the planner does not produce one, so the path from a search to an email is complete
+  in code and not yet connected in the product. Phase 2 still open on criterion 2 (175 of 200
+  candidates). Phase 3 remaining: 3.5, 3.6, 3.9–3.14, 3.16, and 3.15 is what makes an email visible.
+- Next step: have the discovery executor enqueue `crawl.company_site` for every delivered lead
+  that has a website, then task 3.15 so the grid shows it. After that a CSV export, which is the
+  smallest thing that makes the product sellable.
+
 ### 2026-10-08 — Phase 3 — Task 3.1: the frontier, and a politeness clock four workers share
 
 - Done: task 3.1. `app/crawl/frontier.py`: `crawl:hosts` is a ZSET whose score is the

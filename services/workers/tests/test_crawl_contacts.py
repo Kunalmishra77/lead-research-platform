@@ -207,3 +207,11 @@ def test_a_number_written_with_an_en_dash_is_still_a_number() -> None:
     # Word processors and CMS editors turn "011-2345-6789" into en dashes. Folding them in one
     # place keeps every pattern in this module ASCII.
     assert phones_from("<p>011\u20132345\u20136789</p>", region="IN") != []
+
+
+@pytest.mark.parametrize("tld", ["test", "invalid", "localhost"])
+def test_an_address_at_a_reserved_tld_is_not_a_contact(tld: str) -> None:
+    # RFC 2606 / RFC 6761 names exist so they can never resolve, so nobody's inbox is at one.
+    # Found while writing the crawl handler's test against a `.test` site: the validator was
+    # right and the test was wrong.
+    assert emails_from(f"<p>info@clinic.{tld}</p>") == []

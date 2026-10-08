@@ -27,6 +27,7 @@ but `leads` does, and which keeps a task's rows committing or failing together.
 """
 
 import json
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -34,7 +35,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 from uuid6 import uuid7
 
-from app.connectors.types import Candidate
+from app.connectors.types import Candidate, FieldValue
 from app.db.tenant import tenant_transaction
 from app.normalize.domains import is_platform_host, registrable_domain
 
@@ -68,6 +69,15 @@ class GraphRepo(Protocol):
         workspace_id: str,
         research_job_id: str,
     ) -> list[Stored]: ...
+
+    async def add_company_values(
+        self,
+        org_id: str,
+        company_id: str,
+        values: Sequence[FieldValue],
+        *,
+        source_id: str,
+    ) -> int: ...
 
 
 class SqlGraphRepo:
@@ -103,6 +113,31 @@ class SqlGraphRepo:
                 )
         return stored
 
+    async def add_company_values(
+        self,
+        org_id: str,
+        company_id: str,
+        values: Sequence[FieldValue],
+        *,
+        source_id: str,
+    ) -> int:
+        """Adds observations to a company already in the graph. Returns how many were written.
+
+        What the crawler needs and `store()` does not provide: there is no candidate here, no new
+        company, no location and no lead to deliver. The business was found by a search and paid
+        for then; this is its own website telling us more about it, which costs nothing and
+        delivers nothing new to the workspace.
+
+        One transaction for the batch, like `store()`: a crawl that dies halfway should leave a
+        company with the values of a page it finished, not half of one.
+        """
+        if not values:
+            return 0
+        async with tenant_transaction(self._engine, org_id) as conn:
+            return await self._write_values(
+                conn, values, company_id=company_id, source_id=source_id
+            )
+
     async def _store_one(
         self,
         conn: AsyncConnection,
@@ -134,7 +169,7 @@ class SqlGraphRepo:
         if host:
             await self._record_domain(conn, company_id, host, is_platform=on_platform)
         written = await self._write_values(
-            conn, candidate, company_id=company_id, source_id=source_id
+            conn, candidate.values, company_id=company_id, source_id=source_id
         )
         lead_id, is_new = await self._deliver(
             conn,
@@ -327,7 +362,12 @@ class SqlGraphRepo:
         )
 
     async def _write_values(
-        self, conn: AsyncConnection, candidate: Candidate, *, company_id: str, source_id: str
+        self,
+        conn: AsyncConnection,
+        values: Sequence[FieldValue],
+        *,
+        company_id: str,
+        source_id: str,
     ) -> int:
         """Appends this observation and retires the one it replaces.
 
@@ -336,7 +376,7 @@ class SqlGraphRepo:
         may change, and that is exactly the column this needs.
         """
         written = 0
-        for value in candidate.values:
+        for value in values:
             value_id = str(uuid7())
             await conn.execute(
                 text(

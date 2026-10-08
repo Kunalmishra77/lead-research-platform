@@ -2,11 +2,14 @@
 
 from app.ai.gateway import AiGateway
 from app.connectors.registry import ConnectorRegistry
+from app.crawl.fetcher import CrawlFetcher
+from app.crawl.frontier import Frontier
 from app.db.graph import GraphRepo
 from app.db.job_runs import JobRunsRepo
 from app.db.reference import ReferenceData
 from app.db.research_jobs import ResearchJobsRepo
 from app.db.research_tasks import ResearchTasksRepo
+from app.handlers.crawl import register_crawl_handlers
 from app.handlers.discovery import register_discovery_handlers
 from app.handlers.planner import DEFAULT_DISCOVERY_POOL, register_planner_handlers
 from app.handlers.research import register_research_handlers
@@ -25,6 +28,8 @@ def build_registry(
     research_jobs: ResearchJobsRepo | None = None,
     graph: GraphRepo | None = None,
     usage: UsageRecorder | None = None,
+    crawler: CrawlFetcher | None = None,
+    frontier: Frontier | None = None,
     discovery_pool: str = DEFAULT_DISCOVERY_POOL,
 ) -> HandlerRegistry:
     """Without a gateway the AI handlers are left out, so a key-less worker still runs the
@@ -66,4 +71,24 @@ def build_registry(
                 jobs=research_jobs,
                 usage=usage,
             )
+    if (
+        crawler is not None
+        and frontier is not None
+        and graph is not None
+        and reference is not None
+        and research_tasks is not None
+        and research_jobs is not None
+    ):
+        # The crawler calls no provider and charges nothing, so it needs neither a gateway nor a
+        # usage recorder. What it cannot do without is the graph to write to and the task rows to
+        # claim: a crawl that reads a site and cannot record it is pure cost to the site.
+        register_crawl_handlers(
+            registry,
+            fetcher=crawler,
+            frontier=frontier,
+            graph=graph,
+            reference=reference,
+            tasks=research_tasks,
+            jobs=research_jobs,
+        )
     return registry

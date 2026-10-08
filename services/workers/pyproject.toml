@@ -25,6 +25,8 @@ dependencies = [
   "httpx2>=2.12,<3",
   "scrapling>=0.4.15",
   "protego>=0.7.0",
+  "phonenumbers>=9.0.40",
+  "email-validator>=2.3.0",
 ]
 
 [dependency-groups]

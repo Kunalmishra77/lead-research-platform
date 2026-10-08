@@ -13,6 +13,38 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-08 — Phase 7 (partial) — A CSV someone can actually open
+
+- Done: the smallest sellable slice of task 7.1. `export-csv.ts` writes a CSV with a UTF-8 BOM,
+  RFC 4180 quoting, formula-injection escaping, and docs/14's `basic` and `sources` column
+  presets; `GET /app/research/:id/export.csv` serves it behind `exports.create`; the job page
+  offers both downloads. `content-disposition` joins the proxy's response allowlist so the file
+  arrives with a findable name.
+- Decisions (link ADRs): **not the engine docs/14 describes, and on purpose.** A worker job writing
+  to S3 with a signed URL, chunked at 5,000 rows and resumable from a cursor is right for a saved
+  filter over a hundred thousand leads and wrong for one job's two hundred, so the API streams this
+  one synchronously and the engine arrives with the phase that needs it. XLSX, NDJSON, splitting at
+  a million rows and gzip are deferred for the same reason and no other. **Formula-injection
+  escaping is not optional** (docs/10): the values came off strangers' websites and the file is
+  ours, so `=cmd|'/c calc'!A1` in a company name is a working attack on whoever opens it. A cell
+  starting `=`, `+`, `-`, `@`, tab or CR gets an apostrophe. **`exports.create`, not
+  `contacts.view`:** a file leaves the building, and the RBAC matrix already draws that line — a
+  viewer may read the grid and may not export it — so this reuses the permission rather than
+  inventing one that says the same thing. **An undeclared field still exports**, appended
+  alphabetically: the customer paid to collect it, and a value stored then missing from the file is
+  worse than one in an unexpected column.
+- Tests/checks status: api 121 tests (25 new, mostly about what must not happen to a cell), web 68,
+  workers 728; lint, typecheck and build green. Worth recording: `pnpm --filter @leadforge/web
+  test` failed six of ten files with "[vitest-pool] Timeout waiting for worker to respond" — a
+  machine running out of room for fork workers, not a test failure. `vitest run --pool=threads`
+  passes all ten. Something to reach for rather than re-debug next time.
+- Open issues / blockers: **still unproven on the live site.** Everything from search to email to
+  CSV is built and nothing has run end to end on the deployed stack; that needs a redeploy and one
+  search, costing ~20 of the 958 Places calls left in this month's free allowance. Phase 2 remains
+  open on criterion 2 (175 of 200 candidates). Phase 3 remaining: 3.5, 3.6, 3.9–3.14, 3.16.
+- Next step: redeploy, run one search, and read the result — the first end-to-end proof that a
+  sentence becomes leads with emails and a file someone can keep.
+
 ### 2026-10-08 — Phase 3 — Task 3.15: an email on screen, and the evidence behind it
 
 - Done: task 3.15. The results grid gains an **Email** column (a `mailto:` link) and a

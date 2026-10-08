@@ -38,6 +38,15 @@ export const ResearchListQuerySchema = z.object({
 });
 export class ResearchListQueryDto extends createZodDto(ResearchListQuerySchema) {}
 
+export const ExportQuerySchema = z.object({
+  /**
+   * docs/14's column presets. `sources` adds a source_url and observed_at beside every value,
+   * which is what makes an export checkable rather than a list of assertions.
+   */
+  columns: z.enum(['basic', 'sources']).default('basic'),
+});
+export class ExportQueryDto extends createZodDto(ExportQuerySchema) {}
+
 export interface ResearchCredits {
   /** Held for this run; released when it ends (docs/11). */
   reserved: number;

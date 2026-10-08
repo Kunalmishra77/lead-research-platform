@@ -58,6 +58,12 @@ const CANCEL_FLAG_TTL_SECONDS = 24 * 60 * 60;
 const notFound = () =>
   new AppError({ code: 'research.not_found', httpStatus: 404, title: 'Research job not found' });
 
+//: An export walks the same cursor-paged query the grid uses. 200 a page because that is what
+//: the query is indexed for; 100 pages because a research spec cannot ask for 20,000 leads, so
+//: reaching the cap is a bug rather than a big customer.
+const EXPORT_PAGE_SIZE = 200;
+const EXPORT_MAX_PAGES = 100;
+
 @Injectable()
 export class ResearchService {
   constructor(
@@ -221,6 +227,34 @@ export class ResearchService {
       startedAt: row.startedAt?.toISOString() ?? null,
       finishedAt: row.finishedAt?.toISOString() ?? null,
     };
+  }
+
+  /**
+   * Every lead of one job, for an export, walked a page at a time.
+   *
+   * A page at a time rather than one unbounded query: the page query is already written, cursor
+   * paged and indexed, and a select over a job with ten thousand leads is how an export takes a
+   * database down. The cap is deliberate -- a job cannot deliver more leads than its spec's
+   * `max_results`, which the schema bounds, so reaching it means something else is wrong and
+   * stopping with a line in the log beats streaming for ever.
+   */
+  async allResults(user: AuthUser, tenant: TenantInfo, jobId: string): Promise<LeadView[]> {
+    const all: LeadView[] = [];
+    let cursor: string | undefined;
+    for (let page = 0; page < EXPORT_MAX_PAGES; page += 1) {
+      const result = await this.results(user, tenant, jobId, {
+        limit: EXPORT_PAGE_SIZE,
+        cursor,
+      });
+      all.push(...result.items);
+      if (!result.nextCursor) return all;
+      cursor = result.nextCursor;
+    }
+    this.logger.warn(
+      { job_id: jobId, rows: all.length },
+      'export stopped at its page cap; a job should not deliver this many leads',
+    );
+    return all;
   }
 
   /** History for the active workspace, newest first (docs/05 `GET /app/research`). */

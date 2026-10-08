@@ -58,11 +58,43 @@ export default async function ResearchJobPage({
       <JobLive initial={job} />
 
       <section aria-labelledby="results" className="space-y-3">
-        <h2 className="text-base font-medium" id="results">
-          Leads
-        </h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 className="text-base font-medium" id="results">
+            Leads
+          </h2>
+          {results.items.length > 0 && <ExportLinks jobId={job.id} />}
+        </div>
         <ResultsTable jobId={job.id} page={results} />
       </section>
     </div>
+  );
+}
+
+/**
+ * Two downloads, because they answer different questions.
+ *
+ * The plain CSV is what goes into a dialler or a CRM. The one with sources adds a source URL and
+ * an observed date beside every value (docs/14's "With sources" preset), which is what makes the
+ * file checkable by whoever receives it rather than a list of assertions from a tool they have
+ * never heard of.
+ *
+ * Plain links, not buttons with handlers: a download is a GET, and the browser already knows how
+ * to do one. They go through this app's own `/api/app` proxy, so the access token stays
+ * server-side (ADR-0002).
+ */
+function ExportLinks({ jobId }: { jobId: string }) {
+  return (
+    <span className="flex flex-wrap items-center gap-2 text-sm">
+      <Button asChild size="sm" variant="outline">
+        <a download href={`/api/app/research/${jobId}/export.csv`}>
+          Download CSV
+        </a>
+      </Button>
+      <Button asChild size="sm" variant="ghost">
+        <a download href={`/api/app/research/${jobId}/export.csv?columns=sources`}>
+          with sources
+        </a>
+      </Button>
+    </span>
   );
 }

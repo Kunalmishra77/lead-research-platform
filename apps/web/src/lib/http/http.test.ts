@@ -72,6 +72,18 @@ describe('pickResponseHeaders', () => {
     expect([...out.keys()].sort()).toEqual(['content-type', 'retry-after']);
   });
 
+  it("forwards an export's filename, which is the only reason it is on the list", () => {
+    const out = pickResponseHeaders(
+      new Headers({
+        'content-type': 'text/csv; charset=utf-8',
+        'content-disposition': 'attachment; filename="leads-01a0d764-2026-10-08.csv"',
+        'set-cookie': 'a=b',
+      }),
+    );
+    expect(out.get('content-disposition')).toContain('leads-01a0d764-2026-10-08.csv');
+    expect(out.get('set-cookie')).toBeNull();
+  });
+
   it('marks SSE as unbuffered and untransformed', () => {
     const out = pickResponseHeaders(new Headers({ 'content-type': 'text/event-stream' }));
     expect(out.get('cache-control')).toBe('no-cache, no-transform');

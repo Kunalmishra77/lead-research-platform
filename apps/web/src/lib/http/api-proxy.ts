@@ -9,6 +9,9 @@ export const FORWARDED_RESPONSE_HEADERS = [
   'retry-after',
   'x-request-id',
   'www-authenticate',
+  // An export's filename. Carries nothing but a name this app generated, and without it a CSV
+  // download lands as `export.csv` or as the raw path, which nobody can find again.
+  'content-disposition',
 ] as const;
 
 /** Only these browser headers reach the API (never cookies, host or authorization). */

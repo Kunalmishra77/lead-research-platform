@@ -22,10 +22,12 @@ import { streamProgress, TERMINAL_STATUSES } from '../../common/sse/progress-str
 import { APP_CONFIG } from '../../config/config.module';
 import type { AppConfig } from '../../config/env.schema';
 import type { AuthUser, TenantInfo } from '../auth/auth.types';
+import { csvLines, exportFilename } from './export-csv';
 import type { ParseResultView } from './parse.service';
 import { ParseService } from './parse.service';
 import {
   CreateResearchDto,
+  ExportQueryDto,
   JobIdParamDto,
   type LeadsPage,
   LeadsQueryDto,
@@ -137,6 +139,41 @@ export class ResearchController {
     @Query() query: LeadsQueryDto,
   ): Promise<LeadsPage> {
     return this.research.results(user, tenant, params.id, query);
+  }
+
+  /**
+   * The same leads as a CSV (docs/14, docs/10 on formula injection).
+   *
+   * `exports.create` rather than `contacts.view`: a file leaves the building and can be
+   * forwarded, so taking one out is a different act from reading the grid. The RBAC matrix
+   * already draws that line -- a viewer may read the grid and may not export it -- so this reuses
+   * the permission rather than inventing one that says the same thing.
+   *
+   * Written to the reply directly rather than returned, because a CSV is not JSON and Nest would
+   * serialise it as a string with the wrong content type. The rows are already in memory by this
+   * point -- the generator keeps the whole file from being, which is the part that matters when a
+   * job delivered a few hundred leads with twenty fields each.
+   */
+  @Get(':id/export.csv')
+  @RequirePermission('exports.create')
+  async exportCsv(
+    @CurrentUser() user: AuthUser,
+    @CurrentTenant() tenant: TenantInfo,
+    @Param() params: JobIdParamDto,
+    @Query() query: ExportQueryDto,
+    @Res() reply: FastifyReply,
+  ): Promise<void> {
+    const leads = await this.research.allResults(user, tenant, params.id);
+    reply
+      .header('content-type', 'text/csv; charset=utf-8')
+      .header('content-disposition', `attachment; filename="${exportFilename(params.id)}"`)
+      // The file is a snapshot of a moment, and a proxy serving yesterday's to today's request
+      // would be worse than slow.
+      .header('cache-control', 'no-store');
+    for (const line of csvLines(leads, query.columns)) {
+      reply.raw.write(line);
+    }
+    reply.raw.end();
   }
 
   /** SSE: `state`, then live `progress` events, then `done` (docs/05 SSE progress). */

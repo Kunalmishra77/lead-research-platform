@@ -8,6 +8,7 @@ docs/14 (exports, Sheets), 11 (full), 10 (encryption, export safety, privacy mec
 
 ## Tasks
 - [ ] 7.1 Export engine: selection snapshot, chunked streaming, CSV/XLSX/NDJSON writers, formula-injection escaping, S3 multipart, signed URLs, resumable cursor, notifications, audit
+  - [x] **CSV only, served synchronously** (`apps/api/.../export-csv.ts`): UTF-8 BOM, RFC 4180, formula-injection escaping, `basic` and `sources` column presets, `GET /app/research/:id/export.csv` behind `exports.create`. Deliberately *not* the engine: no worker job, no S3, no signed URL, no chunking, no XLSX or NDJSON. Those earn their keep for a saved filter over a hundred thousand leads and not for one job's two hundred, so they wait for the phase that needs them.
 - [ ] 7.2 Envelope encryption module (per-org DEK, master key via env locally, KMS interface for prod)
 - [ ] 7.3 Google OAuth (drive.file) connect/disconnect, token storage, Picker integration
 - [ ] 7.4 Sheets writer: create spreadsheet/worksheet, headers, batched append, update mode with lead_id diff, quota backoff, continuation spreadsheet, error recovery

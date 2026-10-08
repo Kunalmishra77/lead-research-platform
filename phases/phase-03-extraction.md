@@ -13,7 +13,7 @@ docs/06 sections 4-6, 07 (field_extract, page_classify, grounding), 08 (policy),
 - [x] 3.4 Restriction detector (401/403, challenge pages, CAPTCHA markers, login forms, paywalls) -> `access_restricted`, no retry, counted in metrics — built in Phase 2 as `app/connectors/restrictions.py` (strong interstitial markers, weak login/captcha/paywall markers needing corroboration) and counted per connector by `app.admin_connector_health` (task 2.13)
 - [ ] 3.5 Browser fetcher (Playwright pool) used only on SPA-shell heuristic; resource blocking; timeouts
 - [ ] 3.6 Raw store to S3 with content-hash dedupe; raw_documents rows (partitioned)
-- [ ] 3.7 Page discovery: homepage links + sitemap -> choose contact/about/team/careers/services pages (rules)
+- [x] 3.7 Page discovery: homepage links + sitemap -> choose contact/about/team/careers/services pages (rules) — `app/crawl/discovery.py`; anchor text beats an opaque URL, the sitemap is only read for roles the homepage left unfilled
 - [ ] 3.8 Extractors: JSON-LD/microdata/OpenGraph (extruct), contacts (emails incl. de-obfuscation, phones, WhatsApp), social links, address from footer
 - [ ] 3.9 Tech detector with open fingerprint set + DNS MX/TXT
 - [ ] 3.10 Page classifier (rules + small model fallback)

@@ -89,6 +89,29 @@ def registrable_domain(url: str | None) -> str | None:
     return host
 
 
+def site_domain(url: str | None) -> str | None:
+    """The registrable name plus its public suffix, or None when there is nothing usable.
+
+    Distinct from `registrable_domain`, which returns the whole host because that is what
+    `companies.primary_domain` stores. This one collapses subdomains, which is the question the
+    crawler asks: `blog.clinic.co.in` and `www.clinic.co.in` are the same site, and
+    `clinic.co.in.evil.test` is not.
+
+    An unlisted two-label suffix collapses one label too far -- `a.b.unknown.xx` reads as
+    `unknown.xx` -- so the answer errs towards treating two hosts as one site. For deciding what to
+    crawl that is the cheap direction to be wrong in: the pages still have to pass robots.txt and
+    the SSRF guard, which is where a wrong answer would otherwise cost something.
+    """
+    host = host_of(url or "")
+    if not host or "." not in host or " " in host:
+        return None
+    labels = host.split(".")
+    suffix_labels = 2 if ".".join(labels[-2:]) in MULTI_LABEL_SUFFIXES else 1
+    if len(labels) <= suffix_labels:
+        return None
+    return ".".join(labels[-(suffix_labels + 1) :])
+
+
 def registrable_stem(url: str | None) -> str:
     """The name whoever owns this address registered, without subdomain or public suffix.
 

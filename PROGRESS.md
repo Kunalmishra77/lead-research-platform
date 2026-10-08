@@ -13,6 +13,35 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-08 — Phase 3 — Task 3.7: spending six page fetches well
+
+- Done: task 3.7. `app/crawl/discovery.py` turns a homepage into the short list of pages worth
+  reading: links read with Scrapling (resolving a declared `<base href>`, falling back to
+  `aria-label`/`title` for icon links), a sitemap reader that handles both a urlset and an index,
+  URL canonicalisation that drops fragments and tracking params, a same-site test, a skip list for
+  archives and logins and non-pages, and a chooser that takes one page per role in priority order
+  within the depth's budget (1 / 6 / 15 per docs/06 section 4.4). Added `site_domain()` to
+  `app/normalize/domains.py` with tests placing it next to the two functions it is confused with.
+- Decisions (link ADRs): **anchor text is checked before the URL.**
+  `/cdn-cgi/l/email-protection` says nothing and "Email us" says everything, and the text is what
+  a person reading the page would go by. **The sitemap is only consulted for roles the homepage
+  left unfilled** — a shop's sitemap lists tens of thousands of products and reading it to find
+  `/contact` is the long way round. **One page per role, not the best three contact pages:** a
+  second `/contact-2` says the same thing as the first and costs the page `/about` would have
+  used. Contact comes first in the priority order because it carries the emails and phones that
+  make a lead usable; careers last, being a Phase 5 interest.
+- Tests/checks status: 608 worker tests pass (59 new), ruff and mypy clean. One finding worth
+  recording: `registrable_domain()` returns the whole host, not the registrable domain — its
+  docstring says so, because `companies.primary_domain` stores the host — so using it for a
+  same-site test read `blog.clinic.example` as a different site from `clinic.example`. The
+  suffix reasoning already existed in `registrable_stem`, so `site_domain()` joins it rather
+  than duplicating the suffix table somewhere else.
+- Open issues / blockers: Phase 2 still open on criterion 2 (175 of 200 candidates), needing one
+  funded Delhi run. Phase 3 remaining: 3.1 (frontier), 3.5 (browser fallback), 3.6 (raw store to
+  S3), 3.8 onwards (extractors). `research_tasks.cost_micros` is still hardcoded 0.
+- Next step: task 3.8's extractors — JSON-LD and microdata via extruct, then emails with
+  de-obfuscation, phones via phonenumbers, and social links. That is where the first emails arrive.
+
 ### 2026-10-08 — Phase 3 — Task 3.3: the page fetcher, and the redirect that would have walked past every check
 
 - Done: task 3.3. `app/crawl/fetcher.py` wraps `ConnectorHttpClient` (ADR-0013) with the policy a

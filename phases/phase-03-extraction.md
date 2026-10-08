@@ -7,7 +7,7 @@ For every candidate with a website, crawl the key pages legally and extract desc
 docs/06 sections 4-6, 07 (field_extract, page_classify, grounding), 08 (policy), 10 (SSRF), 13 (golden datasets)
 
 ## Tasks
-- [ ] 3.1 Crawl frontier (Redis), per-domain politeness, global concurrency per pool
+- [x] 3.1 Crawl frontier (Redis), per-domain politeness, global concurrency per pool — `app/crawl/frontier.py`; the claim is one Lua script, which is what makes per-host concurrency 1 true across workers rather than only within one
 - [x] 3.2 robots.txt fetch/cache/evaluate with protego; crawl-delay support
 - [x] 3.3 HTTP fetcher: httpx HTTP/2, timeouts, body cap, conditional GET, redirects cap, SSRF guard, honest UA — `app/crawl/fetcher.py` over `ConnectorHttpClient` (ADR-0013), with redirects followed by hand so robots and the SSRF guard run on every hop
 - [x] 3.4 Restriction detector (401/403, challenge pages, CAPTCHA markers, login forms, paywalls) -> `access_restricted`, no retry, counted in metrics — built in Phase 2 as `app/connectors/restrictions.py` (strong interstitial markers, weak login/captcha/paywall markers needing corroboration) and counted per connector by `app.admin_connector_health` (task 2.13)

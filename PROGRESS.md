@@ -13,6 +13,32 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-08 — Phase 3 — Task 3.1: the frontier, and a politeness clock four workers share
+
+- Done: task 3.1. `app/crawl/frontier.py`: `crawl:hosts` is a ZSET whose score is the
+  millisecond a host may next be fetched, `crawl:urls:{host}` a ZSET of URLs by priority, and a
+  per-job seen set with a TTL. `claim()` is one Lua script; `defer()` pushes a host out for a
+  long `Crawl-delay`; `pending()` and `hosts()` answer whether there is work left.
+- Decisions (link ADRs): **the claim had to be one script.** Finding the earliest due host, popping
+  its best URL and pushing its clock forward in three round trips would let two workers fetch one
+  site at the same moment, which is the single thing the politeness rule exists to prevent. The
+  script pushes the clock before it returns, so a worker arriving in the same millisecond sees the
+  host as not due. **`add` uses `nx` on the host score**: overwriting it with `now` would
+  reset a cooling-down site's clock every time a link to it turned up, which is how a polite
+  crawler stops being one. **A host stays in the clock after its last URL is taken** — removing it
+  there would drop its cooldown; the next claim that finds it empty is what removes it. **A URL is
+  queued before it is marked seen**, because a crash between the two then costs a duplicate ZADD of
+  the same member, which is nothing, where the other order loses the page.
+- Tests/checks status: 674 worker tests pass (16 new) on fakeredis **and** against a real Redis via
+  `REDIS_TEST_URL` — a Lua script that only works against a fake is not worth having. ruff and
+  mypy clean. The concurrency test claims twelve URLs at once and asserts no URL comes back twice.
+- Open issues / blockers: Phase 2 still open on criterion 2 (175 of 200 candidates), needing one
+  funded Delhi run. Phase 3 remaining: 3.5 (browser fallback), 3.6 (raw store to S3), 3.9–3.16.
+  **Still nothing joins the fetcher, the frontier and the extractors**, so no email has reached the
+  database yet; that handler is the next piece, and it is what makes the work so far visible.
+- Next step: the crawl handler — walk a lead's site through the frontier, extract, and write
+  `field_values` with provenance. Then an email appears in the product for the first time.
+
 ### 2026-10-08 — Phase 3 — Task 3.8: where the emails come from
 
 - Done: task 3.8. `app/crawl/contacts.py` reads emails (undoing `[at]`/`(dot)`, `&#64;`,

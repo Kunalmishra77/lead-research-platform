@@ -60,6 +60,10 @@ from app.jobs.registry import HandlerRegistry
 
 JOB_TYPE = "crawl.company_site"
 
+#: A crawl buys nothing, so its task row carries no budget. Kept explicit rather than
+#: left to a default: a reader should not have to guess whether crawling is billed.
+CRAWL_CREDIT_BUDGET = 0
+
 
 class CrawlPayload(BaseModel):
     """What a crawl task is told. `extra="forbid"`: an unknown field means a newer planner."""

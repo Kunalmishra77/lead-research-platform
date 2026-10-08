@@ -13,6 +13,34 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-08 — Phase 3 — The search now queues the crawl, so emails have a path to the product
+
+- Done: the discovery executor enqueues `crawl.company_site` for every delivered business whose own
+  website we can read — not a platform address, not a missing one. New `CRAWL_POOL` setting
+  (default `crawl`), threaded through `build_registry` and `app/main.py`, and
+  `WORKER_POOLS` in `deploy/docker-compose.yml` and CLAUDE.md now include it.
+- Decisions (link ADRs): **crawls get their own pool.** A crawl waits seconds per page by design;
+  sharing a pool with searches would let one site's politeness delay hold up every search behind it.
+  **The crawl is queued while the search task is still `running`, and the order is the whole
+  trick:** `finish_if_done` cannot complete a job with a queued task, so rows added here are
+  guaranteed to be waited for — saving them after `mark_completed` would let a job finish between
+  the two and the emails arrive for a job already reported done. **A business reachable only
+  through `business.site` or a Facebook page is not crawled:** that is the platform's address, and
+  reading it would attribute the platform's markup to this company. **Failing to enqueue does not
+  fail the search:** the leads are stored and charged for by then, so a crawl that never starts
+  costs some emails where raising would throw away a search that worked.
+- Tests/checks status: 728 worker tests pass (6 new), ruff and mypy clean. One of the new tests
+  earned its keep immediately: it failed because the fake `SavedTask` used a readable id like
+  `crawl-task-0`, and `JobEnvelope.job_id` is a UUID. The enqueue step logged a validation
+  warning and queued nothing — which is the error handling doing exactly what it promises, and the
+  fake being the thing that was wrong.
+- Open issues / blockers: the path is connected in code and **not yet proven on the live site** —
+  that needs a deploy and one search. Phase 2 still open on criterion 2 (175 of 200 candidates).
+  Phase 3 remaining: 3.5, 3.6, 3.9–3.14, 3.16, and **3.15 is what makes an email visible to the
+  user** — until it lands, emails will be in `field_values` and nowhere on screen.
+- Next step: task 3.15, the results grid showing emails, phones and socials with provenance badges.
+  Then redeploy and run one search end to end.
+
 ### 2026-10-08 — Phase 3 — The crawl handler: an email reaches the database
 
 - Done: `crawl.company_site` (`app/handlers/crawl.py`) joins everything Phase 3 built — frontier,

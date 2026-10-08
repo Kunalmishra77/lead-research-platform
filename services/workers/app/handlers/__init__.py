@@ -10,7 +10,7 @@ from app.db.reference import ReferenceData
 from app.db.research_jobs import ResearchJobsRepo
 from app.db.research_tasks import ResearchTasksRepo
 from app.handlers.crawl import register_crawl_handlers
-from app.handlers.discovery import register_discovery_handlers
+from app.handlers.discovery import DEFAULT_CRAWL_POOL, register_discovery_handlers
 from app.handlers.planner import DEFAULT_DISCOVERY_POOL, register_planner_handlers
 from app.handlers.research import register_research_handlers
 from app.handlers.system import register_system_handlers
@@ -31,6 +31,7 @@ def build_registry(
     crawler: CrawlFetcher | None = None,
     frontier: Frontier | None = None,
     discovery_pool: str = DEFAULT_DISCOVERY_POOL,
+    crawl_pool: str = DEFAULT_CRAWL_POOL,
 ) -> HandlerRegistry:
     """Without a gateway the AI handlers are left out, so a key-less worker still runs the
     rest. A pool that needs them then has no handler, which the consumer reports per job.
@@ -70,6 +71,7 @@ def build_registry(
                 tasks=research_tasks,
                 jobs=research_jobs,
                 usage=usage,
+                crawl_pool=crawl_pool,
             )
     if (
         crawler is not None

@@ -66,6 +66,10 @@ class Settings(BaseSettings):
     #: which is configurable and which its tests override per run: a mismatch puts the plan's
     #: tasks on a stream nothing consumes, and the job simply never progresses.
     DISCOVERY_POOL: str = "discovery"
+    #: Where crawls go. Its own pool on purpose: a crawl waits seconds per page by
+    #: design, and sharing a pool with searches would let one site's politeness delay
+    #: hold up every search behind it.
+    CRAWL_POOL: str = "crawl"
     #: Consumer name inside the group; defaults to host + pid at runtime.
     WORKER_NAME: str | None = None
     #: A pending message older than this is considered abandoned and reclaimed (XAUTOCLAIM).

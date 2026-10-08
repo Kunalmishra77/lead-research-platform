@@ -5,18 +5,22 @@ the stopping: a job pays for businesses it did not already have, a redelivered t
 the same search twice, and a cancelled job buys nothing at all.
 """
 
+import json
 from datetime import UTC, datetime
 from typing import Any
 
 import pytest
 import structlog
 from redis.asyncio import Redis
+from uuid6 import uuid7
 
 from app.connectors.types import Candidate, FieldValue
 from app.db.graph import Stored
+from app.db.research_tasks import SavedTask
 from app.handlers.discovery import register_discovery_handlers
 from app.jobs.cancellation import CANCEL_KEY
 from app.jobs.context import JobContext
+from app.jobs.envelope import ENVELOPE_FIELD, stream_for
 from app.jobs.errors import InvalidInputError, TransientError
 from app.jobs.progress import ProgressPublisher
 from app.jobs.registry import HandlerRegistry
@@ -41,12 +45,13 @@ PAYLOAD = {
 }
 
 
-def candidate(place_id: str, name: str) -> Candidate:
+def candidate(place_id: str, name: str, website: str | None = None) -> Candidate:
     now = datetime.now(UTC)
     return Candidate(
         source_key="google_places",
         external_id=place_id,
         name=name,
+        url=website,
         source_url=f"https://maps.google.com/?q=place_id:{place_id}",
         observed_at=now,
         values=(
@@ -121,8 +126,13 @@ class FakeGraph:
 
 
 class FakeTasks:
-    def __init__(self, *, claimable: bool = True) -> None:
+    def __init__(
+        self, *, claimable: bool = True, inserted: bool = True, save_raises: bool = False
+    ) -> None:
         self.claimable = claimable
+        self.inserted = inserted
+        self.save_raises = save_raises
+        self.planned: list[list[Any]] = []
         self.running: list[str] = []
         self.completed: list[dict[str, Any]] = []
         self.failed: list[str] = []
@@ -147,6 +157,15 @@ class FakeTasks:
     async def mark_cancelled(self, org_id: str, task_id: str) -> bool:
         self.cancelled.append(task_id)
         return True
+
+    async def save_plan(self, org_id: str, job_id: str, planned: Any) -> list[Any]:
+        self.planned.append(list(planned))
+        if self.save_raises:
+            raise RuntimeError("the database is down")
+        # Real UUIDs: a task id becomes a JobEnvelope.job_id, which is typed as one. A readable
+        # fake id here made the enqueue step log a validation warning and queue nothing, which is
+        # the error handling working and the fake being wrong.
+        return [SavedTask(str(uuid7()), task, inserted=self.inserted) for task in planned]
 
 
 class FakeJobs:
@@ -488,3 +507,95 @@ async def test_one_task_finishing_does_not_end_the_whole_jobs_event_stream(
     assert events[0]["job_id"] == JOB, "progress goes to the job's channel, not the task's"
     # Whether the job is actually over is decided by the tasks table, not by this task.
     assert jobs.finished == 1
+
+
+# ---------------------------------------------------------------- crawl enqueue
+# The connection that turns a search into emails: every delivered business whose own website we
+# can read gets a crawl queued for it.
+
+
+async def _published(redis: Redis, pool: str = "crawl") -> list[dict[str, Any]]:
+    entries = await redis.xrange(stream_for(pool))
+    out = []
+    for _, fields in entries:
+        raw = (
+            fields[ENVELOPE_FIELD.encode()]
+            if isinstance(next(iter(fields)), bytes)
+            else fields[ENVELOPE_FIELD]
+        )
+        out.append(json.loads(raw))
+    return out
+
+
+async def test_a_lead_with_a_website_gets_a_crawl_queued(redis: Redis, make_envelope: Any) -> None:
+    connectors = FakeConnectors([candidate("p1", "Clinic One", "https://clinic-one.example/")])
+    _, tasks, _, _ = await run(redis, make_envelope, connectors=connectors)
+
+    [planned] = tasks.planned
+    assert [t.type for t in planned] == ["crawl.company_site"]
+    assert planned[0].input["website"] == "https://clinic-one.example/"
+    assert planned[0].input["depth"] == "standard"
+    assert planned[0].input["country"] == "IN"
+    # A crawl buys nothing, so its row carries no budget.
+    assert planned[0].credit_budget == 0
+
+    [envelope] = await _published(redis)
+    assert envelope["type"] == "crawl.company_site"
+    assert envelope["budget"]["cost_cap_micros"] == 0
+
+
+async def test_a_business_with_no_website_gets_no_crawl(redis: Redis, make_envelope: Any) -> None:
+    connectors = FakeConnectors([candidate("p1", "Clinic One")])
+    _, tasks, _, _ = await run(redis, make_envelope, connectors=connectors)
+    assert tasks.planned == []
+    assert await _published(redis) == []
+
+
+async def test_a_business_reachable_only_through_a_platform_is_not_crawled(
+    redis: Redis, make_envelope: Any
+) -> None:
+    # `business.site` and a Facebook page are the platform's address, not this company's. Crawling
+    # one would read the platform's markup and attribute it to this business.
+    connectors = FakeConnectors(
+        [
+            candidate("p1", "Clinic One", "https://clinicone.business.site/"),
+            candidate("p2", "Clinic Two", "https://www.facebook.com/clinictwo"),
+        ]
+    )
+    _, tasks, _, _ = await run(redis, make_envelope, connectors=connectors)
+    assert tasks.planned == []
+
+
+async def test_the_crawl_is_queued_before_the_search_reports_itself_finished(
+    redis: Redis, make_envelope: Any
+) -> None:
+    # The ordering is the whole trick. While the discovery task is still `running`,
+    # `finish_if_done` cannot complete the job, so the crawl rows are guaranteed to be waited for.
+    connectors = FakeConnectors([candidate("p1", "Clinic One", "https://clinic-one.example/")])
+    _, tasks, _, _ = await run(redis, make_envelope, connectors=connectors)
+    assert tasks.planned != []
+    assert tasks.completed != []
+
+
+async def test_a_redelivered_search_does_not_publish_the_crawl_twice(
+    redis: Redis, make_envelope: Any
+) -> None:
+    connectors = FakeConnectors([candidate("p1", "Clinic One", "https://clinic-one.example/")])
+    tasks = FakeTasks(inserted=False)
+    await run(redis, make_envelope, connectors=connectors, tasks=tasks)
+    # The row was already there from the first delivery, so nothing is published again.
+    assert tasks.planned != []
+    assert await _published(redis) == []
+
+
+async def test_a_failure_to_queue_crawls_does_not_fail_the_search(
+    redis: Redis, make_envelope: Any
+) -> None:
+    # The leads are stored and charged for by this point. A crawl that never starts costs the user
+    # some emails; raising here would throw away a search that worked.
+    connectors = FakeConnectors([candidate("p1", "Clinic One", "https://clinic-one.example/")])
+    tasks = FakeTasks(save_raises=True)
+    graph, tasks, _, _ = await run(redis, make_envelope, connectors=connectors, tasks=tasks)
+    assert tasks.failed == []
+    assert len(tasks.completed) == 1
+    assert graph.stored != []

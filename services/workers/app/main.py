@@ -104,6 +104,7 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
         crawler=crawler,
         frontier=Frontier(redis),
         discovery_pool=settings.DISCOVERY_POOL,
+        crawl_pool=settings.CRAWL_POOL,
     )
     name = settings.WORKER_NAME or f"{socket.gethostname()}-{os.getpid()}"
     consumers = [

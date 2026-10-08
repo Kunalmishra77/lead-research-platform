@@ -15,24 +15,32 @@ worth being careful about, which is why the write is a single transaction and wh
 charged from what the write actually returned rather than from what the search returned.
 """
 
+from datetime import UTC, datetime
 from typing import Any
 
+from leadforge_contracts.job_envelope import JobEnvelope
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.connectors.registry import ConnectorRegistry
 from app.connectors.types import DiscoveryQuery
+from app.crawl.discovery import is_crawlable
 from app.db.graph import GraphRepo
 from app.db.reference import ReferenceData
 from app.db.research_jobs import ResearchJobsRepo
 from app.db.research_tasks import ResearchTasksRepo
+from app.handlers.crawl import CRAWL_CREDIT_BUDGET
+from app.handlers.crawl import JOB_TYPE as CRAWL_JOB_TYPE
 from app.jobs.cancellation import JobCancelledError, raise_if_cancelled
 from app.jobs.context import JobContext
+from app.jobs.envelope import stream_for
 from app.jobs.errors import ErrorClass, InvalidInputError, classify
+from app.jobs.publisher import publish
 from app.jobs.redact import redact
 from app.jobs.registry import HandlerRegistry
 from app.metering.context import CallContext
 from app.metering.usage import UsageRecorder
-from app.planner.plan import TASK_TYPE_BY_SOURCE
+from app.normalize.domains import is_platform_host
+from app.planner.plan import TASK_TYPE_BY_SOURCE, PlannedTask
 
 #: Credits per delivered lead, by the depth the user chose (`db/seeds/billing.ts`). Charged once
 #: per business we did not already have: a job pays for what it found, not for what it looked at.
@@ -42,6 +50,9 @@ CREDIT_METER_BY_DEPTH: dict[str, str] = {
     "deep": "research_deep",
 }
 DEFAULT_DEPTH = "standard"
+
+#: Must match the worker setting `CRAWL_POOL`, and a pool a worker consumes.
+DEFAULT_CRAWL_POOL = "crawl"
 
 
 class DiscoveryPayload(BaseModel):
@@ -83,6 +94,7 @@ def register_discovery_handlers(
     tasks: ResearchTasksRepo,
     jobs: ResearchJobsRepo,
     usage: UsageRecorder,
+    crawl_pool: str = DEFAULT_CRAWL_POOL,
 ) -> None:
     async def on_failure(
         envelope: Any, error_class: ErrorClass, error: str, attempts: int | None
@@ -148,6 +160,23 @@ def register_discovery_handlers(
                 # retry decision does not depend on this having happened.
                 await tasks.mark_failed(org_id, task_id, classify(exc).value, cost_micros=0)
                 raise
+
+            # Enqueued before this task reports itself finished, and that order is the whole
+            # trick: while this task is still `running`, `finish_if_done` cannot complete the job,
+            # so the crawl rows it adds are guaranteed to be waited for. Saving them after
+            # `mark_completed` would let a job finish between the two and the emails arrive for a
+            # job already reported done.
+            await _enqueue_crawls(
+                ctx,
+                found,
+                stored,
+                org_id=org_id,
+                research_job_id=research_job_id,
+                depth=payload.depth or DEFAULT_DEPTH,
+                country=payload.query.country,
+                tasks=tasks,
+                pool=crawl_pool,
+            )
 
             new_leads = sum(1 for s in stored if s.is_new)
             values = sum(s.values_written for s in stored)
@@ -272,6 +301,90 @@ def _research_job_id(ctx: JobContext) -> str:
     if envelope.research_job_id is None:
         raise InvalidInputError("a discovery task needs a research_job_id")
     return str(envelope.research_job_id)
+
+
+async def _enqueue_crawls(
+    ctx: JobContext,
+    found: list[Any],
+    stored: list[Any],
+    *,
+    org_id: str,
+    research_job_id: str,
+    depth: str,
+    country: str | None,
+    tasks: ResearchTasksRepo,
+    pool: str,
+) -> int:
+    """Queues one crawl per business whose own website we can read. Returns how many.
+
+    Only where there is a site worth reading. A business with no website has nothing for us to
+    crawl, and one reachable only through `business.site` or a Facebook page has a platform's
+    address rather than its own -- crawling that would read the platform's markup and attribute it
+    to this company.
+
+    Failing to enqueue must not fail the search. The leads are already stored and charged for; a
+    crawl that never starts costs the user some emails, where raising here would throw away a
+    search that worked.
+    """
+    planned: list[PlannedTask] = []
+    for candidate, record in zip(found, stored, strict=False):
+        website = getattr(candidate, "url", None)
+        if not website or is_platform_host(website) or not is_crawlable(website, website):
+            continue
+        planned.append(
+            PlannedTask(
+                type=CRAWL_JOB_TYPE,
+                input={
+                    "company_id": record.company_id,
+                    "website": website,
+                    "depth": depth,
+                    "country": country,
+                },
+                credit_budget=CRAWL_CREDIT_BUDGET,
+            )
+        )
+    if not planned:
+        return 0
+
+    try:
+        saved = await tasks.save_plan(org_id, research_job_id, planned)
+        stream = stream_for(pool)
+        now = datetime.now(UTC).isoformat()
+        for entry in saved:
+            if not entry.inserted:
+                # A redelivery of this search: the crawl was queued the first time round, and its
+                # own idempotency guard would catch it anyway. Not publishing is cheaper.
+                continue
+            await publish(
+                ctx.redis,
+                stream,
+                JobEnvelope.model_validate(
+                    {
+                        "envelope_version": 1,
+                        "job_id": entry.id,
+                        "research_job_id": research_job_id,
+                        "org_id": org_id,
+                        "type": CRAWL_JOB_TYPE,
+                        "trace_id": ctx.envelope.trace_id,
+                        "attempt": 1,
+                        "priority": ctx.envelope.priority,
+                        "idempotency_key": f"{CRAWL_JOB_TYPE}:{entry.id}",
+                        # Nothing to spend: a crawl calls no provider.
+                        "budget": {"credits_remaining": 0, "cost_cap_micros": 0},
+                        "payload": entry.task.input,
+                        "created_at": now,
+                    }
+                ),
+            )
+    except Exception as exc:
+        ctx.log.warning(
+            "leads were stored but their crawls could not be queued",
+            research_job_id=research_job_id,
+            error_class=classify(exc).value,
+            error=redact(str(exc)),
+        )
+        return 0
+    return len(planned)
 
 
 __all__ = ["register_discovery_handlers"]

@@ -94,7 +94,10 @@ services:
       context: .
       dockerfile: deploy/Dockerfile.workers
     environment:
-      WORKER_POOLS: system,interactive,discovery
+      # `crawl` is its own pool on purpose: a crawl waits seconds per page by design, so
+      # sharing a pool with searches would let one site's politeness delay hold up every
+      # search queued behind it.
+      WORKER_POOLS: system,interactive,discovery,crawl
       DATABASE_URL_WORKERS: ${DATABASE_URL_WORKERS}
       REDIS_URL: redis://redis:6379
       OPENAI_API_KEY: ${OPENAI_API_KEY}

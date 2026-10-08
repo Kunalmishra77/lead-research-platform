@@ -27,6 +27,7 @@ dependencies = [
   "protego>=0.7.0",
   "phonenumbers>=9.0.40",
   "email-validator>=2.3.0",
+  "extruct>=0.18.0",
 ]
 
 [dependency-groups]
@@ -73,5 +74,7 @@ files = ["app"]
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["aioboto3.*", "botocore.*", "fakeredis.*"]
+# Ship no py.typed marker. extruct returns dict[str, list[dict[str, Any]]] and app/crawl/structured
+# narrows that itself, which is where the checking that matters happens.
+module = ["aioboto3.*", "botocore.*", "fakeredis.*", "extruct.*"]
 ignore_missing_imports = true

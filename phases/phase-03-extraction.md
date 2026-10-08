@@ -14,7 +14,7 @@ docs/06 sections 4-6, 07 (field_extract, page_classify, grounding), 08 (policy),
 - [ ] 3.5 Browser fetcher (Playwright pool) used only on SPA-shell heuristic; resource blocking; timeouts
 - [ ] 3.6 Raw store to S3 with content-hash dedupe; raw_documents rows (partitioned)
 - [x] 3.7 Page discovery: homepage links + sitemap -> choose contact/about/team/careers/services pages (rules) — `app/crawl/discovery.py`; anchor text beats an opaque URL, the sitemap is only read for roles the homepage left unfilled
-- [ ] 3.8 Extractors: JSON-LD/microdata/OpenGraph (extruct), contacts (emails incl. de-obfuscation, phones, WhatsApp), social links, address from footer
+- [x] 3.8 Extractors: JSON-LD/microdata/OpenGraph (extruct), contacts (emails incl. de-obfuscation, phones, WhatsApp), social links, address from footer — `app/crawl/structured.py` (nodes ranked, so a breadcrumb trail is not the company name) and `app/crawl/contacts.py` (a `mailto:`/`tel:` href outranks text; a phone must be valid per `phonenumbers`, not merely possible)
 - [ ] 3.9 Tech detector with open fingerprint set + DNS MX/TXT
 - [ ] 3.10 Page classifier (rules + small model fallback)
 - [ ] 3.11 LLM field extraction for description/services/products/team members with evidence validation

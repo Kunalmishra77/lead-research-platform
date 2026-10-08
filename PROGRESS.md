@@ -13,6 +13,38 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-08 — Phase 3 — Task 3.8: where the emails come from
+
+- Done: task 3.8. `app/crawl/contacts.py` reads emails (undoing `[at]`/`(dot)`, `&#64;`,
+  `%40`), phones (E.164 via `phonenumbers`), WhatsApp links and social profiles.
+  `app/crawl/structured.py` reads JSON-LD, microdata and OpenGraph through extruct and returns the
+  business node: name, description, telephones, emails, postal address, `sameAs`, opening hours,
+  logo, rating. Dependencies added: `phonenumbers`, `email-validator`, `extruct`.
+- Decisions (link ADRs): **a `mailto:` or `tel:` href outranks text** — the author put the
+  address in a link for a reason, while a string in a paragraph may be an example, a testimonial or
+  a theme's placeholder. **A phone survives only if `phonenumbers` calls it valid**, not merely
+  possible: possible accepts any string of the right length, which is how PIN codes, GSTINs,
+  invoice numbers and years get in. A local number with no region is dropped rather than guessed.
+  **Structured-data nodes are ranked, not taken in order**, because a page carries `WebSite`,
+  `BreadcrumbList`, `Organization` and `Product` blocks too and reading the first one names the
+  company after its breadcrumb trail. A decoded obfuscated address is still `found`: every
+  character came from the page and only the spelling of `@` and `.` was restored, which is what
+  CLAUDE.md's rule about invented contact values turns on.
+- Tests/checks status: 658 worker tests pass (50 new), ruff and mypy clean. Two things the library
+  had to be asked rather than assumed. extruct reads **all** of a page's JSON-LD or none: one
+  hand-written block that is not JSON fails its whole json-ld pass, and `errors="log"` logs the
+  failure and still returns nothing for that syntax — so the blocks are read one at a time as a
+  fallback when extruct comes back empty and the page plainly has some. And extruct is a heavy
+  dependency for what we use (12 packages, including `rdflib` and `pyrdfa3` for RDFa we do not
+  ask for); it stays because microdata is common on older small-business sites, which are most of
+  this market, and a correct microdata reader is not a weekend's work.
+- Open issues / blockers: Phase 2 still open on criterion 2 (175 of 200 candidates), needing one
+  funded Delhi run. Phase 3 remaining: 3.1 (frontier), 3.5 (browser fallback), 3.6 (raw store to
+  S3), 3.9–3.16. Nothing yet joins the fetcher to the extractors and writes `field_values`, so no
+  email has reached the database — that is the next piece of real progress, not another extractor.
+- Next step: task 3.1's crawl frontier, then the handler that walks a lead's site end to end and
+  writes what it found with provenance. That is when emails appear in the product.
+
 ### 2026-10-08 — Phase 3 — Task 3.7: spending six page fetches well
 
 - Done: task 3.7. `app/crawl/discovery.py` turns a homepage into the short list of pages worth

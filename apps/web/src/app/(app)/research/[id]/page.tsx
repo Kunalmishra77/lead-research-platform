@@ -64,7 +64,12 @@ export default async function ResearchJobPage({
           </h2>
           {results.items.length > 0 && <ExportLinks jobId={job.id} />}
         </div>
-        <ResultsTable finished={!running} jobId={job.id} page={results} />
+        <ResultsTable
+          candidates={job.progress?.candidates}
+          finished={!running}
+          jobId={job.id}
+          page={results}
+        />
       </section>
     </div>
   );

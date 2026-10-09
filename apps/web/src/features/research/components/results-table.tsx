@@ -24,22 +24,44 @@ import { SocialsCell } from './socials-cell';
  * The attribution underneath is a condition of using the data at all, so it renders from the
  * sources this page actually contains rather than being assumed.
  */
+/**
+ * What an empty grid means, which is three different things.
+ *
+ * The first version of this said "found no businesses matching your description" for every
+ * finished job, and printed it directly under a counter reading "Businesses seen 12". A screen
+ * that contradicts itself one line later is worse than the vague message it replaced.
+ */
+export function emptyMessage({
+  finished,
+  candidates,
+}: {
+  finished: boolean;
+  candidates: number | undefined;
+}): string {
+  if (!finished) return 'No leads yet. They appear here as the search finds them.';
+  if (!candidates) {
+    return 'This search found no businesses matching your description. Try widening the area, or asking for a nearby category as well.';
+  }
+  return `This run found ${candidates.toLocaleString('en-IN')} businesses but delivered none to this workspace.`;
+}
+
 export function ResultsTable({
   page,
   jobId,
   finished = false,
+  candidates,
 }: {
   page: LeadsPage;
   jobId: string;
   /** Whether the job has stopped. An empty grid means different things before and after. */
   finished?: boolean;
+  /** How many businesses the run saw, so an empty grid cannot contradict the counter above it. */
+  candidates?: number;
 }) {
   if (page.items.length === 0) {
     return (
       <p className="border-border text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
-        {finished
-          ? 'This search found no businesses matching your description. Try widening the area, or asking for a nearby category as well.'
-          : 'No leads yet. They appear here as the search finds them.'}
+        {emptyMessage({ finished, candidates })}
       </p>
     );
   }

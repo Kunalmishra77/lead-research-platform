@@ -13,6 +13,41 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-09 — Every transient failure was permanent
+
+- Done: found and fixed the third fault from the live Delhi run, from the code rather than the
+  log. Two of six searches failed `transient` with `attempts=1` and never recovered. The retry
+  machinery was working perfectly: the consumer scheduled attempt 2 and delivered it. The handler
+  had written `status = 'failed'` on its way out, `mark_running` excludes tasks that have stopped,
+  so the retry's first act was to read its own failure, log *"already finished; nothing to do"*
+  and return. Five attempts, five no-ops. A third of a paid run thrown away, in both the discovery
+  and crawl handlers.
+- Second, worse half of the same line: `finish_if_done` completes a job once nothing of it is
+  queued or running. A task written `failed` while its retry was still scheduled is neither — so
+  the job finished early, and a retry that *had* worked would have delivered leads to a job the
+  user was told was done, spending credits after settlement had closed the books.
+- Decisions (link ADRs): a retryable failure now leaves the row `running`, which is the truth —
+  the work is still in flight — and only a terminal class is written as `failed`. The consumer's
+  `on_failure` hook records the real failure once it stops retrying, dead-letter path included,
+  so nothing goes unrecorded and no task hangs. **A first attempt at this was reverted:** adding
+  `or :attempt > attempts` to the claim query fixed the symptom, but once the handler stops
+  writing `failed` prematurely no path reaches that branch, and loosening "a stopped task stays
+  stopped" for an unexercised case is not worth the weaker invariant.
+- Why no test caught it: `FakeTasks.mark_running` returned a cheerful `True` regardless of the
+  row's state, while the column refuses to move a stopped task. A fake looser than its database
+  tests nothing. It now models the lifecycle, and the three new tests fail against the old
+  handler — checked by reverting it.
+- Tests/checks status: workers 736 (ruff, mypy clean). The claim semantics were also exercised
+  against the live database inside a rolled-back transaction: redelivery at the same attempt
+  refused, completed and cancelled refused.
+- Open issues / blockers: the *underlying* reason those two Places calls failed is still unknown
+  and still needs the worker log — this makes the failures survivable, not impossible. Unchanged:
+  `research_tasks.cost_micros` hardcoded 0; credits pill and dashboard counters unwired; Phase 2
+  open on criterion 2.
+- Next step: deploy and re-run the Delhi search. Three numbers to read — delivered vs new, leads
+  carrying an email, pages that came back `access_restricted`.
+
+
 ### 2026-10-09 — A job reports what it found, not only what was new
 
 - Done: the first live run exposed a product bug no test could have caught. A search for *20

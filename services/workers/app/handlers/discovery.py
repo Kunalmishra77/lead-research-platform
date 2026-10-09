@@ -33,7 +33,7 @@ from app.handlers.crawl import JOB_TYPE as CRAWL_JOB_TYPE
 from app.jobs.cancellation import JobCancelledError, raise_if_cancelled
 from app.jobs.context import JobContext
 from app.jobs.envelope import stream_for
-from app.jobs.errors import ErrorClass, InvalidInputError, classify
+from app.jobs.errors import RETRYABLE, ErrorClass, InvalidInputError, classify
 from app.jobs.publisher import publish
 from app.jobs.redact import redact
 from app.jobs.registry import HandlerRegistry
@@ -162,19 +162,15 @@ def register_discovery_handlers(
                     org_id, research_job_id
                 )
                 if headroom <= 0:
-                    ctx.log.info(
-                        "discovery task skipped; the job already has what it asked for",
-                        task=task_id,
+                    await _skip_satisfied(
+                        ctx,
+                        tasks,
+                        jobs,
+                        org_id=org_id,
+                        task_id=task_id,
                         research_job_id=research_job_id,
                         target=payload.query.max_results,
                     )
-                    await tasks.mark_completed(
-                        org_id,
-                        task_id,
-                        {"candidates": 0, "leads": 0, "values": 0, "skipped": "target reached"},
-                        0,
-                    )
-                    await jobs.finish_if_done(org_id, research_job_id)
                     return
                 found = await _search(
                     ctx,
@@ -196,9 +192,22 @@ def register_discovery_handlers(
                 ctx.log.info("discovery task cancelled", task=task_id)
                 return
             except Exception as exc:
-                # Record the failure on the task before it propagates, so the consumer's own
-                # retry decision does not depend on this having happened.
-                await tasks.mark_failed(org_id, task_id, classify(exc).value, cost_micros=0)
+                # A task that will be retried stays `running`, and only a task that is
+                # finished for good is written as `failed`.
+                #
+                # Both halves matter. `finish_if_done` completes a job once nothing of it is
+                # queued or running, so writing `failed` here let the job finish while a retry
+                # was still scheduled -- the retry would then deliver leads to a job the user had
+                # already been told was done, and spend credits the settlement had closed the
+                # books on. And the retry could not have run anyway: claiming the row excludes
+                # tasks that have stopped.
+                #
+                # The consumer records the real failure through its `on_failure` hook once it
+                # stops retrying, including on dead-letter, so nothing goes unrecorded and no
+                # task is left running for ever.
+                error_class = classify(exc)
+                if error_class not in RETRYABLE:
+                    await tasks.mark_failed(org_id, task_id, error_class.value, cost_micros=0)
                 raise
 
             # Enqueued before this task reports itself finished, and that order is the whole
@@ -274,6 +283,37 @@ def register_discovery_handlers(
                 **counts,
                 credits=credits,
             )
+
+
+async def _skip_satisfied(
+    ctx: JobContext,
+    tasks: ResearchTasksRepo,
+    jobs: ResearchJobsRepo,
+    *,
+    org_id: str,
+    task_id: str,
+    research_job_id: str,
+    target: int,
+) -> None:
+    """Closes a search the job no longer needs, without making a call.
+
+    Completed rather than cancelled or failed: there was nothing left to do, which is a success.
+    It still asks whether the job is over, because this may well be the last task of it and
+    nothing else would ever check.
+    """
+    ctx.log.info(
+        "discovery task skipped; the job already has what it asked for",
+        task=task_id,
+        research_job_id=research_job_id,
+        target=target,
+    )
+    await tasks.mark_completed(
+        org_id,
+        task_id,
+        {"candidates": 0, "leads": 0, "values": 0, "skipped": "target reached"},
+        0,
+    )
+    await jobs.finish_if_done(org_id, research_job_id)
 
 
 async def _workspace(jobs: ResearchJobsRepo, org_id: str, research_job_id: str) -> str:

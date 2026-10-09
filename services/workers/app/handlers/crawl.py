@@ -50,6 +50,7 @@ from app.db.research_tasks import ResearchTasksRepo
 from app.jobs.cancellation import JobCancelledError, raise_if_cancelled
 from app.jobs.context import JobContext
 from app.jobs.errors import (
+    RETRYABLE,
     AccessRestrictedError,
     ErrorClass,
     InvalidInputError,
@@ -139,7 +140,10 @@ def register_crawl_handlers(
             ctx.log.info("crawl task cancelled", task=task_id)
             return
         except Exception as exc:
-            await tasks.mark_failed(org_id, task_id, classify(exc).value, cost_micros=0)
+            # Retryable failures leave the row `running`; see the note in handlers/discovery.py.
+            error_class = classify(exc)
+            if error_class not in RETRYABLE:
+                await tasks.mark_failed(org_id, task_id, error_class.value, cost_micros=0)
             raise
 
         counts = {"values": written}

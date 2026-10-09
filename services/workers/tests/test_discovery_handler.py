@@ -141,25 +141,43 @@ class FakeTasks:
         self.completed: list[dict[str, Any]] = []
         self.failed: list[str] = []
         self.cancelled: list[str] = []
+        #: The row's own state, because `mark_running` depends on it.
+        self.status = "queued"
+        self.attempts = 0
 
     async def mark_running(self, org_id: str, task_id: str, attempt: int) -> bool:
+        """The real row's lifecycle rule, not a cheerful `True`.
+
+        `SqlResearchTasksRepo.mark_running` will not move a task that has stopped, and this fake
+        used to ignore that -- which is how a bug where every retry no-opped reached production
+        with a green suite. A fake looser than its column is a fake that tests nothing.
+        """
         self.running.append(task_id)
-        return self.claimable
+        if not self.claimable:
+            return False
+        if self.status in ("completed", "failed", "cancelled"):
+            return False
+        self.status = "running"
+        self.attempts = attempt
+        return True
 
     async def mark_completed(
         self, org_id: str, task_id: str, output: dict[str, Any], cost_micros: int
     ) -> bool:
         self.completed.append(output)
+        self.status = "completed"
         return True
 
     async def mark_failed(
         self, org_id: str, task_id: str, error_class: str, cost_micros: int
     ) -> bool:
         self.failed.append(error_class)
+        self.status = "failed"
         return True
 
     async def mark_cancelled(self, org_id: str, task_id: str) -> bool:
         self.cancelled.append(task_id)
+        self.status = "cancelled"
         return True
 
     async def save_plan(self, org_id: str, job_id: str, planned: Any) -> list[Any]:
@@ -180,6 +198,8 @@ class FakeJobs:
         #: Leads the job already holds. The handler subtracts it from the target to decide
         #: whether this search is still worth paying for (ADR-0015).
         self.delivered = 0
+        #: None for a job with nowhere to deliver, which is not something a retry can fix.
+        self.workspace: str | None = WORKSPACE
 
     async def mark_running(self, org_id: str, job_id: str) -> bool:
         self.running += 1
@@ -194,7 +214,7 @@ class FakeJobs:
         return True
 
     async def workspace_of(self, org_id: str, job_id: str) -> str | None:
-        return WORKSPACE
+        return self.workspace
 
     async def delivered_count(self, org_id: str, job_id: str) -> int:
         """How many leads the job already holds. Zero unless a test says otherwise."""
@@ -247,6 +267,7 @@ async def run(
     jobs: FakeJobs | None = None,
     usage: FakeUsage | None = None,
     payload: dict[str, Any] | None = None,
+    attempt: int = 1,
 ) -> tuple[FakeGraph, FakeTasks, FakeJobs, FakeUsage]:
     graph = graph or FakeGraph()
     tasks = tasks or FakeTasks()
@@ -260,6 +281,7 @@ async def run(
         research_job_id=JOB,
         budget={"credits_remaining": 50, "cost_cap_micros": 1_000_000},
         payload=payload if payload is not None else PAYLOAD,
+        attempt=attempt,
     )
     handler = registry.get(TASK_TYPE)
     assert handler is not None
@@ -447,21 +469,32 @@ async def test_a_cancelled_job_runs_no_search_and_charges_nothing(
     assert tasks.completed == []
 
 
-async def test_a_failed_search_records_the_failure_before_it_propagates(
+async def test_a_search_waiting_to_retry_is_not_written_off_as_failed(
     redis: Redis, make_envelope: Any
 ) -> None:
-    connectors = FakeConnectors(TransientError("places is down"))
+    """This test used to assert the opposite, and that is how a live run lost two searches.
 
-    with pytest.raises(TransientError):
-        await run(redis, make_envelope, connectors=FakeConnectors(TransientError("down")))
+    The old reasoning was that the row must say what happened either way, "or a job could never
+    finish because finish_if_done waits on it". Half right. `finish_if_done` waits on queued and
+    running tasks -- so writing `failed` here did not unblock the job, it ended it early, while
+    a retry was still scheduled. And the retry, when it came, could not claim a row that had
+    stopped: it logged "already finished; nothing to do" and returned. Five attempts, five
+    no-ops, a third of a paid run gone.
 
+    The job cannot hang either way: the consumer records the failure through its `on_failure`
+    hook once it stops retrying, and that includes the dead-letter path.
+    """
     tasks = FakeTasks()
     with pytest.raises(TransientError):
-        await run(redis, make_envelope, connectors=connectors, tasks=tasks)
+        await run(
+            redis,
+            make_envelope,
+            connectors=FakeConnectors(TransientError("places is down")),
+            tasks=tasks,
+        )
 
-    # The consumer decides whether to retry; the task's own row must say what happened either
-    # way, or a job could never finish because finish_if_done waits on it.
-    assert tasks.failed == ["transient"]
+    assert tasks.failed == []
+    assert tasks.status == "running"
 
 
 async def test_a_payload_the_executor_does_not_understand_fails_the_task(
@@ -674,3 +707,89 @@ async def test_a_search_asks_only_for_the_leads_the_job_still_has_room_for(
     # Three left of the hundred asked for, so this search asks for three -- not the hundred the
     # planner wrote on the envelope, and not nothing.
     assert connectors.searched[0].max_results == 3
+
+
+# ------------------------------------------------------------------------------ retries
+
+
+async def test_a_search_that_failed_transiently_runs_again_on_its_retry(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """The consumer schedules a retry; this is about the retry being allowed to do anything.
+
+    A live Delhi run lost two of its six searches to `transient` and never recovered them. The
+    retry machinery worked perfectly: the envelope came back with attempt 2, and the first thing
+    the handler does is claim the row -- which `mark_running` refused, because the handler had
+    already written `status = 'failed'` on the way out and the claim excludes stopped tasks. The
+    retry logged "already finished; nothing to do" and returned. Five attempts, five no-ops, and
+    a third of a paid run thrown away.
+    """
+    tasks = FakeTasks()
+
+    # Attempt 1: the connector is unreachable, exactly as it was live.
+    with pytest.raises(Exception, match="places is down"):
+        await run(
+            redis,
+            make_envelope,
+            connectors=FakeConnectors(RuntimeError("places is down")),
+            tasks=tasks,
+        )
+    assert tasks.failed == [], "a retryable failure is not the task's final word"
+
+    # Attempt 2: the same task, one attempt later, with a connector that now answers.
+    connectors = FakeConnectors([candidate("p1", "Alpha Dental")])
+    graph, _, _, _ = await run(
+        redis, make_envelope, connectors=connectors, tasks=tasks, attempt=2
+    )
+
+    assert connectors.searches == 1, "the retry skipped the search instead of running it"
+    assert [c.external_id for c in graph.stored[0]] == ["p1"]
+    assert tasks.completed[0]["candidates"] == 1
+
+
+async def test_a_job_does_not_finish_while_one_of_its_searches_is_waiting_to_retry(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """`finish_if_done` completes a job once nothing of it is queued or running.
+
+    So a task written `failed` while its retry was still scheduled let the job complete early.
+    The retry would then deliver leads to a job the user had been told was finished, and spend
+    credits after the settlement had closed the books. A retryable failure leaves the row
+    `running`, which is the truth -- the work is still in flight.
+    """
+    tasks = FakeTasks()
+    with pytest.raises(Exception, match="places is down"):
+        await run(
+            redis,
+            make_envelope,
+            connectors=FakeConnectors(RuntimeError("places is down")),
+            tasks=tasks,
+        )
+
+    assert tasks.failed == [], "a retryable failure must not be written as a final one"
+    assert tasks.status == "running"
+
+
+async def test_a_failure_that_will_never_succeed_is_recorded_at_once(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """The other half of the split: a job with no workspace has nowhere to put a lead.
+
+    Retrying cannot conjure one, so the row says so immediately rather than sitting `running`
+    until the consumer's dead-letter path catches up.
+    """
+    tasks = FakeTasks()
+    jobs = FakeJobs()
+    jobs.workspace = None
+
+    with pytest.raises(InvalidInputError):
+        await run(
+            redis,
+            make_envelope,
+            connectors=FakeConnectors([candidate("p1", "Alpha Dental")]),
+            tasks=tasks,
+            jobs=jobs,
+        )
+
+    assert tasks.failed == ["invalid_input"]
+    assert tasks.status == "failed"

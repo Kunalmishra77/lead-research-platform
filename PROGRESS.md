@@ -13,6 +13,41 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-09 — A job reports what it found, not only what was new
+
+- Done: the first live run exposed a product bug no test could have caught. A search for *20
+  dental clinics in Delhi* found 12 businesses and wrote 179 values, and the page said **"Leads
+  delivered 0 · No leads yet"**. Every number was true: all 12 had been delivered by an identical
+  search on 24 Sep, `_deliver` correctly inserted nothing, and the grid filters on
+  `leads.research_job_id` — which still named the earlier job. ADR-0015 splits the two questions:
+  new table `app.research_job_leads` (migrations 0024/0025, RLS forced, worker INSERT-only, 113
+  rows backfilled), written per candidate inside the lead's own transaction. The grid joins it;
+  the page now shows **"12 · all already in this workspace"**.
+- Second fix, same run: `_results_per_task` divided the job's target between its searches, so 20
+  became six searches of four. Those searches overlap almost completely — "dentist in Delhi" and
+  "dental clinic in Delhi" return the same clinics — so the plan guaranteed an undershoot while
+  paying for six calls that would each have returned twenty for the same money. Each search now
+  asks for the whole target and the job-wide ceiling moved to delivery time, where
+  `delivered_count` can see what the others already found. A search the job no longer needs is
+  skipped **before** the call, not after: on a free monthly allowance an unneeded paid call is the
+  one waste worth writing code to avoid.
+- Decisions (link ADRs): **ADR-0015**. `is_new` is stored, not derived — only knowable at write
+  time, and a later job must not change what an earlier invoice said. `leads.research_job_id`
+  keeps its ADR-0012 meaning (delivered *first* by) and nothing rewrites it. Jobs that ran before
+  the migration left no trace of what they re-found and none is invented; their counts stay as
+  they are, which is why job `01a12078` still reads 0 until it is run again.
+- Tests/checks status: workers 733 (3 new, incl. the repeat-search case and the skipped search),
+  api 121, web 73 (5 new for `deliveredNote`); ruff, mypy, both tsc passes clean. The new join was
+  checked against the live database: 106 and 7 for the two older jobs, identical to the column it
+  replaces, returning real rows.
+- Open issues / blockers: **two of six searches failed `transient` with `attempts=1`** and the job
+  completed anyway. Root cause unknown — the error text lives only in the worker log, which has
+  not been read yet. Nothing here addresses it. Also unchanged: `research_tasks.cost_micros`
+  hardcoded 0; credits pill and dashboard counters unwired; Phase 2 open on criterion 2.
+- Next step: deploy, re-run the same Delhi search, and read three things — the delivered/new pair
+  on the page, how many leads carry an email, and how many pages came back `access_restricted`.
+
+
 ### 2026-10-08 — Phase 7 (partial) — A CSV someone can actually open
 
 - Done: the smallest sellable slice of task 7.1. `export-csv.ts` writes a CSV with a UTF-8 BOM,

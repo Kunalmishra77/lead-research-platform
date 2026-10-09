@@ -169,6 +169,20 @@
       "when": 1791376197568,
       "tag": "0023_settlement_sweeper",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791547087004,
+      "tag": "0024_research_job_leads",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791547088004,
+      "tag": "0025_research_job_leads_security",
+      "breakpoints": true
     }
   ]
 }

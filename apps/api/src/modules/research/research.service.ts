@@ -10,6 +10,7 @@ import {
   industries,
   leads,
   lt,
+  researchJobLeads,
   researchJobs,
   searches,
   sources,
@@ -264,6 +265,11 @@ export class ResearchService {
    * Reads `leads` rather than the graph: `companies` is shared, and being in it says nothing
    * about who is entitled to see it (ADR-0012). The join is what scopes this to one workspace,
    * and RLS is what stops a wrong `research_job_id` reaching another tenant's rows.
+   *
+   * Which leads a job delivered comes from `research_job_leads`, not from `leads.research_job_id`
+   * (ADR-0015). That column names the job that delivered a lead *first*, so a customer re-running
+   * a search saw an empty grid: the second run re-found everything, correctly inserted no lead,
+   * and every row still pointed at the first job.
    */
   async results(
     user: AuthUser,
@@ -295,11 +301,12 @@ export class ResearchService {
           googlePlaceId: companyLocations.googlePlaceId,
         })
         .from(leads)
+        .innerJoin(researchJobLeads, eq(researchJobLeads.leadId, leads.id))
         .innerJoin(companies, eq(companies.id, leads.companyId))
         .leftJoin(companyLocations, eq(companyLocations.companyId, companies.id))
         .where(
           and(
-            eq(leads.researchJobId, jobId),
+            eq(researchJobLeads.researchJobId, jobId),
             eq(leads.workspaceId, tenant.workspaceId),
             // UUID v7 ids sort by creation time, so the id alone is a stable cursor.
             query.cursor ? lt(leads.id, query.cursor) : undefined,

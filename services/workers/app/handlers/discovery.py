@@ -70,6 +70,16 @@ class DiscoveryPayload(BaseModel):
     locality: str | None = None
     depth: str | None = None
 
+    def with_max_results(self, max_results: int) -> "DiscoveryPayload":
+        """The same task, asking for no more than the job still has room for.
+
+        A copy rather than a mutation: the envelope is the record of what was planned, and a
+        retry must re-read it, not whatever an earlier attempt narrowed it to.
+        """
+        return self.model_copy(
+            update={"query": self.query.model_copy(update={"max_results": max_results})}
+        )
+
 
 class DiscoveryQueryPayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -141,7 +151,37 @@ def register_discovery_handlers(
                 await jobs.mark_running(org_id, research_job_id)
                 workspace_id = await _workspace(jobs, org_id, research_job_id)
 
-                found = await _search(ctx, payload, connectors=connectors, org_id=org_id)
+                # What the other searches have already delivered. Each search asks for the
+                # job's whole target (`_results_per_task`), because they overlap too much to
+                # divide it between them -- so this is where the job-wide ceiling is kept.
+                #
+                # Checked *before* the call, not after: a search this job no longer needs is a
+                # paid API call with nothing to show for it, and on a free monthly allowance
+                # that is the one kind of waste worth writing code to avoid.
+                headroom = payload.query.max_results - await jobs.delivered_count(
+                    org_id, research_job_id
+                )
+                if headroom <= 0:
+                    ctx.log.info(
+                        "discovery task skipped; the job already has what it asked for",
+                        task=task_id,
+                        research_job_id=research_job_id,
+                        target=payload.query.max_results,
+                    )
+                    await tasks.mark_completed(
+                        org_id,
+                        task_id,
+                        {"candidates": 0, "leads": 0, "values": 0, "skipped": "target reached"},
+                        0,
+                    )
+                    await jobs.finish_if_done(org_id, research_job_id)
+                    return
+                found = await _search(
+                    ctx,
+                    payload.with_max_results(headroom),
+                    connectors=connectors,
+                    org_id=org_id,
+                )
                 stored = await graph.store(
                     org_id,
                     found,
@@ -179,6 +219,11 @@ def register_discovery_handlers(
             )
 
             new_leads = sum(1 for s in stored if s.is_new)
+            # Two different numbers, and the customer is owed both (ADR-0015). `delivered` is
+            # every lead this search put in front of them; `new_leads` is the subset they had not
+            # been given before, which is the only one billing may count. A second run of the
+            # same search delivers everything and charges for nothing.
+            delivered = sum(1 for s in stored if s.lead_id is not None)
             values = sum(s.values_written for s in stored)
             credits = await _charge(
                 ctx,
@@ -190,7 +235,12 @@ def register_discovery_handlers(
                 reference=reference,
             )
 
-            counts = {"candidates": len(found), "leads": new_leads, "values": values}
+            counts = {
+                "candidates": len(found),
+                "leads": delivered,
+                "new_leads": new_leads,
+                "values": values,
+            }
             await tasks.mark_completed(org_id, task_id, {**counts, "credits": credits}, 0)
 
             # Reporting must not undo a task that worked. Everything above this line is paid for

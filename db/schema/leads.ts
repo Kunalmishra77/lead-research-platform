@@ -1,9 +1,11 @@
 import { sql } from 'drizzle-orm';
 import {
+  boolean,
   check,
   foreignKey,
   index,
   jsonb,
+  primaryKey,
   smallint,
   timestamp,
   uniqueIndex,
@@ -88,5 +90,43 @@ export const leads = app.table(
     /** The job page reads this one: every lead a given job delivered, newest first. */
     index('leads_job_idx').on(t.researchJobId, t.createdAt.desc()),
     check('leads_score_range', sql`${t.score} is null or ${t.score} between 0 and 100`),
+  ],
+);
+
+/**
+ * Which leads a research job surfaced — new to the workspace or already held (ADR-0015).
+ *
+ * `leads.research_job_id` says which job *first* delivered a lead, and that is a fact about the
+ * lead. This says which jobs *found* it, which is a fact about each job, and the two stop
+ * agreeing the moment a customer runs the same search twice: the second run re-finds everything,
+ * inserts no lead row, and without this table reports that it found nothing.
+ *
+ * `is_new` is stored, not derived. "Was this lead new when this job ran?" is answerable only at
+ * write time, and a later job must not be able to change what an earlier invoice said. Billing
+ * counts `sum(is_new)`; the grid counts rows; both read the same table.
+ */
+export const researchJobLeads = app.table(
+  'research_job_leads',
+  {
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    researchJobId: uuid('research_job_id').notNull(),
+    leadId: uuid('lead_id')
+      .notNull()
+      .references(() => leads.id, { onDelete: 'cascade' }),
+    /** True if this job is the one that delivered the lead. What docs/11 charges for. */
+    isNew: boolean('is_new').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    primaryKey({ name: 'research_job_leads_pkey', columns: [t.researchJobId, t.leadId] }),
+    foreignKey({
+      name: 'research_job_leads_job_org_fk',
+      columns: [t.researchJobId, t.orgId],
+      foreignColumns: [researchJobs.id, researchJobs.orgId],
+    }).onDelete('cascade'),
+    /** The reverse question: every search that turned this company up. */
+    index('research_job_leads_lead_idx').on(t.leadId),
   ],
 );

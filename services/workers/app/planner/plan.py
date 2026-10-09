@@ -351,15 +351,23 @@ def _with_limits(
 
 
 def _results_per_task(spec: ResearchSpec, *, count: int) -> int:
-    """How many results one task may ask for, so the plan cannot outrun `max_results`.
+    """How many results one task may ask for: the job's whole target, not a slice of it.
 
-    Credits are consumed per delivered candidate (docs/11), so giving every task the job's whole
-    `max_results` is a second route past the reservation: a market map with 90 searches would ask
-    for 90 times what the user said they wanted.
+    This used to divide the target between the searches, on the reasonable-sounding grounds that
+    otherwise a market map with 90 searches would ask for 90 times what the user wanted. It is
+    wrong, and a live run showed why: the searches overlap almost completely. "dentist in Delhi",
+    "dental clinic in Delhi" and "dental surgery in Delhi" return the same clinics. A request for
+    20 leads became six searches of four, which after deduplication delivered twelve -- while
+    each of those six calls was billed in full and would have returned twenty for the same money.
+
+    So each search asks for the whole target and the job-wide ceiling moves to delivery time,
+    where `ResearchJobsRepo.delivered_count` can see what the other searches already found. The
+    task's own `cost_cap_micros` (`_split_budget`) still bounds what one search may spend, and
+    the credit reservation still bounds the job, so nothing here can outrun either.
     """
     if count <= 0:
         return 0
-    return max(1, min(MAX_RESULTS_PER_TASK, ceil(spec.limits.max_results / count)))
+    return max(1, min(MAX_RESULTS_PER_TASK, spec.limits.max_results))
 
 
 def _split_budget(credits: int, *, template: PlanTemplate, count: int) -> list[int]:

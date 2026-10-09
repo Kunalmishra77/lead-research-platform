@@ -24,11 +24,22 @@ import { SocialsCell } from './socials-cell';
  * The attribution underneath is a condition of using the data at all, so it renders from the
  * sources this page actually contains rather than being assumed.
  */
-export function ResultsTable({ page, jobId }: { page: LeadsPage; jobId: string }) {
+export function ResultsTable({
+  page,
+  jobId,
+  finished = false,
+}: {
+  page: LeadsPage;
+  jobId: string;
+  /** Whether the job has stopped. An empty grid means different things before and after. */
+  finished?: boolean;
+}) {
   if (page.items.length === 0) {
     return (
       <p className="border-border text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
-        No leads yet. They appear here as the search finds them.
+        {finished
+          ? 'This search found no businesses matching your description. Try widening the area, or asking for a nearby category as well.'
+          : 'No leads yet. They appear here as the search finds them.'}
       </p>
     );
   }

@@ -81,7 +81,14 @@ export function JobLive({ initial }: { initial: ResearchJobView }) {
 
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Counter label="Businesses seen" value={job.progress?.candidates} />
-        <Counter label="Leads delivered" value={job.progress?.leads} />
+        <Counter
+          label="Leads delivered"
+          value={job.progress?.leads}
+          // Two numbers, because re-running a search delivers everything and charges for nothing
+          // (ADR-0015). Without the note a repeat run reads as "0 new" next to a full grid, and
+          // the customer is left wondering which number is the lie.
+          note={deliveredNote(job.progress)}
+        />
         <Counter label="Values stored" value={job.progress?.values} />
         <Counter
           label="Credits used"
@@ -130,20 +137,42 @@ function countsOf(event: ProgressMessage): JobProgress {
   const next: JobProgress = {};
   if (typeof counts.candidates === 'number') next.candidates = counts.candidates;
   if (typeof counts.leads === 'number') next.leads = counts.leads;
+  if (typeof counts.new_leads === 'number') next.new_leads = counts.new_leads;
   if (typeof counts.values === 'number') next.values = counts.values;
   if (event.message) next.message = event.message;
   return next;
+}
+
+/**
+ * How many of the delivered leads were new, in words, or nothing when it would not add anything.
+ *
+ * Silent on an empty job: "0 new" under a 0 explains a number nobody is confused by. The two
+ * extremes get plain language rather than arithmetic, because "all already yours" is the
+ * reassurance a repeat search is owed and "12 of 12" is not.
+ */
+export function deliveredNote(progress: JobProgress | null | undefined): string | undefined {
+  const delivered = progress?.leads;
+  const fresh = progress?.new_leads;
+  if (typeof delivered !== 'number' || typeof fresh !== 'number' || delivered === 0) {
+    return undefined;
+  }
+  if (fresh === 0) return 'all already in this workspace';
+  if (fresh === delivered) return 'all new to this workspace';
+  return `${fresh.toLocaleString('en-IN')} new to this workspace`;
 }
 
 function Counter({
   label,
   value,
   pending,
+  note,
 }: {
   label: string;
   value: number | undefined;
   /** Shown instead of the number while the number is not yet final. */
   pending?: string;
+  /** A line under the number, for when the number alone would be read wrongly. */
+  note?: string;
 }) {
   return (
     <div className="border-border rounded-lg border p-3">
@@ -153,6 +182,7 @@ function Counter({
       >
         {pending ?? (value ?? 0).toLocaleString('en-IN')}
       </dd>
+      {note && <dd className="text-muted-foreground mt-0.5 text-xs">{note}</dd>}
     </div>
   );
 }

@@ -74,12 +74,16 @@ class FakeConnectors:
     def __init__(self, found: list[Candidate] | Exception) -> None:
         self._found = found
         self.searches = 0
+        #: The queries as the handler actually asked them, which is not what the planner wrote:
+        #: `max_results` is narrowed to the job's remaining headroom (ADR-0015).
+        self.searched: list[Any] = []
 
     def get(self, key: str) -> Any:
         return self
 
     async def search(self, query: Any, ctx: Any) -> list[Candidate]:
         self.searches += 1
+        self.searched.append(query)
         if isinstance(self._found, Exception):
             raise self._found
         return self._found
@@ -173,6 +177,9 @@ class FakeJobs:
         self.progress: list[dict[str, int]] = []
         self.running = 0
         self.finished = 0
+        #: Leads the job already holds. The handler subtracts it from the target to decide
+        #: whether this search is still worth paying for (ADR-0015).
+        self.delivered = 0
 
     async def mark_running(self, org_id: str, job_id: str) -> bool:
         self.running += 1
@@ -188,6 +195,10 @@ class FakeJobs:
 
     async def workspace_of(self, org_id: str, job_id: str) -> str | None:
         return WORKSPACE
+
+    async def delivered_count(self, org_id: str, job_id: str) -> int:
+        """How many leads the job already holds. Zero unless a test says otherwise."""
+        return self.delivered
 
     async def mark_failed(self, org_id: str, job_id: str, error_class: str, message: str) -> bool:
         return True
@@ -274,7 +285,7 @@ async def test_what_the_search_found_is_stored_and_counted(
     assert [c.external_id for c in graph.stored[0]] == ["p1", "p2"]
     assert tasks.completed[0]["candidates"] == 2
     assert tasks.completed[0]["leads"] == 2
-    assert jobs.progress == [{"candidates": 2, "leads": 2, "values": 2}]
+    assert jobs.progress == [{"candidates": 2, "leads": 2, "new_leads": 2, "values": 2}]
 
 
 async def test_a_job_pays_for_businesses_it_did_not_already_have(
@@ -599,3 +610,67 @@ async def test_a_failure_to_queue_crawls_does_not_fail_the_search(
     assert tasks.failed == []
     assert len(tasks.completed) == 1
     assert graph.stored != []
+
+
+# ------------------------------------------------- what a job found vs what it was charged for
+
+
+async def test_a_search_that_re_finds_everything_still_reports_what_it_delivered(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """The bug this is here for: a repeat search reported that it found nothing.
+
+    `leads` is inserted ON CONFLICT DO NOTHING, so re-running a search delivers every lead again
+    and inserts none. The job page read the new-lead count, showed 0 beside a grid filtered on
+    `leads.research_job_id`, and told a customer whose search had just worked that it had not
+    (ADR-0015).
+    """
+    connectors = FakeConnectors([candidate(f"p{i}", f"Clinic {i}") for i in range(4)])
+
+    _, tasks, jobs, usage = await run(
+        redis, make_envelope, connectors=connectors, graph=FakeGraph(new=0)
+    )
+
+    assert tasks.completed[0]["leads"] == 4
+    assert tasks.completed[0]["new_leads"] == 0
+    assert jobs.progress == [{"candidates": 4, "leads": 4, "new_leads": 0, "values": 4}]
+    # Delivered four, charged for none. Both halves matter: the first is what the customer sees,
+    # the second is what they pay.
+    assert usage.calls == []
+
+
+async def test_a_search_the_job_no_longer_needs_is_never_paid_for(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """A job that already has its 100 leads must not buy a 101st search.
+
+    Every search asks for the job's whole target because they overlap too much to divide it
+    (`_results_per_task`), so without this check the last searches of a satisfied job would each
+    make a billed API call and throw the answer away.
+    """
+    jobs = FakeJobs()
+    jobs.delivered = 100  # The target in PAYLOAD.
+    connectors = FakeConnectors([candidate("p1", "Alpha Dental")])
+
+    graph, tasks, _, usage = await run(redis, make_envelope, connectors=connectors, jobs=jobs)
+
+    assert connectors.searched == []
+    assert graph.stored == []
+    assert usage.calls == []
+    # Completed, not failed: there was nothing left to do, which is a success.
+    assert tasks.completed[0]["skipped"] == "target reached"
+    assert jobs.finished == 1
+
+
+async def test_a_search_asks_only_for_the_leads_the_job_still_has_room_for(
+    redis: Redis, make_envelope: Any
+) -> None:
+    jobs = FakeJobs()
+    jobs.delivered = 97
+    connectors = FakeConnectors([candidate("p1", "Alpha Dental")])
+
+    await run(redis, make_envelope, connectors=connectors, jobs=jobs)
+
+    # Three left of the hundred asked for, so this search asks for three -- not the hundred the
+    # planner wrote on the envelope, and not nothing.
+    assert connectors.searched[0].max_results == 3

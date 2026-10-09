@@ -20,7 +20,12 @@ from app.jobs.errors import InvalidInputError
 
 #: The only counters a job's progress may carry. `add_progress` interpolates these names into
 #: its statement, so the set is closed on purpose.
-PROGRESS_COUNTERS: frozenset[str] = frozenset({"candidates", "leads", "values"})
+PROGRESS_COUNTERS: frozenset[str] = frozenset(
+    #: `leads` is every lead a job delivered; `new_leads` is the subset the workspace did not
+    #: already hold, which is the only one billing counts (ADR-0015). They differ whenever a
+    #: customer runs a search twice, and the job page owes them both numbers.
+    {"candidates", "leads", "new_leads", "values"}
+)
 
 # Every statement below ends with `status not in ('completed', 'failed', 'cancelled')`: a job
 # that has already stopped stays stopped. A redelivered envelope must not reopen a job the user
@@ -60,6 +65,7 @@ class ResearchJobsRepo(Protocol):
     async def add_progress(self, org_id: str, job_id: str, counts: dict[str, int]) -> bool: ...
     async def finish_if_done(self, org_id: str, job_id: str) -> bool: ...
     async def workspace_of(self, org_id: str, job_id: str) -> str | None: ...
+    async def delivered_count(self, org_id: str, job_id: str) -> int: ...
 
 
 class SqlResearchJobsRepo:
@@ -142,6 +148,31 @@ class SqlResearchJobsRepo:
                 )
             ).first()
         return str(row[0]) if row else None
+
+    async def delivered_count(self, org_id: str, job_id: str) -> int:
+        """How many leads this job has handed over so far, across all of its searches.
+
+        What it is for: a job asking for 20 leads splits into several searches, and those
+        searches overlap heavily -- "dentist in Delhi" and "dental clinic in Delhi" return mostly
+        the same clinics. Dividing the target between them therefore guarantees an undershoot, so
+        each search asks for the whole target and this is what stops the job sailing past it.
+
+        Read from `research_job_leads` rather than counted in the worker because the searches run
+        concurrently in separate processes; only the database knows the running total. Tasks that
+        overlap can still overshoot by a few, which is why the credit reservation remains the
+        thing that actually bounds the spend (ADR-0014).
+        """
+        async with tenant_transaction(self._engine, org_id) as conn:
+            row = (
+                await conn.execute(
+                    text(
+                        "select count(*) from app.research_job_leads"
+                        " where research_job_id = :id"
+                    ),
+                    {"id": job_id},
+                )
+            ).first()
+        return int(row[0]) if row else 0
 
     async def mark_cancelled(self, org_id: str, job_id: str) -> bool:
         """Records what the cancel flag already told us (ADR-0008).

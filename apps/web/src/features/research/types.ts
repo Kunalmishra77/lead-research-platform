@@ -66,7 +66,10 @@ export interface JobCredits {
 /** The counters workers write. A closed set (`PROGRESS_COUNTERS` in the worker). */
 export interface JobProgress {
   candidates?: number;
+  /** Every lead this job delivered, whether or not the workspace already held it. */
   leads?: number;
+  /** The subset that was new to the workspace — what the run is charged for (ADR-0015). */
+  new_leads?: number;
   values?: number;
   message?: string;
 }

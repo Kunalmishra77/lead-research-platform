@@ -316,7 +316,7 @@ async def test_one_place_named_twice_is_searched_once() -> None:
     assert plan.total_credits == int(600 * TEMPLATES["prospecting"].discovery_share)
 
 
-async def test_the_job_cannot_ask_for_more_results_than_the_user_wanted() -> None:
+async def test_every_search_asks_for_the_whole_target_rather_than_a_share_of_it() -> None:
     plan = await build_plan(
         make_spec(cities=["Pune"], max_results=100),
         capabilities=capabilities_for(["name"]),
@@ -327,10 +327,26 @@ async def test_the_job_cannot_ask_for_more_results_than_the_user_wanted() -> Non
     )
 
     asked = [t.input["query"]["max_results"] for t in plan.tasks]
-    # Credits are consumed per delivered candidate (docs/11), so giving every task the whole
-    # max_results is a second way past the reservation: four searches would fetch 400.
-    assert sum(asked) <= 100 + len(plan.tasks)
-    assert all(a >= 1 for a in asked)
+    # Dividing the target between the searches was the old rule and it undershot badly: these
+    # four searches overlap almost completely, so asking each for 25 delivered far fewer than
+    # 100 while paying for all four calls in full (ADR-0015). The job-wide ceiling now lives at
+    # delivery time, where `delivered_count` can see what the other searches already found.
+    assert asked == [100, 100, 100, 100]
+
+
+async def test_no_search_asks_for_more_than_the_user_wanted() -> None:
+    plan = await build_plan(
+        make_spec(cities=["Pune"], max_results=12),
+        capabilities=capabilities_for(["name"]),
+        template=TEMPLATES["prospecting"],
+        reference=FakeReference(),
+        expansion=Expansion(queries=("a", "b", "c", "d")),
+        credits=600,
+    )
+
+    # The whole target, never more: a single search returning 200 for a 12-lead job would spend
+    # the job's budget on results it must then throw away.
+    assert all(t.input["query"]["max_results"] == 12 for t in plan.tasks)
 
 
 # ---------------------------------------------------------------- nothing to do

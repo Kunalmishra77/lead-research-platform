@@ -64,7 +64,7 @@ export default async function ResearchJobPage({
           </h2>
           {results.items.length > 0 && <ExportLinks jobId={job.id} />}
         </div>
-        <ResultsTable jobId={job.id} page={results} />
+        <ResultsTable finished={!running} jobId={job.id} page={results} />
       </section>
     </div>
   );

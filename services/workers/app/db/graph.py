@@ -178,12 +178,53 @@ class SqlGraphRepo:
             workspace_id=workspace_id,
             research_job_id=research_job_id,
         )
+        if lead_id is not None:
+            await self._link(
+                conn,
+                lead_id=lead_id,
+                is_new=is_new,
+                org_id=org_id,
+                research_job_id=research_job_id,
+            )
         return Stored(
             company_id=company_id,
             location_id=location_id,
             lead_id=lead_id,
             is_new=is_new,
             values_written=written,
+        )
+
+    async def _link(
+        self,
+        conn: AsyncConnection,
+        *,
+        lead_id: str,
+        is_new: bool,
+        org_id: str,
+        research_job_id: str,
+    ) -> None:
+        """Records that this job surfaced this lead, new to the workspace or not (ADR-0015).
+
+        Without this row a job that re-finds leads it delivered last month reports that it found
+        nothing: `_deliver` correctly inserts no lead, so `leads.research_job_id` still names the
+        earlier job and the grid -- which filters on it -- comes back empty. The customer's search
+        worked and the screen said otherwise.
+
+        `is_new` is written here rather than computed later because it is a statement about this
+        moment. Billing counts it, and a later job finding the same lead must not change what an
+        earlier invoice said.
+
+        `DO NOTHING` so a retried task is harmless, and in the same transaction as the lead, so a
+        crash cannot leave a lead delivered but unlinked.
+        """
+        await conn.execute(
+            text(
+                "insert into app.research_job_leads"
+                " (org_id, research_job_id, lead_id, is_new)"
+                " values (:org, :job, :lead, :is_new)"
+                " on conflict do nothing"
+            ),
+            {"org": org_id, "job": research_job_id, "lead": lead_id, "is_new": is_new},
         )
 
     async def _deliver(

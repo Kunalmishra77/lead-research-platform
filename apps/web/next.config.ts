@@ -35,10 +35,12 @@ const securityHeaders = [
 const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  // Emits `.next/standalone`: a server plus only the files it imports. The deploy image does not
-  // use it yet — it runs `next start` from the built workspace, because that has fewer ways to
-  // fail on a first deploy — but this is what it slims down to once the stack is proven.
-  output: 'standalone',
+  // No `output: 'standalone'`. It was set here in anticipation of a slimmer image, with a comment
+  // saying the deploy did not use it yet — and Next prints, on every boot of that deploy,
+  // `"next start" does not work with "output: standalone" configuration`. A config that describes
+  // a plan rather than what actually runs is worse than no config: it is an unsupported
+  // combination that the server tells us about and nobody reads. It comes back the day the image
+  // runs `node .next/standalone/apps/web/server.js`, and not before.
   // Workspace packages are published as compiled ESM (dist/); nothing to transpile.
   headers: () => Promise.resolve([{ source: '/:path*', headers: securityHeaders }]),
   // A Sentry DSN is public by design; only the browser copy is inlined into client bundles. It is

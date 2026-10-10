@@ -18,10 +18,27 @@ const EXAMPLES = [
   'Chartered accountants in Ahmedabad',
 ];
 
+/**
+ * What each depth actually does today, which is how many pages of a company's own site get read.
+ *
+ * The old wording promised that Deep "adds people, hiring and verification". None of those
+ * exist: people are Phase 5, verification is Phase 4, and depth reaches exactly three things in
+ * the code — the default number of results, the credits per lead, and `page_budget()` in
+ * `crawl/discovery.py`. Describing unbuilt features as a paid option is the worst kind of
+ * placeholder, because the customer pays more for it.
+ *
+ * The page counts are the honest difference and they decide whether an email is found. Measured
+ * on a live run of 115 crawls: every readable site was given one page, and 32 of 71 had an
+ * address on the home page. The other 39 keep theirs on a contact page that Quick never opens.
+ */
 const DEPTHS: { value: Depth; label: string; blurb: string }[] = [
-  { value: 'quick', label: 'Quick', blurb: 'Name, address, phone, website.' },
-  { value: 'standard', label: 'Standard', blurb: 'Adds the website profile and socials.' },
-  { value: 'deep', label: 'Deep', blurb: 'Adds people, hiring and verification.' },
+  { value: 'quick', label: 'Quick', blurb: 'Reads the home page only. Misses most emails.' },
+  {
+    value: 'standard',
+    label: 'Standard',
+    blurb: 'Reads up to 6 pages, including the contact page. This is where emails come from.',
+  },
+  { value: 'deep', label: 'Deep', blurb: 'Reads up to 15 pages of each site.' },
 ];
 
 /**

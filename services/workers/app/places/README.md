@@ -101,7 +101,12 @@ phone number is a worse lead than no lead.
 
 Some upstream Overture rows are column-shifted. A real Delhi example had `IN-HR` in phone, `IN`
 in email and `122004` in website — a region code, a country and a postcode, each one field left
-of where it belonged. 1,327 of 226,918 Delhi phone values, 0.6%.
+of where it belonged.
+
+It is rare. Building Delhi for real refused **13** phone values among otherwise-valid businesses,
+and the finished index holds 199,421 distinct phone values of which none fail even a strict
+format check. (An earlier note here claimed 0.6%; that came from a pattern that also rejected
+`x12` extensions and dotted numbers, counted before the business filter. Withdrawn.)
 
 Every contact value is therefore checked against its own shape and dropped if it fails, keeping
 the rest of the record. Validating only the phone and trusting the others is how a postcode ends

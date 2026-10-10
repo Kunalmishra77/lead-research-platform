@@ -96,6 +96,37 @@ which is billed too. Discovering elsewhere saves no Places calls. The conclusion
 Places stops being the discovery engine — still holds, but for a different reason: a free dataset
 with 67% own-phone coverage makes the paid one unnecessary for discovery, not cheaper.
 
+### Correction, from building it end to end
+
+An earlier draft of this ADR said 0.6% of phone values were corrupt, from 1,327 of 226,918
+failing a check. That number was wrong in two ways and is withdrawn.
+
+It came from a stricter pattern than the one shipped -- it rejected `+91 124 4567890 x12` and
+dotted formats, which are real numbers written normally -- and it counted rows before the
+business filter, where most of the damage sits. Building the Delhi index for real refused **13**
+phone values among otherwise-valid businesses, and the finished index holds **199,421 distinct
+phone values, none of which fail even that strict pattern**.
+
+The corruption is real; the `IN-HR` row exists and the validator is worth keeping. It is rare,
+and it concentrates in rows already being refused for other reasons.
+
+The end-to-end build, for the record (Delhi box, 210 seconds, 139.8 MB index):
+
+```
+rows read                286,277
+refused, not a business   16,968   (machines, and operating_status = closed)
+refused, bad phone            13
+businesses               269,309
+  their own phone        190,145   70.6%
+  their own email        107,735   40.0%
+  website                152,532   56.6%
+  contactable             231,788   86.1%
+```
+
+The percentages are higher than the figures above them because refusing the junk shrinks the
+denominator, which is the point of refusing it. Gurgaon alone: 526 gyms, 476 of them contactable,
+carrying branch-level addresses like `sec89gurugram@plus.fitness` rather than a head office.
+
 ## Consequences
 
 Easier:

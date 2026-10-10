@@ -13,7 +13,31 @@ The schema anticipated this — `company_domains.is_platform` exists, and the un
 domain the company has a page on, and never as the domain that identifies it.
 """
 
+from pathlib import Path
 from urllib.parse import urlparse
+
+#: Every TLD IANA delegates, read once at import from the file beside this module.
+#:
+#: `email_validator` without DNS accepts anything shaped like an address, so a page reading
+#: "treatment done@Dr.Bhatia's clinic" yielded `done@dr.bhatia` and it reached a customer's CSV
+#: as a contact. A real TLD is the cheapest check that rejects it, and it keeps the ones a
+#: clinic actually buys -- `.clinic`, `.dental`, `.care` are all on the list.
+IANA_TLDS: frozenset[str] = frozenset(
+    line.strip().lower()
+    for line in (Path(__file__).with_name("iana_tlds.txt")).read_text(encoding="utf-8").splitlines()
+    if line.strip() and not line.startswith("#")
+)
+
+
+def has_real_tld(domain: str) -> bool:
+    """Whether a domain ends in a top-level domain that exists.
+
+    False for a bare host with no dot: `localhost` and `intranet` are reachable names, not
+    places a stranger can be emailed.
+    """
+    _, _, tld = domain.rstrip(".").rpartition(".")
+    return bool(tld) and tld.lower() in IANA_TLDS
+
 
 #: Public suffixes two labels deep, so the registrable name is the third from the right. Not the
 #: full Public Suffix List: the geographies we sell into, plus the common global ones. An unlisted

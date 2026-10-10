@@ -30,6 +30,8 @@ import phonenumbers
 from email_validator import EmailNotValidError, validate_email
 from scrapling import Selector
 
+from app.normalize.domains import has_real_tld
+
 #: Role accounts. Kept, but flagged: `info@` is a lead, `priya@` is a person, and docs/10 treats
 #: the second as personal data with different handling.
 ROLE_LOCAL_PARTS = frozenset(
@@ -154,6 +156,11 @@ def _tidy_email(local: str, domain: str) -> str | None:
     if not local or not domain or local.lower() in _IGNORED_LOCAL_PARTS:
         return None
     if _IGNORED_EMAIL_HOSTS.search(domain):
+        return None
+    # A real top-level domain. `validate_email` below checks shape, not existence, so without
+    # this a page reading "treatment done@Dr.Bhatia's clinic" yields `done@dr.bhatia` -- which
+    # went out in a customer's results before this line existed.
+    if not has_real_tld(domain):
         return None
     address = f"{local}@{domain}".lower()
     try:

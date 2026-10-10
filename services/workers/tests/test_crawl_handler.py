@@ -31,7 +31,7 @@ ORG = "11111111-1111-7111-8111-111111111111"
 JOB = "22222222-2222-7222-8222-222222222222"
 TASK = "33333333-3333-7333-8333-333333333333"
 COMPANY = "44444444-4444-7444-8444-444444444444"
-SITE = "https://clinic.example/"
+SITE = "https://clinicdelhi.in/"
 
 HOME = b"""
 <html><body>
@@ -42,7 +42,7 @@ HOME = b"""
 
 CONTACT = b"""
 <html><body>
-  <p>Email <a href="mailto:info@clinic.example">info@clinic.example</a></p>
+  <p>Email <a href="mailto:info@clinicdelhi.in">info@clinicdelhi.in</a></p>
   <p>Call <a href="tel:+919876543210">+91 98765 43210</a></p>
   <a href="https://instagram.com/clinicdelhi">Instagram</a>
 </body></html>
@@ -129,12 +129,12 @@ async def run(
 
 
 def mock_site() -> None:
-    respx.get("https://clinic.example/").mock(return_value=httpx.Response(200, content=HOME))
-    respx.get("https://clinic.example/contact").mock(
+    respx.get("https://clinicdelhi.in/").mock(return_value=httpx.Response(200, content=HOME))
+    respx.get("https://clinicdelhi.in/contact").mock(
         return_value=httpx.Response(200, content=CONTACT)
     )
-    respx.get("https://clinic.example/about").mock(return_value=httpx.Response(200, content=ABOUT))
-    respx.get("https://clinic.example/sitemap.xml").mock(return_value=httpx.Response(404))
+    respx.get("https://clinicdelhi.in/about").mock(return_value=httpx.Response(200, content=ABOUT))
+    respx.get("https://clinicdelhi.in/sitemap.xml").mock(return_value=httpx.Response(404))
 
 
 @pytest.mark.asyncio
@@ -150,9 +150,9 @@ async def test_a_crawl_produces_an_email_with_its_provenance(
         await http.aclose()
 
     by_field = {v.field: v for v in graph.written}
-    assert by_field["email"].value == "info@clinic.example"
+    assert by_field["email"].value == "info@clinicdelhi.in"
     # The whole point of the product: the value says where it came from.
-    assert by_field["email"].source_url == "https://clinic.example/contact"
+    assert by_field["email"].source_url == "https://clinicdelhi.in/contact"
     assert by_field["email"].source_key == "website"
     assert by_field["email"].method == "crawl"
     assert by_field["email"].derivation == "found"
@@ -200,7 +200,7 @@ async def test_a_site_that_turns_us_away_completes_rather_than_fails(
 ) -> None:
     # A 403 is the site exercising its rights. Retrying it three times and then marking the job
     # broken would be both rude and wrong.
-    respx.get("https://clinic.example/").mock(return_value=httpx.Response(403))
+    respx.get("https://clinicdelhi.in/").mock(return_value=httpx.Response(403))
     registry, graph, tasks, _, http = build(redis)
     try:
         await run(redis, make_envelope, registry)
@@ -217,7 +217,7 @@ async def test_a_site_that_turns_us_away_completes_rather_than_fails(
 async def test_a_robots_disallow_is_obeyed_and_nothing_is_fetched(
     redis: Redis, make_envelope: Any
 ) -> None:
-    route = respx.get("https://clinic.example/").mock(
+    route = respx.get("https://clinicdelhi.in/").mock(
         return_value=httpx.Response(200, content=HOME)
     )
     registry, graph, tasks, _, http = build(redis, robots=b"User-agent: *\nDisallow: /\n")
@@ -236,7 +236,7 @@ async def test_a_cancelled_job_stops_before_reading_anything(
     redis: Redis, make_envelope: Any
 ) -> None:
     await redis.set(CANCEL_KEY.format(job_id=JOB), "1")
-    route = respx.get("https://clinic.example/").mock(
+    route = respx.get("https://clinicdelhi.in/").mock(
         return_value=httpx.Response(200, content=HOME)
     )
     registry, graph, tasks, _, http = build(redis)

@@ -215,3 +215,28 @@ def test_an_address_at_a_reserved_tld_is_not_a_contact(tld: str) -> None:
     # Found while writing the crawl handler's test against a `.test` site: the validator was
     # right and the test was wrong.
     assert emails_from(f"<p>info@clinic.{tld}</p>") == []
+
+
+def test_a_sentence_that_looks_like_an_address_is_not_one() -> None:
+    """The address that reached a customer's results: `done@dr.bhatia`.
+
+    `email_validator` without DNS checks the shape of an address, not whether its domain could
+    exist, so prose with an `@` in it passes. A real top-level domain is the cheapest thing that
+    tells the two apart.
+    """
+    assert emails_from("<p>Get your treatment done@Dr.Bhatia's clinic today</p>") == []
+
+
+def test_the_domains_a_clinic_actually_buys_still_pass() -> None:
+    # The check must not be a guess at which TLDs are "real enough": .clinic and .dental are
+    # delegated, and a practice that paid for one would otherwise be dropped.
+    found = emails_from(
+        '<a href="mailto:hi@smile.clinic">a</a>'
+        '<a href="mailto:hi@practice.dental">b</a>'
+        '<a href="mailto:hi@practice.co.in">c</a>'
+    )
+    assert [e.value for e in found] == [
+        "hi@smile.clinic",
+        "hi@practice.dental",
+        "hi@practice.co.in",
+    ]

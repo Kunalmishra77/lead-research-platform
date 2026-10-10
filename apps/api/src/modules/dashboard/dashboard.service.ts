@@ -13,7 +13,14 @@ import type {
   SourceCount,
 } from './dashboard.dto';
 
-/** Fields that mean "this lead can be contacted", which is what the headline counts measure. */
+/**
+ * Fields that mean "this lead can be contacted", which is what the headline counts measure.
+ *
+ * Matched with `in`, never `= any(...::text[])`. Drizzle expands a JS array inside a `sql`
+ * template to `($1, $2, ...)`, which Postgres reads as a record: the cast fails with "cannot
+ * cast type record to text[]". Raw postgres-js serialises the same array natively, so checking
+ * the statement outside Drizzle answers a different question than the one being asked.
+ */
 const SOCIAL_FIELDS = ['instagram', 'facebook', 'linkedin', 'x', 'youtube', 'whatsapp'];
 
 @Injectable()
@@ -93,7 +100,7 @@ export class DashboardService {
                  exists (select 1 from app.field_values v
                           where v.entity_type = 'company' and v.entity_id = m.company_id
                             and v.is_current
-                            and v.field = any(${SOCIAL_FIELDS}::text[])) as social,
+                            and v.field in ${SOCIAL_FIELDS}) as social,
                  m.created_at
             from mine m
         )

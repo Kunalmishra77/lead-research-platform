@@ -31,6 +31,7 @@ from aiolimiter import AsyncLimiter
 from opentelemetry import trace
 from redis.asyncio import Redis
 
+from app.connectors.rate_limiter import Rate, SharedRateLimiter
 from app.connectors.restrictions import restriction_reason
 from app.connectors.types import RateLimit
 from app.jobs.cancellation import raise_if_cancelled
@@ -90,6 +91,19 @@ class ConnectorHttpClient:
         self._max_bytes = max_bytes
         self._max_attempts = max_attempts
         self._log = log or structlog.get_logger("leadforge.connectors").bind(source=source_key)
+        # Shared when there is a Redis to share it in, which there is everywhere but a unit test.
+        # An in-process limiter counts one process, and a connector is built per task: four
+        # discovery tasks on one worker each got their own allowance and sent four times the rate
+        # the source was promised. docs/08 is explicit that the quota belongs to the API key.
+        self._shared_limiter = (
+            SharedRateLimiter(
+                redis,
+                source=source_key,
+                rate=Rate.of(rate_limit.requests, rate_limit.per_seconds),
+            )
+            if redis is not None
+            else None
+        )
         self._limiter = AsyncLimiter(rate_limit.requests, rate_limit.per_seconds)
         self._semaphore = asyncio.Semaphore(rate_limit.concurrency)
         self._client = client or httpx.AsyncClient(
@@ -243,6 +257,10 @@ class ConnectorHttpClient:
         raise last or TransientError("request failed")
 
     async def _send_once(self, request: httpx.Request) -> httpx.Response:
+        # Both: the shared bucket paces every worker against the source's quota, and the local
+        # one still caps this process so a Redis hiccup cannot turn into a flood.
+        if self._shared_limiter is not None:
+            await self._shared_limiter.acquire()
         async with self._semaphore, self._limiter:
             response = await self._client.send(request, stream=True)
             body = bytearray()

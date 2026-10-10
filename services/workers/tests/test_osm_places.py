@@ -31,6 +31,11 @@ from app.osm.places import Place, category_of, name_of, place_from_tags
         ({"amenity": "parking"}, None),
         ({"amenity": "bench"}, None),
         ({"amenity": "waste_basket"}, None),
+        # Machines, not businesses: an ATM belongs to a bank that is indexed in its own right.
+        # 1,301 of the 76,153 rows in the first real index, none of them reachable.
+        ({"amenity": "atm"}, None),
+        ({"amenity": "vending_machine"}, None),
+        ({"amenity": "charging_station"}, None),
         ({"leisure": "park"}, None),
         ({"leisure": "playground"}, None),
         ({"tourism": "viewpoint"}, None),
@@ -42,6 +47,24 @@ from app.osm.places import Place, category_of, name_of, place_from_tags
     ],
 )
 def test_category_of(tags: dict[str, str], expected: str | None) -> None:
+    assert category_of(tags) == expected
+
+
+@pytest.mark.parametrize(
+    ("tags", "expected"),
+    [
+        # The deny list asks whether anything could ever be sold to it, not whether the thing is
+        # a business in the abstract. These all pass that test and must keep passing it: an
+        # over-eager list silently decides which customers our users are allowed to find.
+        ({"amenity": "place_of_worship"}, "amenity=place_of_worship"),
+        ({"amenity": "fuel"}, "amenity=fuel"),
+        ({"amenity": "school"}, "amenity=school"),
+        ({"amenity": "college"}, "amenity=college"),
+        ({"amenity": "marketplace"}, "amenity=marketplace"),
+        ({"tourism": "camp_site"}, "tourism=camp_site"),
+    ],
+)
+def test_things_that_can_be_sold_to_stay_in(tags: dict[str, str], expected: str) -> None:
     assert category_of(tags) == expected
 
 

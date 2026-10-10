@@ -41,11 +41,20 @@ UNFILTERED_KEYS: Final[frozenset[str]] = frozenset({"shop", "office", "craft", "
 
 #: `amenity` values that are infrastructure, not businesses. A named one is still not a lead:
 #: "Gandhi Chowk Parking" has no one to sell to.
+#:
+#: The test of membership is whether anything could ever be sold to it, which is narrower than
+#: "is it a business". A temple buys sound systems and catering, and a petrol pump is a company,
+#: so both stay in; an ATM is a machine belonging to a bank that is already indexed separately,
+#: so it does not. Keeping the list to that test is what stops it quietly deciding which
+#: customers our users are allowed to find. `amenity=atm` alone was 1,301 rows of the 76,153 in
+#: the first real index, every one of them unreachable.
 NOT_A_BUSINESS_AMENITY: Final[frozenset[str]] = frozenset(
     {
+        "atm",
         "bench",
         "bicycle_parking",
         "bicycle_repair_station",
+        "charging_station",
         "bus_station",
         "clock",
         "drinking_water",
@@ -60,6 +69,7 @@ NOT_A_BUSINESS_AMENITY: Final[frozenset[str]] = frozenset(
         "shelter",
         "telephone",
         "toilets",
+        "vending_machine",
         "waste_basket",
         "waste_disposal",
         "waste_transfer_station",

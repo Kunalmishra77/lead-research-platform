@@ -64,6 +64,20 @@ const LEADING_FIELDS: readonly { field: string; header: string }[] = [
 /** `lead_id` first: an export is only re-importable if each row says which lead it is. */
 const ID_HEADER = 'lead_id';
 
+/**
+ * Second column, in every preset: which sources this row's facts came from.
+ *
+ * The plain export used to carry no provenance at all, which made the file indistinguishable
+ * from one any scraper could produce — and provenance is the thing this product claims. A
+ * customer looking at a downloaded row asked the obvious question, "where did this come from",
+ * and nothing in the file answered it.
+ *
+ * One cell naming the sources, not a URL: the per-value evidence belongs to the `sources`
+ * preset, and a row-level answer only has to say whether a phone number came off a maps listing
+ * or off the company's own site.
+ */
+const SOURCES_HEADER = 'sources';
+
 export function escapeCell(raw: unknown): string {
   const text = stringify(raw);
   if (text === '') return '';
@@ -108,17 +122,30 @@ export function fieldsFor(leads: readonly LeadView[]): { field: string; header: 
 }
 
 export function headerRow(columns: readonly { header: string }[], preset: ColumnPreset): string[] {
-  const out = [ID_HEADER];
+  const out = [ID_HEADER, SOURCES_HEADER];
   for (const column of columns) {
     out.push(column.header);
     if (preset === 'sources') {
-      // docs/14's "With sources" preset: source_url and observed_at per field. Next to the value
+      // docs/14's "With sources" preset: where each value came from and when, next to the value
       // rather than in a block at the end, so a reader checking one cell does not have to count
       // columns to find its evidence.
-      out.push(`${column.header} source`, `${column.header} observed at`);
+      //
+      // The source's name as well as its page: "google_places" and "website" are the distinction
+      // a person acts on — a maps listing versus the company's own words — and reading that back
+      // out of a URL is work the file can do for them.
+      out.push(
+        `${column.header} source`,
+        `${column.header} source url`,
+        `${column.header} observed at`,
+      );
     }
   }
   return out;
+}
+
+/** The sources behind one lead's values, in the order they are most likely to be asked about. */
+export function sourcesOf(lead: LeadView): string {
+  return [...new Set(lead.values.map((v) => v.source))].sort().join(' | ');
 }
 
 export function leadRow(
@@ -127,12 +154,12 @@ export function leadRow(
   preset: ColumnPreset,
 ): string[] {
   const byField = new Map(lead.values.map((v) => [v.field, v]));
-  const out = [lead.id];
+  const out = [lead.id, sourcesOf(lead)];
   for (const column of columns) {
     const value = byField.get(column.field);
     out.push(stringify(value?.value));
     if (preset === 'sources') {
-      out.push(value?.sourceUrl ?? '', value?.observedAt ?? '');
+      out.push(value?.source ?? '', value?.sourceUrl ?? '', value?.observedAt ?? '');
     }
   }
   return out;

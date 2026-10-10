@@ -135,11 +135,25 @@ describe('columns', () => {
 
   it('puts lead_id first, so an export can be read back', () => {
     const columns = fieldsFor([lead([value({ field: 'name' })])]);
-    expect(headerRow(columns, 'basic')).toEqual(['lead_id', 'Name']);
+    expect(headerRow(columns, 'basic')).toEqual(['lead_id', 'sources', 'Name']);
     expect(leadRow(lead([value({ field: 'name' })]), columns, 'basic')).toEqual([
       'lead-1',
+      'google_places',
       'Clinic Delhi',
     ]);
+  });
+
+  it('names the sources behind the row, even in the plain export', () => {
+    // The plain file used to carry no provenance at all, which left a customer holding a row
+    // they could not account for. "Where did this come from" is the first question a downloaded
+    // lead gets asked, and it used to have no answer in the file.
+    const values = [
+      value({ field: 'name', source: 'google_places' }),
+      value({ field: 'email', value: 'a@b.in', source: 'website' }),
+      value({ field: 'phone', value: '+911123456789', source: 'google_places' }),
+    ];
+    const columns = fieldsFor([lead(values)]);
+    expect(leadRow(lead(values), columns, 'basic')[1]).toBe('google_places | website');
   });
 });
 
@@ -156,13 +170,20 @@ describe('the "with sources" preset', () => {
     const columns = fieldsFor([lead(values)]);
     expect(headerRow(columns, 'sources')).toEqual([
       'lead_id',
+      'sources',
       'Email',
       'Email source',
+      'Email source url',
       'Email observed at',
     ]);
+    // The source's name as well as its page: "a maps listing said so" and "the company's own
+    // site said so" are different claims, and a reader should not have to decode a URL to tell
+    // them apart.
     expect(leadRow(lead(values), columns, 'sources')).toEqual([
       'lead-1',
+      'google_places',
       'info@clinic.example',
+      'google_places',
       'https://clinic.example/contact',
       '2026-10-08T09:00:00.000Z',
     ]);
@@ -174,8 +195,8 @@ describe('the "with sources" preset', () => {
       lead([value({ field: 'phone' })], 'lead-2'),
     ]);
     const row = leadRow(lead([value({ field: 'email' })]), columns, 'sources');
-    // email, its source, its date, then phone's three -- all empty.
-    expect(row.slice(4)).toEqual(['', '', '']);
+    // lead_id, sources, then email's four, then phone's four -- all empty.
+    expect(row.slice(6)).toEqual(['', '', '', '']);
   });
 });
 
@@ -193,13 +214,13 @@ describe('the file', () => {
       ]),
     ];
     expect(lines).toHaveLength(3);
-    expect(lines[1]).toBe('a,One\r\n');
-    expect(lines[2]).toBe('b,Two\r\n');
+    expect(lines[1]).toBe('a,google_places,One\r\n');
+    expect(lines[2]).toBe('b,google_places,Two\r\n');
   });
 
   it('writes just a header when there is nothing to export', () => {
     const lines = [...csvLines([])];
-    expect(lines).toEqual([`${UTF8_BOM}lead_id\r\n`]);
+    expect(lines).toEqual([`${UTF8_BOM}lead_id,sources\r\n`]);
   });
 
   it('names the file after the job and the day it was taken', () => {

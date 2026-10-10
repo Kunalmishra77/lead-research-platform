@@ -26,9 +26,34 @@ export async function register(): Promise<void> {
   }
 }
 
-/** Server Component, route handler and server action errors; dropped when Sentry is off. */
-export const onRequestError: Instrumentation.onRequestError = async (...args) => {
-  if (!process.env.SENTRY_DSN_WEB) return;
-  const Sentry = await import('@sentry/nextjs');
-  Sentry.captureRequestError(...args);
+/**
+ * Server Component, route handler and server action errors.
+ *
+ * This used to begin `if (!process.env.SENTRY_DSN_WEB) return`, so with Sentry off — which is how
+ * the Coolify deploy runs — every server error was thrown away. React shows the browser a digest
+ * and withholds the message in production (error #441), and nothing on the server wrote it down,
+ * so a 500 on the job page was a number and nothing else. Two days went into guessing at it.
+ *
+ * So it always prints, and sends to Sentry as well when there is somewhere to send it. The digest
+ * is the first field because it is the only thing the person reporting the fault can see.
+ *
+ * What is logged: the digest, the route, and the error. Not headers and not the query string —
+ * docs/10 keeps a session cookie and a search term out of logs, and neither helps here.
+ */
+export const onRequestError: Instrumentation.onRequestError = async (error, request, context) => {
+  const detail = error instanceof Error ? (error.stack ?? error.message) : String(error);
+  const digest =
+    typeof error === 'object' && error !== null && 'digest' in error
+      ? String(error.digest)
+      : 'none';
+
+  console.error(
+    `[server error] digest=${digest} route=${context.routePath} (${context.routeType})` +
+      ` method=${request.method} path=${request.path.split('?')[0]}\n${detail}`,
+  );
+
+  if (process.env.SENTRY_DSN_WEB) {
+    const Sentry = await import('@sentry/nextjs');
+    Sentry.captureRequestError(error, request, context);
+  }
 };

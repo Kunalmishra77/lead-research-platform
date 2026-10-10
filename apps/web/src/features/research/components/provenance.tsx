@@ -1,5 +1,6 @@
 'use client';
 
+import { kindOf, type ProvenanceKind } from '../provenance-kind';
 import type { LeadValue } from '../types';
 
 /**
@@ -32,15 +33,6 @@ export function ValueCell({ value }: { value: LeadValue | undefined }) {
     </span>
   );
 }
-
-export function kindOf(value: LeadValue): ProvenanceKind {
-  if (value.method === 'ai') return 'ai';
-  if (value.derivation === 'derived_pattern') return 'derived';
-  if (value.method === 'user') return 'user';
-  return 'found';
-}
-
-export type ProvenanceKind = 'found' | 'derived' | 'ai' | 'user';
 
 const LABELS: Record<ProvenanceKind, string> = {
   found: 'Found in a source',

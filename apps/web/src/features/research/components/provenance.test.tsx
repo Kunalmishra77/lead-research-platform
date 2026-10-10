@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
+import { kindOf } from '../provenance-kind';
 import type { LeadValue } from '../types';
-import { kindOf, ValueCell } from './provenance';
+import { ValueCell } from './provenance';
 
 function value(over: Partial<LeadValue> = {}): LeadValue {
   return {

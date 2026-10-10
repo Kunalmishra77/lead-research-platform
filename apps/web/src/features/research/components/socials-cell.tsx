@@ -1,5 +1,5 @@
+import { kindOf } from '../provenance-kind';
 import type { LeadValue, LeadView } from '../types';
-import { kindOf } from './provenance';
 
 /**
  * A lead's social profiles, as links (task 3.15, docs/08 row 50).

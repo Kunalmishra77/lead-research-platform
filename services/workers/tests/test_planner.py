@@ -335,7 +335,7 @@ async def test_every_search_asks_for_the_whole_target_rather_than_a_share_of_it(
 
 
 async def test_an_area_wide_sweep_is_expressible() -> None:
-    """"Every gym in the city" has no number the customer can know in advance.
+    """ "Every gym in the city" has no number the customer can know in advance.
 
     The per-task cap used to be 200, so the largest answerable question was eight searches of two
     hundred. What bounds the spend is the task's `cost_cap_micros` and the free-tier guard, not a

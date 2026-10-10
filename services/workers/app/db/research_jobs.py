@@ -165,10 +165,7 @@ class SqlResearchJobsRepo:
         async with tenant_transaction(self._engine, org_id) as conn:
             row = (
                 await conn.execute(
-                    text(
-                        "select count(*) from app.research_job_leads"
-                        " where research_job_id = :id"
-                    ),
+                    text("select count(*) from app.research_job_leads where research_job_id = :id"),
                     {"id": job_id},
                 )
             ).first()

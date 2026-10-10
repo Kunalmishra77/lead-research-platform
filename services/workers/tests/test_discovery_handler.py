@@ -738,9 +738,7 @@ async def test_a_search_that_failed_transiently_runs_again_on_its_retry(
 
     # Attempt 2: the same task, one attempt later, with a connector that now answers.
     connectors = FakeConnectors([candidate("p1", "Alpha Dental")])
-    graph, _, _, _ = await run(
-        redis, make_envelope, connectors=connectors, tasks=tasks, attempt=2
-    )
+    graph, _, _, _ = await run(redis, make_envelope, connectors=connectors, tasks=tasks, attempt=2)
 
     assert connectors.searches == 1, "the retry skipped the search instead of running it"
     assert [c.external_id for c in graph.stored[0]] == ["p1"]

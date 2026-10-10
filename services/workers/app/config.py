@@ -67,6 +67,11 @@ class Settings(BaseSettings):
     #: so the margin is what makes the guarantee arithmetic rather than hope.
     GOOGLE_PLACES_FREE_HEADROOM: int = 50
     SERPER_API_KEY: str | None = None
+    #: The OpenStreetMap place index built by `python -m app.osm build` (ADR-0016). A file rather
+    #: than a URL because this source has no API: discovery reads local disk, which is what makes
+    #: it free of both quota and per-row cost. Unset means the index is not available and the
+    #: connector is not registered, exactly as a missing API key means for the others.
+    OSM_INDEX_PATH: Path | None = None
 
     #: Comma-separated pools this process consumes, e.g. "system,crawl_http" (streams jobs:<pool>).
     WORKER_POOLS: str = "system"

@@ -33,6 +33,7 @@ class BaseConnector(ABC):
 ## Source matrix
 | Source | Data | Method | Auth | Class | Phase |
 | --- | --- | --- | --- | --- | --- |
+| OpenStreetMap (bulk extract) | name, category, address, geo, phone, website, sometimes email | Geofabrik `.osm.pbf` downloaded to local disk, reduced to a SQLite index (ADR-0016); **not** the Overpass API, whose fair-use policy forbids this volume | none | green (ODbL 1.0, attribution required) | 2 |
 | Google Places API (New) | name, category, address, geo, phone, website, hours, rating, review count, business status | Text Search / Nearby / Place Details with field masks | API key + billing | green | 2 |
 | SERP API (serper.dev, ADR-0006) | URLs for websites, social profiles, directory pages, news | Vendor API | API key | green | 2 |
 | Company websites | description, services, contacts, socials, team, careers, locations, tech | Own crawler | none | amber (robots-respecting) | 3 |
@@ -57,10 +58,10 @@ class BaseConnector(ABC):
 
 ## Capability map (seed; updated from yield stats)
 ```yaml
-website:        [google_places, serp, registry_matcher]
-phone:          [google_places, website]
-email:          [website, provider_waterfall]
-address:        [google_places, website, companies_house]
+website:        [osm, google_places, serp, registry_matcher]
+phone:          [osm, google_places, website]
+email:          [osm, website, provider_waterfall]
+address:        [osm, google_places, website, companies_house]
 instagram:      [website, serp]   # likewise facebook, linkedin, x, youtube, whatsapp (FieldKey per platform)
 technologies:   [tech_detector]
 employee_band:  [companies_house, provider_waterfall, firmographic_estimator]

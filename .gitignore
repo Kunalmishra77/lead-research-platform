@@ -20,3 +20,11 @@ playwright-report/
 test-results/
 next-env.d.ts
 *.tsbuildinfo
+
+# OSM extracts and the place index built from them (ADR-0016). Gigabytes of downloadable data
+# that is rebuilt by `python -m app.osm build`, never edited, and never a source of truth here.
+data/osm/
+*.osm.pbf
+*.osm.pbf.part
+*.sqlite
+*.sqlite.building

@@ -37,6 +37,7 @@ from app.connectors.types import (
 )
 from app.jobs.errors import BudgetExhaustedError, InvalidInputError, ParseFailedError
 from app.metering.context import CallContext
+from app.metering.free_tier import FreeTierLimit, NullFreeTierGuard
 
 BASE_URL = "https://places.googleapis.com/v1"
 SEARCH_URL = f"{BASE_URL}/places:searchText"
@@ -151,12 +152,17 @@ class GooglePlacesConnector(BaseConnector):
         api_key: str,
         *,
         cache: PlaceSearchCache | None = None,
+        free_tier: FreeTierLimit | None = None,
         max_tile_km: float = 15.0,
     ) -> None:
         if not api_key:
             raise InvalidInputError("google_places needs an API key")
         self._client = client
         self._api_key = api_key
+        #: What stops a wide sweep from walking out of Google's free allowance and into $35 per
+        #: thousand. Defaults to no cap, which is right for a paid account and wrong for ours --
+        #: `build_connectors` passes the real one.
+        self._free_tier: FreeTierLimit = free_tier or NullFreeTierGuard()
         self._cache = cache
         self._max_tile_km = max_tile_km
 
@@ -279,6 +285,24 @@ class GooglePlacesConnector(BaseConnector):
             if not budget.can_afford(SEARCH_COST_MICROS):
                 # Out of money, not out of results. Saying so keeps whatever the earlier pages
                 # already bought and tells the caller the area is only partly covered.
+                more_to_come = True
+                break
+            try:
+                # Claimed before the call, not counted after it: tasks of one job run at the same
+                # time, and counting afterwards lets them all read a total under the limit in the
+                # same moment and cross it together. Not released on failure either -- a request
+                # that may have reached Google may have been billed, and the whole point of this
+                # guard is that "it cost nothing" is true rather than probable.
+                await self._free_tier.reserve(1)
+            except BudgetExhaustedError:
+                # Out of free calls, not out of results -- the same shape as the money cap above,
+                # so it is handled the same way: keep what the earlier pages found and tell the
+                # caller the area is only partly covered.
+                ctx.log.warning(
+                    "google_places stopped: this month's free allowance is used up",
+                    found=len(candidates),
+                    error_class="budget_exhausted",
+                )
                 more_to_come = True
                 break
             budget.spend(SEARCH_COST_MICROS)

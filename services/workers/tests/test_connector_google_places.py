@@ -58,6 +58,8 @@ DETAILS_URL = "https://places.googleapis.com/v1/places/ChIJexampleAAAAAAAAAAAAAA
 
 #: Pune, roughly. Small enough to be one tile at the default size.
 SMALL_BBOX = (18.50, 73.80, 18.56, 73.88)
+#: Delhi, which is wider than one 15 km tile and so needs several calls to cover.
+WIDE_BBOX = (28.40, 76.83, 28.89, 77.35)
 
 
 def make_connector(
@@ -677,3 +679,75 @@ async def test_a_cache_entry_from_an_older_shape_is_never_read_back() -> None:
 
     assert await cache.get("google_places", "dentists", tile) is None
     await redis.aclose()
+
+
+class _SpentAllowance:
+    """An allowance with nothing left, which is what the end of a free month looks like."""
+
+    def __init__(self, calls_left: int = 0) -> None:
+        self.left = calls_left
+        self.reserved = 0
+
+    async def used(self, *, now: Any = None) -> int:
+        return self.reserved
+
+    async def remaining(self, *, now: Any = None) -> int:
+        return self.left
+
+    async def reserve(self, calls: int = 1, *, now: Any = None) -> None:
+        if self.left < calls:
+            raise BudgetExhaustedError("free allowance used up")
+        self.left -= calls
+        self.reserved += calls
+
+    async def release(self, calls: int = 1, *, now: Any = None) -> None:
+        self.left += calls
+        self.reserved -= calls
+
+
+@respx.mock
+async def test_no_call_is_made_once_the_free_allowance_is_gone() -> None:
+    """The guarantee the whole guard exists for: the first billed call never happens.
+
+    Google charges $35 per thousand for the call after the last free one, and answers it exactly
+    like a free one. Nothing downstream could tell the difference, so this is the only place the
+    difference can be made.
+    """
+    sent = search_route("search_success")
+    connector, _ = make_connector(free_tier=_SpentAllowance(calls_left=0))
+    try:
+        # `budget_exhausted`, not an empty list: a search that never ran is not a search that
+        # found nothing, and the job must not record "no gyms in Delhi" because we stopped
+        # paying. It is also the class the consumer already knows not to retry.
+        with pytest.raises(BudgetExhaustedError):
+            await connector.search(
+                DiscoveryQuery(text="gyms", bbox=SMALL_BBOX, country="IN", max_results=100),
+                make_ctx(),
+            )
+    finally:
+        await connector._client.aclose()
+
+    assert sent() == [], "a request left the machine after the allowance was spent"
+
+
+@respx.mock
+async def test_what_the_allowance_did_cover_is_kept() -> None:
+    """Running out part-way is a partial answer, not a failed job.
+
+    The same shape as the per-task money cap: keep what the earlier pages bought, and let the
+    task report coverage rather than throwing away leads already paid for.
+    """
+    sent = search_route("search_success")
+    allowance = _SpentAllowance(calls_left=1)
+    connector, _ = make_connector(free_tier=allowance)
+    try:
+        candidates = await connector.search(
+            DiscoveryQuery(text="gyms", bbox=WIDE_BBOX, country="IN", max_results=1000),
+            make_ctx(),
+        )
+    finally:
+        await connector._client.aclose()
+
+    assert len(sent()) == 1
+    assert allowance.left == 0
+    assert len(candidates) == 3

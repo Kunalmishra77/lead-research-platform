@@ -13,6 +13,7 @@ from app.connectors.google_places import GooglePlacesConnector, PlaceSearchCache
 from app.connectors.http_client import ConnectorHttpClient
 from app.connectors.registry import ConnectorRegistry
 from app.connectors.serp import SerpConnector
+from app.metering.free_tier import FreeTierGuard, FreeTierLimit, NullFreeTierGuard
 from app.metering.usage import UsageRecorder
 
 #: Honest, with a contact URL, as docs/08 requires of every request we make.
@@ -46,6 +47,7 @@ def build_connectors(
                 client,
                 settings.GOOGLE_PLACES_API_KEY,
                 cache=PlaceSearchCache(redis),
+                free_tier=_places_allowance(settings, redis, logger),
             )
         )
     elif not settings.GOOGLE_PLACES_API_KEY:
@@ -78,3 +80,31 @@ def build_connectors(
 async def close_clients(clients: list[ConnectorHttpClient]) -> None:
     for client in clients:
         await client.aclose()
+
+
+def _places_allowance(
+    settings: Settings, redis: Redis, log: structlog.stdlib.BoundLogger
+) -> FreeTierLimit:
+    """The cap that keeps Places inside its free monthly allowance, or none for a paid account.
+
+    This exists because the guard was written, tested, and then wired to nothing: the allowance
+    was documented in a comment while the code would have sailed past it at $35 per thousand
+    without a different response to notice. An operator running this with no budget needs the
+    limit to be a mechanism, not a note.
+    """
+    limit = settings.GOOGLE_PLACES_FREE_CALLS_PER_MONTH
+    if limit is None:
+        log.info("google_places has no free-tier cap; calls past any allowance will be billed")
+        return NullFreeTierGuard()
+    guard = FreeTierGuard(
+        redis,
+        sku=GooglePlacesConnector.meter,
+        monthly_limit=limit,
+        headroom=settings.GOOGLE_PLACES_FREE_HEADROOM,
+    )
+    log.info(
+        "google_places capped to its free allowance",
+        monthly_limit=limit,
+        headroom=settings.GOOGLE_PLACES_FREE_HEADROOM,
+    )
+    return guard

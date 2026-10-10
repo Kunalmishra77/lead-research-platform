@@ -58,6 +58,14 @@ class Settings(BaseSettings):
     #: Off until the 30-day sweeper exists: Places content must be deleted on a clock, and a key
     #: on its own must not start storing it (ADR-0011).
     GOOGLE_PLACES_ENABLED: bool = False
+    #: Google's free Places allowance, in billable calls per calendar month. The call after the
+    #: last free one is charged at $35 per thousand, with no warning and no different response,
+    #: so this is what keeps "this costs nothing" a fact. `None` means a paid account with no cap.
+    GOOGLE_PLACES_FREE_CALLS_PER_MONTH: int | None = 1000
+    #: Held back from the number above. Our count and Google's will not agree exactly — a retried
+    #: request may or may not have reached them, and their month turns over in their timezone —
+    #: so the margin is what makes the guarantee arithmetic rather than hope.
+    GOOGLE_PLACES_FREE_HEADROOM: int = 50
     SERPER_API_KEY: str | None = None
 
     #: Comma-separated pools this process consumes, e.g. "system,crawl_http" (streams jobs:<pool>).

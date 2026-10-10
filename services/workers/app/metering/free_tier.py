@@ -24,6 +24,7 @@ timezone, not ours. The headroom is what makes "no spend" a fact rather than an 
 """
 
 from datetime import UTC, datetime
+from typing import Protocol
 
 import structlog
 from redis.asyncio import Redis
@@ -38,6 +39,15 @@ FREE_TIER_KEY = "freetier:{sku}:{month}"
 #: Two months, so the previous month's number can still be read when a question is asked on the
 #: first. Longer would keep counters nobody will look at.
 KEY_TTL_S = 62 * 24 * 3600
+
+
+class FreeTierLimit(Protocol):
+    """What a caller needs from an allowance: ask, claim, give back."""
+
+    async def used(self, *, now: datetime | None = None) -> int: ...
+    async def remaining(self, *, now: datetime | None = None) -> int: ...
+    async def reserve(self, calls: int = 1, *, now: datetime | None = None) -> None: ...
+    async def release(self, calls: int = 1, *, now: datetime | None = None) -> None: ...
 
 
 class FreeTierGuard:

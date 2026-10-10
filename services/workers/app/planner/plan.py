@@ -37,9 +37,17 @@ TASK_TYPE_BY_SOURCE: Final[dict[str, str]] = {
     "google_places": "discovery.places_text_search",
 }
 
-#: The most results one task may ask a source for. Above this a single call stops being one call:
-#: the Places connector pages and tiles internally, and each page is billed.
-MAX_RESULTS_PER_TASK: Final[int] = 200
+#: The most results one task may ask a source for.
+#:
+#: It was 200, which made "every gym in Delhi" impossible to express: eight searches of two
+#: hundred is a ceiling of sixteen hundred before deduplication, and the whole point of an
+#: area-wide sweep is that nobody knows the number in advance. The reason for the old cap stands
+#: -- the Places connector pages and tiles internally and each page is billed -- but a cap on
+#: *results* was never the thing protecting the money. Two things are: the task's own
+#: `cost_cap_micros`, which comes from credits the customer reserved, and `FreeTierGuard`, which
+#: refuses the first call that would leave Google's free allowance. Both bound spend directly,
+#: and neither cares what number was asked for.
+MAX_RESULTS_PER_TASK: Final[int] = 2_000
 
 #: The floor under a task's budget when nothing better is known. The real floor is one call of
 #: the source it will use, which `_min_task_credits` works out: a task funded below that makes no

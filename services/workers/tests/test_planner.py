@@ -334,6 +334,25 @@ async def test_every_search_asks_for_the_whole_target_rather_than_a_share_of_it(
     assert asked == [100, 100, 100, 100]
 
 
+async def test_an_area_wide_sweep_is_expressible() -> None:
+    """"Every gym in the city" has no number the customer can know in advance.
+
+    The per-task cap used to be 200, so the largest answerable question was eight searches of two
+    hundred. What bounds the spend is the task's `cost_cap_micros` and the free-tier guard, not a
+    cap on how many results were asked for, so the cap no longer pretends to do that job.
+    """
+    plan = await build_plan(
+        make_spec(cities=["Pune"], max_results=2000),
+        capabilities=capabilities_for(["name"]),
+        template=TEMPLATES["prospecting"],
+        reference=FakeReference(),
+        expansion=Expansion(queries=("gyms", "fitness centre")),
+        credits=4000,
+    )
+
+    assert [t.input["query"]["max_results"] for t in plan.tasks] == [2000, 2000]
+
+
 async def test_no_search_asks_for_more_than_the_user_wanted() -> None:
     plan = await build_plan(
         make_spec(cities=["Pune"], max_results=12),

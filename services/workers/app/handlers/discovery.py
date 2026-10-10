@@ -89,7 +89,10 @@ class DiscoveryQueryPayload(BaseModel):
     country: str | None = Field(default=None, max_length=2)
     category: str | None = None
     language: str = "en"
-    max_results: int = Field(default=20, ge=1, le=200)
+    #: Matches the contract's own ceiling (`research-spec.schema.json`, Limits.max_results). It
+    #: was 200 here while the schema allowed 10,000, so a spec the API accepted could be refused
+    #: by the worker that had to run it.
+    max_results: int = Field(default=20, ge=1, le=10_000)
 
 
 DiscoveryPayload.model_rebuild()

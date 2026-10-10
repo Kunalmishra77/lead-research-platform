@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 
 import { ApiError, apiFetch } from '@/lib/api/server';
 
+import { allowedFilters, type HistoryFilters } from './history-query';
 import type { LeadsPage, ResearchJobView, ResearchPage } from './types';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -35,8 +36,13 @@ async function researchFetch<T>(path: string): Promise<T> {
   }
 }
 
-export function listJobs(cursor: unknown): Promise<ResearchPage> {
-  return researchFetch<ResearchPage>(`/app/research?${query(cursor)}`);
+/** The history, filtered the way the page's own URL says (`history-query.ts` decides what counts). */
+export function listJobs(filters: HistoryFilters = {}): Promise<ResearchPage> {
+  const allowed = allowedFilters(filters);
+  const params = new URLSearchParams(query(allowed.cursor));
+  if (allowed.status) params.set('status', allowed.status);
+  if (allowed.q) params.set('q', allowed.q);
+  return researchFetch<ResearchPage>(`/app/research?${params.toString()}`);
 }
 
 export function getJob(id: string): Promise<ResearchJobView> {

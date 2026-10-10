@@ -32,9 +32,31 @@ export class ParseResearchDto extends createZodDto(ParseResearchSchema) {}
 export const JobIdParamSchema = z.object({ id: z.uuid() });
 export class JobIdParamDto extends createZodDto(JobIdParamSchema) {}
 
+export const JOB_STATUSES = [
+  'queued',
+  'running',
+  'completed',
+  'failed',
+  'cancelled',
+  'paused',
+] as const;
+
+/** One of the statuses a job can be in, for a caller that filters by it. */
+export type JobStatus = (typeof JOB_STATUSES)[number];
+
 export const ResearchListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   cursor: z.uuid().optional(),
+  /** One status, because the history is read to answer "what failed" or "what is running". */
+  status: z.enum(JOB_STATUSES).optional(),
+  /**
+   * Matched against what the customer typed, case-insensitively.
+   *
+   * Bounded because it reaches a `like` with no index behind it: a history holds hundreds of
+   * rows, not millions, and an unbounded pattern on a growing table is a slow query waiting to
+   * be written.
+   */
+  q: z.string().trim().min(1).max(200).optional(),
 });
 export class ResearchListQueryDto extends createZodDto(ResearchListQuerySchema) {}
 
@@ -84,6 +106,17 @@ export interface ResearchJobListItem {
   creditsUsed: number;
   createdAt: string;
   finishedAt: string | null;
+  /** What the run delivered, and how much of it was new to the workspace (ADR-0015). */
+  leads: number;
+  newLeads: number;
+  /**
+   * Why it stopped, for a run that did not finish.
+   *
+   * On the list rather than one click away: a person scanning their history for a failure wants
+   * to know whether it ran out of credits or was refused by a source, and opening five jobs to
+   * find out is the thing a history page exists to prevent.
+   */
+  errorClass: string | null;
 }
 
 export interface ResearchPage {

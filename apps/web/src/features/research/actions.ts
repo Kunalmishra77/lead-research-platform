@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import { ApiError, apiFetch } from '@/lib/api/server';
 
+import { nonce } from './idempotency';
 import type { ParseResult } from './types';
 
 const PromptSchema = z.object({
@@ -103,6 +104,41 @@ export async function cancelResearch(form: FormData): Promise<void> {
     // than as a second error the user cannot act on.
   }
   redirect(`/research/${id}`);
+}
+
+/**
+ * Runs an earlier search again, as it was asked the first time.
+ *
+ * Reads the stored spec rather than re-parsing the sentence: the customer may have removed a
+ * chip or changed the depth before running it, and "run that again" means the thing that ran,
+ * not the thing that was typed.
+ *
+ * A fresh idempotency key every time, on purpose. The key exists to swallow a double-click, and
+ * this is the opposite: deliberately asking for the same leads again because the world has
+ * moved on since. The API remembers a key for 24 hours, so reusing the original would return
+ * the old job and look like nothing happened -- which is exactly the bug that cost a day.
+ */
+export async function rerunResearch(form: FormData): Promise<void> {
+  const id = form.get('jobId');
+  if (typeof id !== 'string') return;
+
+  let jobId: string;
+  try {
+    const previous = await apiFetch<{ rawQuery: string; spec: ResearchSpec }>(
+      `/app/research/${id}`,
+    );
+    const created = await apiFetch<{ jobId: string }>('/app/research', {
+      method: 'POST',
+      body: JSON.stringify({ rawQuery: previous.rawQuery, spec: previous.spec }),
+      headers: { 'idempotency-key': `web:rerun:${id}:${nonce()}` },
+    });
+    jobId = created.jobId;
+  } catch {
+    // Back to the history, where the run that did not start is still visible. The alternative
+    // is an error page that loses the list the person was working through.
+    redirect('/research/history');
+  }
+  redirect(`/research/${jobId}`);
 }
 
 /** The API's own words where it has them; ours only as a fallback. */

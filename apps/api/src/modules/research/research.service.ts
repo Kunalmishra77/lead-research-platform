@@ -6,6 +6,7 @@ import {
   desc,
   eq,
   fieldValues,
+  ilike,
   inArray,
   industries,
   leads,
@@ -32,6 +33,7 @@ import { JobPublisher } from '../../infra/streams/job-publisher';
 import type { AuthUser, TenantInfo } from '../auth/auth.types';
 import { CreditsService } from '../credits/credits.service';
 import type {
+  JobStatus,
   LeadsPage,
   LeadValue,
   LeadView,
@@ -58,6 +60,16 @@ const CANCEL_FLAG_TTL_SECONDS = 24 * 60 * 60;
 
 const notFound = () =>
   new AppError({ code: 'research.not_found', httpStatus: 404, title: 'Research job not found' });
+
+/**
+ * A search term, with the wildcards a customer did not mean to type taken out.
+ *
+ * `%` and `_` are wildcards to `like`, so "50% off" would otherwise match far more than it
+ * says, and a backslash has to go first or it would escape the escapes.
+ */
+function escapeLike(term: string): string {
+  return term.replace(/[\\%_]/g, (match) => `\\${match}`);
+}
 
 //: An export walks the same cursor-paged query the grid uses. 200 a page because that is what
 //: the query is indexed for; 100 pages because a research spec cannot ask for 20,000 leads, so
@@ -409,7 +421,7 @@ export class ResearchService {
   async list(
     user: AuthUser,
     tenant: TenantInfo,
-    query: { limit: number; cursor?: string },
+    query: { limit: number; cursor?: string; status?: JobStatus; q?: string },
   ): Promise<ResearchPage> {
     const rows = await withTenant(this.db, { orgId: tenant.orgId, userId: user.userId }, (tx) =>
       tx
@@ -421,7 +433,19 @@ export class ResearchService {
           creditsUsed: researchJobs.creditsUsed,
           createdAt: researchJobs.createdAt,
           finishedAt: researchJobs.finishedAt,
+          errorClass: researchJobs.errorClass,
           rawQuery: searches.rawQuery,
+          // Counted in the same statement rather than per row: a history page of fifty jobs
+          // would otherwise be fifty extra queries, which is how a list page becomes slow
+          // enough that nobody opens it.
+          leads: sql<number>`(
+            select count(*) from app.research_job_leads rjl
+             where rjl.research_job_id = ${researchJobs.id}
+          )`,
+          newLeads: sql<number>`(
+            select count(*) from app.research_job_leads rjl
+             where rjl.research_job_id = ${researchJobs.id} and rjl.is_new
+          )`,
         })
         .from(researchJobs)
         .leftJoin(searches, eq(searches.id, researchJobs.searchId))
@@ -430,6 +454,10 @@ export class ResearchService {
             eq(researchJobs.workspaceId, tenant.workspaceId),
             // UUID v7 ids sort by creation time, so the id alone is a stable cursor.
             query.cursor ? lt(researchJobs.id, query.cursor) : undefined,
+            query.status ? eq(researchJobs.status, query.status) : undefined,
+            // `ilike` on what the customer typed. Their own words are the only handle they have
+            // on a run -- nobody remembers a job by its UUID.
+            query.q ? ilike(searches.rawQuery, `%${escapeLike(query.q)}%`) : undefined,
           ),
         )
         .orderBy(desc(researchJobs.id))
@@ -444,6 +472,9 @@ export class ResearchService {
       creditsUsed: r.creditsUsed,
       createdAt: r.createdAt.toISOString(),
       finishedAt: r.finishedAt?.toISOString() ?? null,
+      errorClass: r.errorClass,
+      leads: r.leads,
+      newLeads: r.newLeads,
     }));
     const last = items.at(-1);
     return { items, nextCursor: rows.length > query.limit && last ? last.id : null };

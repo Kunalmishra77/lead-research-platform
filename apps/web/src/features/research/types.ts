@@ -97,7 +97,21 @@ export interface ResearchJobListItem {
   creditsUsed: number;
   createdAt: string;
   finishedAt: string | null;
+  /** What the run delivered, and how much was new to the workspace (ADR-0015). */
+  leads: number;
+  newLeads: number;
+  /** Why it stopped, for a run that did not finish. */
+  errorClass: string | null;
 }
+
+/** The statuses the history can be filtered by, in the order the filter bar shows them. */
+export const FILTERABLE_STATUSES = [
+  'running',
+  'queued',
+  'completed',
+  'failed',
+  'cancelled',
+] as const;
 
 export interface ResearchPage {
   items: ResearchJobListItem[];

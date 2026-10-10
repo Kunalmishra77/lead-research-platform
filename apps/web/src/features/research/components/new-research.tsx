@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
 import { parseResearch, type ParseState, runResearch, type RunState } from '../actions';
+import { idempotencyKeyFor, nonce } from '../idempotency';
 import type { Depth, ParseResult } from '../types';
 import { type ChipGroup, SpecChips } from './spec-chips';
 
@@ -216,11 +217,28 @@ function RunBar({
   running: boolean;
   runState: RunState;
 }) {
-  // One key per reviewed request: a double submit must not start -- or reserve credits for -- two
-  // jobs, and the same-origin proxy cannot carry an Idempotency-Key, so the Server Action sets it.
+  /**
+   * One key per reviewed request, per visit to this form.
+   *
+   * A double submit must not start -- or reserve credits for -- two jobs, and the same-origin
+   * proxy cannot carry an Idempotency-Key, so the Server Action sets it. The first version of
+   * this hashed only the content, which made the key mean "this sentence, ever" instead of "this
+   * click": the API replays a matching key for 24 hours, so asking for the same leads twice in a
+   * day silently returned the first run's job. A whole day was spent on a search that looked like
+   * it did nothing. Re-running a search is the normal case here -- businesses open, numbers
+   * change -- so the key carries a nonce minted when this form mounted.
+   *
+   * The content hash stays, and does the job it was added for: two clicks of the same button on
+   * the same reviewed spec share a key and the second is ignored. Editing a chip or the depth
+   * changes `spec`, which is a different request and earns a new key.
+   */
+  // `useState` rather than a ref: the value is read while rendering, and a ref read during
+  // render is exactly what `react-hooks/refs` forbids. The initialiser runs once per mount,
+  // which is the definition of "this visit".
+  const [visit] = useState(nonce);
   const idempotencyKey = useMemo(
-    () => `web:${hash(JSON.stringify({ rawQuery, spec }))}`,
-    [rawQuery, spec],
+    () => idempotencyKeyFor(visit, rawQuery, spec),
+    [visit, rawQuery, spec],
   );
 
   return (
@@ -329,11 +347,3 @@ function removeChip(
 }
 
 /** Small, stable, and only ever used to key an idempotent submit. */
-function hash(input: string): string {
-  let h = 2166136261;
-  for (let i = 0; i < input.length; i += 1) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return (h >>> 0).toString(36);
-}

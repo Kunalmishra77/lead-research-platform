@@ -13,6 +13,35 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-10 — The same search could only ever be run once a day
+
+- Done: found why a whole day of "I ran it and nothing happened". The API log settled it in one
+  line: `POST /app/research -> 202`, twice, thirteen hours apart, both carrying
+  `idempotency-key: web:sxf16b`. The request worked every time. The key was identical every time,
+  so the API replayed the first run's response and the browser redirected to that job — the one
+  from 11:41 the previous morning. No new row, no error, nothing on screen to explain it.
+- Cause: the web form built the key as `web:${hash({rawQuery, spec})}`. The comment said "one key
+  per reviewed request", but a content hash means "this sentence, ever", and the API remembers a
+  key for 24 hours. Asking for the same leads twice in a day was silently a no-op. For a
+  lead-generation product that is the *normal* case — businesses open, numbers change.
+- Decision: the key is now a visit nonce plus the content hash (`idempotency.ts`, with tests).
+  Two clicks of one reviewed request still share a key, which is the whole reason the key exists;
+  a later visit, or an edited chip or depth, earns a new one. The nonce is `Math.random`, not
+  `crypto.randomUUID`: the deployment is plain HTTP and `randomUUID` is undefined outside a
+  secure context.
+- Also: the finished-job empty state I added yesterday read "This search found no businesses
+  matching your description" directly under a counter saying "Businesses seen 12". Three cases
+  now, and the third names the number.
+- Tests/checks status: web 80 (13 files, +7), typecheck clean. The key builder moved to its own
+  module because the component pulls server-only imports and cannot be loaded from a test.
+- Open issues / blockers: the stale key expires on its own, so no Redis surgery is needed — the
+  new format cannot collide with it. Still unproven end to end: no run has yet exercised
+  ADR-0015's link rows on the live site. Still unknown: why two Places calls failed `transient`
+  yesterday.
+- Next step: deploy, run the search, and finally read the three numbers — delivered vs new, leads
+  with an email, pages that came back `access_restricted`.
+
+
 ### 2026-10-09 — Every transient failure was permanent
 
 - Done: found and fixed the third fault from the live Delhi run, from the code rather than the

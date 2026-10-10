@@ -13,6 +13,46 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-10 (later) — Phase 2 — volume is a storage problem, and the source was the wrong one
+
+- **The question was "lakhs of leads a month, free, not dependent on one source". Measuring first
+  moved the problem.** 657 leads, 13,870 field values, 11.8 KB per lead, 34 MB of the Supabase
+  free plan's 500 MB used: room for **40,645 more leads in total**. Storage binds two orders of
+  magnitude before Google's quota does, and it binds on the total rather than the month. Also
+  measured: 87% of existing leads are contactable (Places gives phone for 74%, website for 47%;
+  crawling those sites gives phone for 79% and email for 50% of what it reads).
+- **Overpass is not the free alternative.** Its fair-use policy names this exact pattern and caps
+  use near 10,000 requests a day; the 504s and 429s an exploratory query collected were the
+  policy working. It says to take an extract instead, so the free path and the compliant path are
+  the same path (ADR-0016).
+- **Built the OSM bulk pipeline** (`app/osm/`): Geofabrik download with MD5 verification, a
+  streaming pbf ingest, and a SQLite place index with an R*Tree. Real run: 213 MB extract, 82
+  seconds, **76,153 businesses in a 15.8 MB index** — 207 bytes each against 11.8 KB per lead.
+  Its Delhi count of 21,879 sits 3% under an independent Overpass count of 22,497, and under in
+  the right direction (car parks and parks refused, relations skipped).
+- Two bugs the tests earned, both invisible without the real decoder and real SQLite: SQLite's
+  R*Tree rounds stored boxes **outward** for 32-bit floats, so the containment query dropped
+  points exactly on a box edge — one missing stripe per tile in a sweep; and a closed way repeats
+  its first node, so averaging put every building's pin ~110 m off in the same direction.
+- **Then the owner pushed back — correctly — that leads you cannot contact are not leads.** OSM
+  is 9.7% phone and 2.7% email. Researching properly turned up what should have been found first:
+  **Overture Maps Places** (CDLA-Permissive-2.0) and **Foursquare OS Places** (Apache 2.0), both
+  free bulk datasets built from commercial data. Measured on the same Delhi box:
+  **286,277 named places, 84% phone, 58% website, 42.5% email, 81% social, 86.5% contactable** —
+  13x the volume of OSM at the contact quality of our paid Google pipeline.
+- Decisions: ADR-0016 (volume comes from a file, not an API quota) holds and is validated —
+  Overture is also a file. Which file changes, and that needs its own ADR once the Overture rows
+  are checked for accuracy, not just coverage.
+- Tests/checks: workers **801** (741 + 60 new), ruff + mypy clean. Nothing shipped to the VPS yet.
+- Open issues: Overture **coverage** is measured, **accuracy is not** — 84% phone beats Google's
+  74%, which is suspicious enough to sample before believing. Meta-sourced rows may carry stale
+  Facebook-page numbers. Also unverified: duplicate rate, `operating_status`, and whether 286,277
+  includes non-businesses. ADR-0016 contains one claim now known to be wrong: using OSM for
+  discovery and Places for enrichment saves no Places calls, because Place Details is billed too.
+- Next step: finish the Overture row sampling, then write the ADR choosing the primary dataset and
+  rebuild Task 2 (the connector) against it rather than against OSM. OSM stays as the second
+  source Phase 4 needs for cross-verification.
+
 ### 2026-10-10 — The first area-wide sweep, and a dashboard that is not placeholders
 
 - **528 gyms in Delhi, for nothing.** One sweep: 3h14m, 345 Google Places calls against a free

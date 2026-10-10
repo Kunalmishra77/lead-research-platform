@@ -65,6 +65,10 @@ export class OrgsService {
           workspaceId: workspaces.id,
           workspaceName: workspaces.name,
           role: memberships.role,
+          // The sidebar shows this on every page, and `/app/me` is already fetched on every
+          // page. One more column on a query that runs anyway beats a second round trip, and
+          // beats the pill reading `—` because nothing was wired to it.
+          creditsBalance: organizations.creditsBalance,
         })
         .from(memberships)
         .innerJoin(organizations, eq(organizations.id, memberships.orgId))

@@ -9,7 +9,14 @@ import { signOut } from '@/features/auth/actions';
 import { SidebarNav } from './sidebar';
 import { WorkspaceSwitcher } from './workspace-switcher';
 
-/** Credits come from billing (Phase 2/7); the pill is a placeholder until then. */
+/**
+ * The org's credit balance, or an em-dash when there is no membership to read it from.
+ *
+ * It read `—` on every page for months with the comment "a placeholder until billing". The
+ * number existed the whole time -- `organizations.credits_balance` is what every reservation
+ * already debits -- so the placeholder was not waiting on billing, it was waiting on someone
+ * passing it in.
+ */
 export function CreditsPill({ credits }: { credits: number | null }) {
   return (
     <span
@@ -41,7 +48,11 @@ export function AppShell({ user, memberships, activeWorkspaceId, children }: App
           <SidebarNav showDeveloper={process.env.NODE_ENV !== 'production'} />
         </div>
         <div className="flex flex-col gap-3">
-          <CreditsPill credits={null} />
+          <CreditsPill
+            credits={
+              memberships.find((m) => m.workspaceId === activeWorkspaceId)?.creditsBalance ?? null
+            }
+          />
           <WorkspaceSwitcher memberships={memberships} activeWorkspaceId={activeWorkspaceId} />
         </div>
       </aside>

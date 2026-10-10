@@ -27,5 +27,7 @@ export interface MeResponse {
     workspaceId: string;
     workspaceName: string;
     role: string;
+    /** The org's balance, so the sidebar can show it without a call of its own. */
+    creditsBalance: number;
   }[];
 }

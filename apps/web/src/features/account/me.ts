@@ -11,6 +11,8 @@ export interface Membership {
   workspaceId: string;
   workspaceName: string;
   role: string;
+  /** The org's credit balance, carried here so the sidebar needs no call of its own. */
+  creditsBalance: number;
 }
 
 export interface Me {

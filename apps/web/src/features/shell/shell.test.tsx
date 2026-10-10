@@ -43,6 +43,7 @@ describe('WorkspaceSwitcher', () => {
             workspaceId: 'w1',
             workspaceName: 'Default',
             role: 'owner',
+            creditsBalance: 0,
           },
           {
             orgId: 'o2',
@@ -51,6 +52,7 @@ describe('WorkspaceSwitcher', () => {
             workspaceId: 'w2',
             workspaceName: 'Sales',
             role: 'member',
+            creditsBalance: 0,
           },
         ]}
       />,

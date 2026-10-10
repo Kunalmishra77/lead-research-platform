@@ -17,6 +17,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CreditsModule } from './modules/credits/credits.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { DevModule } from './modules/dev/dev.module';
 import { HealthModule } from './modules/health/health.module';
 import { MembersModule } from './modules/members/members.module';
@@ -65,6 +66,7 @@ import { ResearchModule } from './modules/research/research.module';
     MembersModule,
     AdminModule,
     CreditsModule,
+    DashboardModule,
     ResearchModule,
     DevModule,
   ],

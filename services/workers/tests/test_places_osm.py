@@ -13,8 +13,8 @@ import osmium
 import pytest
 from osmium.osm import mutable
 
-from app.osm.index import OsmIndex
-from app.osm.ingest import build_index
+from app.places.index import PlaceIndex
+from app.places.osm import build_index
 
 #: A square building outline. Its centre is lat 28.505, lon 77.205.
 _SQUARE = [(77.20, 28.50), (77.21, 28.50), (77.21, 28.51), (77.20, 28.51)]
@@ -86,7 +86,7 @@ def test_ingest_finds_the_businesses_and_leaves_the_rest(extract: Path, tmp_path
     report = build_index(extract, out)
 
     assert report.places == 2
-    assert {p.name for p in OsmIndex(out).search(bbox=(28.0, 77.0, 29.0, 78.0))} == {
+    assert {p.name for p in PlaceIndex(out).search(bbox=(28.0, 77.0, 29.0, 78.0))} == {
         "Iron Gym",
         "Fit Factory",
     }
@@ -107,7 +107,7 @@ def test_a_closed_ways_centre_is_not_pulled_by_its_repeated_node(
     """
     out = tmp_path / "index.sqlite"
     build_index(extract, out)
-    [factory] = OsmIndex(out).search(bbox=(28.0, 77.0, 29.0, 78.0), name="Fit Factory")
+    [factory] = PlaceIndex(out).search(bbox=(28.0, 77.0, 29.0, 78.0), name="Fit Factory")
     assert factory.lat == pytest.approx(28.505, abs=1e-6)
     assert factory.lon == pytest.approx(77.205, abs=1e-6)
 
@@ -115,14 +115,14 @@ def test_a_closed_ways_centre_is_not_pulled_by_its_repeated_node(
 def test_tag_values_survive_the_whole_pass(extract: Path, tmp_path: Path) -> None:
     out = tmp_path / "index.sqlite"
     build_index(extract, out)
-    [gym] = OsmIndex(out).search(bbox=(28.0, 77.0, 29.0, 78.0), name="Iron Gym")
-    assert gym.osm_type == "n"
-    assert gym.osm_id == 1
+    [gym] = PlaceIndex(out).search(bbox=(28.0, 77.0, 29.0, 78.0), name="Iron Gym")
+    assert gym.source == "osm"
+    assert gym.external_id == "n1"
     assert gym.category == "leisure=fitness_centre"
     assert gym.phone == "+91 98100 00000"
     assert gym.website == "https://irongym.in"
     assert gym.city == "Gurgaon"
-    assert gym.osm_url == "https://www.openstreetmap.org/node/1"
+    assert gym.source_url == "https://www.openstreetmap.org/node/1"
 
 
 def test_the_report_counts_what_it_read(extract: Path, tmp_path: Path) -> None:
@@ -142,7 +142,7 @@ def test_a_rebuild_replaces_the_index_rather_than_adding_to_it(
     out = tmp_path / "index.sqlite"
     build_index(extract, out)
     build_index(extract, out)
-    assert OsmIndex(out).stats().places == 2
+    assert PlaceIndex(out).stats().places == 2
 
 
 def test_a_build_leaves_no_staging_file_behind(extract: Path, tmp_path: Path) -> None:
@@ -161,4 +161,4 @@ def test_the_index_records_where_its_data_is_from(extract: Path, tmp_path: Path)
     """Without this a stale snapshot looks exactly like today's data."""
     out = tmp_path / "index.sqlite"
     build_index(extract, out)
-    assert OsmIndex(out).stats().extract_date is not None
+    assert PlaceIndex(out).stats().extract_date is not None

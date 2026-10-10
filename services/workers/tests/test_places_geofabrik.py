@@ -12,7 +12,7 @@ import httpx
 import pytest
 import respx
 
-from app.osm.download import REGIONS, fetch_extract, region_url
+from app.places.geofabrik import REGIONS, fetch_extract, region_url
 
 _URL = "https://download.geofabrik.de/asia/india/northern-zone-latest.osm.pbf"
 _BODY = b"not really a pbf, but the bytes are what is checksummed"

@@ -21,8 +21,8 @@ from typing import Final
 import osmium
 import structlog
 
-from app.osm.index import IndexWriter
-from app.osm.places import PRIMARY_KEYS, Place, place_from_tags
+from app.places.index import IndexWriter
+from app.places.model import PRIMARY_KEYS, Place, osm_place
 
 log = structlog.get_logger(__name__)
 
@@ -118,7 +118,7 @@ def _places(pbf: Path, location_storage: str, report: IngestReport) -> Iterator[
         # methods read the same way but leave every attribute access below unchecked.
         if isinstance(element, osmium.osm.Node):
             report.nodes += 1
-            place = place_from_tags(
+            place = osm_place(
                 osm_type="n",
                 osm_id=element.id,
                 tags=dict(element.tags),
@@ -132,7 +132,7 @@ def _places(pbf: Path, location_storage: str, report: IngestReport) -> Iterator[
             if centre is None:
                 report.ways_without_location += 1
                 continue
-            place = place_from_tags(
+            place = osm_place(
                 osm_type="w",
                 osm_id=element.id,
                 tags=dict(element.tags),

@@ -22,35 +22,43 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Final
 
-from app.osm.places import Place
+from app.places.model import Place
 
 #: Bumped when the schema changes in a way that makes an existing file unreadable, which forces
 #: a rebuild rather than a confusing query error against the old shape.
-SCHEMA_VERSION: Final[int] = 1
+SCHEMA_VERSION: Final[int] = 2
 
 SCHEMA: Final[str] = """
 create table if not exists places (
-  id          integer primary key,
-  osm_type    text    not null,
-  osm_id      integer not null,
-  name        text    not null,
-  category    text    not null,
-  lat         real    not null,
-  lon         real    not null,
-  phone       text,
-  website     text,
-  email       text,
-  street      text,
-  housenumber text,
-  city        text,
-  postcode    text,
-  updated_at  text
+  id               integer primary key,
+  source           text    not null,
+  external_id      text    not null,
+  name             text    not null,
+  category         text    not null,
+  lat              real    not null,
+  lon              real    not null,
+  source_url       text    not null default '',
+  phone            text,
+  website          text,
+  email            text,
+  socials          text,
+  street           text,
+  housenumber      text,
+  city             text,
+  postcode         text,
+  region           text,
+  country          text,
+  confidence       real,
+  operating_status text,
+  updated_at       text
 );
 
--- An element's identity is its kind plus its id; the integer primary key exists only to join
--- the R*Tree, which indexes by rowid and nothing else.
-create unique index if not exists places_element on places (osm_type, osm_id);
+-- A record's identity is its dataset plus that dataset's id; the integer primary key exists
+-- only to join the R*Tree, which indexes by rowid and nothing else.
+create unique index if not exists places_record on places (source, external_id);
 create index if not exists places_category on places (category);
+-- Discovery filters on both at once, and a sweep of one city asks for one source.
+create index if not exists places_source_category on places (source, category);
 
 create virtual table if not exists places_geo using rtree (
   id, min_lat, max_lat, min_lon, max_lon
@@ -61,9 +69,17 @@ create table if not exists meta (key text primary key, value text not null);
 
 #: Columns in the order `_to_place` reads them.
 _COLUMNS: Final[str] = (
-    "osm_type, osm_id, name, category, lat, lon, "
-    "phone, website, email, street, housenumber, city, postcode, updated_at"
+    "source, external_id, name, category, lat, lon, source_url, "
+    "phone, website, email, socials, street, housenumber, city, postcode, "
+    "region, country, confidence, operating_status, updated_at"
 )
+
+#: How many columns `_COLUMNS` names, for the insert's placeholder run.
+_COLUMN_COUNT: Final[int] = len(_COLUMNS.split(","))
+
+#: Several social URLs share one column. A newline, because it cannot occur inside a URL --
+#: a comma or a semicolon can, and would split one link into two unusable halves.
+SOCIALS_SEPARATOR: Final[str] = "\n"
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,7 +94,7 @@ class IndexStats:
     schema_version: int
 
 
-class OsmIndex:
+class PlaceIndex:
     """Read-only access to a built index. Safe to share; one connection per calling thread.
 
     Queries are synchronous because SQLite is. A caller inside the event loop wraps them in
@@ -113,7 +129,9 @@ class OsmIndex:
         *,
         bbox: tuple[float, float, float, float],
         categories: Sequence[str] = (),
+        source: str | None = None,
         name: str | None = None,
+        contactable: bool = False,
         limit: int = 100,
         offset: int = 0,
     ) -> list[Place]:
@@ -129,6 +147,13 @@ class OsmIndex:
         if categories:
             where.append(f"p.category in ({', '.join('?' * len(categories))})")
             params.extend(categories)
+        if source:
+            where.append("p.source = ?")
+            params.append(source)
+        if contactable:
+            # The product's unit is a business someone can be reached at, so this is a first
+            # class filter rather than something every caller re-derives and gets subtly wrong.
+            where.append("(p.phone is not null or p.email is not null)")
         if name:
             where.append("p.name like ? escape '\\'")
             params.append(f"%{_escape_like(name)}%")
@@ -146,10 +171,20 @@ class OsmIndex:
         return [_to_place(row) for row in rows]
 
     def count(
-        self, *, bbox: tuple[float, float, float, float], categories: Sequence[str] = ()
+        self,
+        *,
+        bbox: tuple[float, float, float, float],
+        categories: Sequence[str] = (),
+        source: str | None = None,
+        contactable: bool = False,
     ) -> int:
         """How many businesses an area holds, for planning a sweep before running one."""
         where, params = _bbox_where(bbox)
+        if source:
+            where.append("p.source = ?")
+            params.append(source)
+        if contactable:
+            where.append("(p.phone is not null or p.email is not null)")
         if categories:
             where.append(f"p.category in ({', '.join('?' * len(categories))})")
             params.extend(categories)
@@ -212,22 +247,28 @@ class IndexWriter:
             return 0
         self._conn.executemany(
             f"insert or ignore into places ({_COLUMNS}) "  # noqa: S608
-            f"values ({', '.join('?' * 14)})",
+            f"values ({', '.join('?' * _COLUMN_COUNT)})",
             [
                 (
-                    p.osm_type,
-                    p.osm_id,
+                    p.source,
+                    p.external_id,
                     p.name,
                     p.category,
                     p.lat,
                     p.lon,
+                    p.source_url,
                     p.phone,
                     p.website,
                     p.email,
+                    SOCIALS_SEPARATOR.join(p.socials) if p.socials else None,
                     p.street,
                     p.housenumber,
                     p.city,
                     p.postcode,
+                    p.region,
+                    p.country,
+                    p.confidence,
+                    p.operating_status,
                     p.updated_at.isoformat() if p.updated_at else None,
                 )
                 for p in batch
@@ -301,20 +342,27 @@ def _escape_like(term: str) -> str:
 
 
 def _to_place(row: sqlite3.Row) -> Place:
+    socials = row["socials"]
     return Place(
-        osm_type=row["osm_type"],
-        osm_id=int(row["osm_id"]),
+        source=row["source"],
+        external_id=row["external_id"],
         name=row["name"],
         category=row["category"],
         lat=float(row["lat"]),
         lon=float(row["lon"]),
+        source_url=row["source_url"] or "",
         phone=row["phone"],
         website=row["website"],
         email=row["email"],
+        socials=tuple(socials.split(SOCIALS_SEPARATOR)) if socials else (),
         street=row["street"],
         housenumber=row["housenumber"],
         city=row["city"],
         postcode=row["postcode"],
+        region=row["region"],
+        country=row["country"],
+        confidence=row["confidence"],
+        operating_status=row["operating_status"],
         updated_at=_parse_time(row["updated_at"]),
     )
 

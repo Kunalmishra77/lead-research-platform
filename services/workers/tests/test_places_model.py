@@ -10,7 +10,16 @@ from datetime import UTC, datetime
 
 import pytest
 
-from app.osm.places import Place, category_of, name_of, place_from_tags
+from app.places.model import (
+    OSM,
+    Place,
+    category_of,
+    looks_like_email,
+    looks_like_phone,
+    looks_like_url,
+    name_of,
+    osm_place,
+)
 
 
 @pytest.mark.parametrize(
@@ -101,12 +110,12 @@ def test_name_of(tags: dict[str, str], expected: str | None) -> None:
 
 
 def test_a_business_with_no_name_is_not_a_lead() -> None:
-    assert place_from_tags(osm_type="n", osm_id=1, tags={"shop": "bakery"}, lat=0, lon=0) is None
+    assert osm_place(osm_type="n", osm_id=1, tags={"shop": "bakery"}, lat=0, lon=0) is None
 
 
 def test_contact_values_come_from_either_tagging_scheme() -> None:
     """Both `phone` and `contact:phone` are in wide use; reading one loses real contacts."""
-    place = place_from_tags(
+    place = osm_place(
         osm_type="n",
         osm_id=7,
         tags={
@@ -126,7 +135,7 @@ def test_contact_values_come_from_either_tagging_scheme() -> None:
 
 
 def test_a_full_place_keeps_every_part_of_the_address() -> None:
-    place = place_from_tags(
+    place = osm_place(
         osm_type="w",
         osm_id=42,
         tags={
@@ -144,12 +153,13 @@ def test_a_full_place_keeps_every_part_of_the_address() -> None:
         updated_at=datetime(2026, 3, 4, tzinfo=UTC),
     )
     assert place == Place(
-        osm_type="w",
-        osm_id=42,
+        source=OSM,
+        external_id="w42",
         name="Fit Factory",
         category="leisure=fitness_centre",
         lat=28.45,
         lon=77.10,
+        source_url="https://www.openstreetmap.org/way/42",
         phone="+911141000000",
         website="https://fitfactory.in",
         email=None,
@@ -171,5 +181,73 @@ def test_a_full_place_keeps_every_part_of_the_address() -> None:
 )
 def test_osm_url_points_at_the_element_a_person_can_check(osm_type: str, expected: str) -> None:
     """Provenance has to be openable. A client disputing one value gets this URL."""
-    place = Place(osm_type=osm_type, osm_id=99, name="X", category="shop=bakery", lat=0.0, lon=0.0)
-    assert place.osm_url == expected
+    place = osm_place(
+        osm_type=osm_type, osm_id=99, tags={"name": "X", "shop": "bakery"}, lat=0.0, lon=0.0
+    )
+    assert place is not None
+    assert place.source_url == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("097111 74449", True),
+        ("+91 98100 00000", True),
+        ("+9118605005555", True),
+        ("01141000000", True),
+        ("(0124) 456-7890", True),
+        ("+91 124 4567890 x12", True),
+        # The real corruption: a region code where the phone should be.
+        ("IN-HR", False),
+        ("IN", False),
+        # A postcode is six digits -- short of anything dialable.
+        ("122004", False),
+        ("", False),
+        (None, False),
+        # Longer than E.164 permits, so it is not a number that was merely formatted oddly.
+        ("1234567890123456789", False),
+        ("call us on our website", False),
+    ],
+)
+def test_looks_like_phone(value: str | None, expected: bool) -> None:
+    assert looks_like_phone(value) is expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("84.gurgaon@anytimefitness.in", True),
+        ("hi@example.co.in", True),
+        ("IN", False),
+        ("122004", False),
+        ("no-at-sign.example.in", False),
+        ("two@at@signs.in", False),
+        ("missing@domain", False),
+        ("@example.in", False),
+        ("", False),
+        (None, False),
+    ],
+)
+def test_looks_like_email(value: str | None, expected: bool) -> None:
+    assert looks_like_email(value) is expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("https://www.anytimefitness.com/en-in/locations/gurugram", True),
+        ("http://example.in", True),
+        ("example.in", True),
+        ("www.example.co.in", True),
+        # A postcode that slid one column left is all digits and dots are absent.
+        ("122004", False),
+        ("IN-HR", False),
+        # Digits with dots is an IP-looking string, not a company's site.
+        ("122.004", False),
+        ("two words.in", False),
+        ("", False),
+        (None, False),
+    ],
+)
+def test_looks_like_url(value: str | None, expected: bool) -> None:
+    assert looks_like_url(value) is expected

@@ -10,19 +10,27 @@ from pathlib import Path
 
 import pytest
 
-from app.osm.index import SCHEMA_VERSION, IndexWriter, OsmIndex
-from app.osm.places import Place
+from app.places.index import SCHEMA_VERSION, IndexWriter, PlaceIndex
+from app.places.model import OSM, Place
 
 #: Roughly Delhi and its neighbours, so the fixtures read like the real thing.
 DELHI = (28.40, 76.83, 28.89, 77.35)
 
 
 def _place(osm_id: int, name: str, category: str, lat: float, lon: float, **kw: object) -> Place:
-    return Place(osm_type="n", osm_id=osm_id, name=name, category=category, lat=lat, lon=lon, **kw)
+    return Place(
+        source=OSM,
+        external_id=f"n{osm_id}",
+        name=name,
+        category=category,
+        lat=lat,
+        lon=lon,
+        **kw,
+    )
 
 
 @pytest.fixture
-def index(tmp_path: Path) -> OsmIndex:
+def index(tmp_path: Path) -> PlaceIndex:
     """An index holding five businesses: four inside Delhi's box, one well outside it."""
     path = tmp_path / "test.sqlite"
     with IndexWriter(path) as writer:
@@ -37,16 +45,16 @@ def index(tmp_path: Path) -> OsmIndex:
             ]
         )
         writer.finish(extract_date=datetime(2026, 10, 9, tzinfo=UTC))
-    return OsmIndex(path)
+    return PlaceIndex(path)
 
 
-def test_a_bbox_returns_what_is_inside_it_and_nothing_else(index: OsmIndex) -> None:
+def test_a_bbox_returns_what_is_inside_it_and_nothing_else(index: PlaceIndex) -> None:
     names = {p.name for p in index.search(bbox=DELHI)}
     assert names == {"Iron Gym", "Fit Factory", "Sharma Bakery", "100% Pure Juice"}
     assert "Marine Gym" not in names
 
 
-def test_a_bbox_excludes_a_place_just_outside_its_edge(index: OsmIndex) -> None:
+def test_a_bbox_excludes_a_place_just_outside_its_edge(index: PlaceIndex) -> None:
     """The boundary is where an off-by-one in the R*Tree comparison would show up."""
     # Iron Gym is at 28.45, 77.10. A box ending just short of it must not return it.
     assert index.search(bbox=(28.40, 76.83, 28.44, 77.35)) == []
@@ -54,7 +62,7 @@ def test_a_bbox_excludes_a_place_just_outside_its_edge(index: OsmIndex) -> None:
     assert [p.name for p in index.search(bbox=(28.40, 76.83, 28.45, 77.35))] == ["Iron Gym"]
 
 
-def test_categories_narrow_the_search(index: OsmIndex) -> None:
+def test_categories_narrow_the_search(index: PlaceIndex) -> None:
     gyms = index.search(bbox=DELHI, categories=["leisure=fitness_centre"])
     assert {p.name for p in gyms} == {"Iron Gym", "Fit Factory"}
 
@@ -64,37 +72,37 @@ def test_categories_narrow_the_search(index: OsmIndex) -> None:
     assert index.search(bbox=DELHI, categories=["shop=nothing_like_this"]) == []
 
 
-def test_a_name_containing_a_wildcard_matches_literally(index: OsmIndex) -> None:
+def test_a_name_containing_a_wildcard_matches_literally(index: PlaceIndex) -> None:
     """`100% Pure Juice` has a LIKE wildcard in it. Unescaped, `%` matches anything."""
     assert [p.name for p in index.search(bbox=DELHI, name="100%")] == ["100% Pure Juice"]
     # The proof it is escaped: a name that would match only if `%` were a wildcard finds nothing.
     assert index.search(bbox=DELHI, name="100%Juice") == []
 
 
-def test_name_search_is_a_substring_match(index: OsmIndex) -> None:
+def test_name_search_is_a_substring_match(index: PlaceIndex) -> None:
     assert [p.name for p in index.search(bbox=DELHI, name="Gym")] == ["Iron Gym"]
     assert [p.name for p in index.search(bbox=DELHI, name="Bakery")] == ["Sharma Bakery"]
 
 
-def test_count_agrees_with_search(index: OsmIndex) -> None:
+def test_count_agrees_with_search(index: PlaceIndex) -> None:
     """Counting is what lets a sweep be planned before it is run, so it must not drift."""
     assert index.count(bbox=DELHI) == 4
     assert index.count(bbox=DELHI, categories=["leisure=fitness_centre"]) == 2
     assert index.count(bbox=(18.0, 72.0, 19.5, 73.5)) == 1
 
 
-def test_paging_is_stable_and_covers_everything_once(index: OsmIndex) -> None:
+def test_paging_is_stable_and_covers_everything_once(index: PlaceIndex) -> None:
     """Ordered by id, so page two never repeats or skips a business from page one."""
     first = index.search(bbox=DELHI, limit=2, offset=0)
     second = index.search(bbox=DELHI, limit=2, offset=2)
     assert len(first) == 2
     assert len(second) == 2
-    ids = [p.osm_id for p in (*first, *second)]
+    ids = [p.external_id for p in (*first, *second)]
     assert ids == sorted(ids)
     assert len(set(ids)) == 4
 
 
-def test_a_place_survives_the_round_trip(index: OsmIndex) -> None:
+def test_a_place_survives_the_round_trip(index: PlaceIndex) -> None:
     path = index.path
     with IndexWriter(path.with_name("one.sqlite")) as writer:
         writer.add(
@@ -117,7 +125,7 @@ def test_a_place_survives_the_round_trip(index: OsmIndex) -> None:
             ]
         )
         writer.finish()
-    [back] = OsmIndex(path.with_name("one.sqlite")).search(bbox=DELHI)
+    [back] = PlaceIndex(path.with_name("one.sqlite")).search(bbox=DELHI)
     assert back.phone == "+911141000000"
     assert back.website == "https://example.in"
     assert back.email == "hi@example.in"
@@ -128,7 +136,7 @@ def test_a_place_survives_the_round_trip(index: OsmIndex) -> None:
     assert back.updated_at == datetime(2026, 3, 4, tzinfo=UTC)
 
 
-def test_stats_report_what_the_index_holds_and_when_the_data_is_from(index: OsmIndex) -> None:
+def test_stats_report_what_the_index_holds_and_when_the_data_is_from(index: PlaceIndex) -> None:
     stats = index.stats()
     assert stats.places == 5
     assert stats.schema_version == SCHEMA_VERSION
@@ -143,8 +151,8 @@ def test_the_same_element_is_not_stored_twice(tmp_path: Path) -> None:
         writer.add([_place(1, "Iron Gym", "leisure=fitness_centre", 28.45, 77.10)])
         writer.add([_place(1, "Iron Gym", "leisure=fitness_centre", 28.45, 77.10)])
         writer.finish()
-    assert OsmIndex(path).stats().places == 1
+    assert PlaceIndex(path).stats().places == 1
 
 
 def test_a_missing_index_reports_itself_missing(tmp_path: Path) -> None:
-    assert OsmIndex(tmp_path / "nope.sqlite").exists() is False
+    assert PlaceIndex(tmp_path / "nope.sqlite").exists() is False

@@ -13,6 +13,50 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-10 — The first area-wide sweep, and a dashboard that is not placeholders
+
+- **528 gyms in Delhi, for nothing.** One sweep: 3h14m, 345 Google Places calls against a free
+  allowance of 950, 528 credits. This is the first run that answered a question nobody knew the
+  answer to in advance, which is what the product is for.
+- Four defects stood between that and working, and all four were invisible rather than loud:
+  **(1)** the job page 500'd with React error #441 — `SocialsCell` is a Server Component calling
+  `kindOf()`, which lived in a `'use client'` module. It only fired for a lead with a social
+  profile, so it reached production behind a grid that had never had a row in it. **(2)** the
+  same search could not be run twice in a day: the form built its Idempotency-Key from a hash of
+  the content, and the API replays a key for 24 hours. **(3)** `onRequestError` began
+  `if (!SENTRY_DSN_WEB) return`, so with Sentry off every server error was discarded — which is
+  why (1) and (2) each cost hours of guessing. **(4)** `AsyncLimiter` bounds one process and a
+  connector is built per task, so four discovery tasks offered Google forty requests a second
+  instead of ten; the sweep collected 429s and sat in backoff for 24 minutes.
+- Decisions (link ADRs): the shared rate limiter is a Redis token bucket keyed by source, taken
+  with one Lua script and refilled from Redis's own `TIME` — a monotonic clock is per-process and
+  two workers' versions of "now" have no relationship. `FreeTierGuard` is finally wired into the
+  Places connector: it was written, tested and connected to nothing, so the only thing between a
+  wide sweep and $35 per thousand was a docstring. Caps that made an area sweep inexpressible
+  (`MAX_RESULTS_PER_TASK` 200, payload `le=200` against a contract allowing 10,000) now match the
+  contract; what bounds spend is the task's `cost_cap_micros` and the free-tier guard, neither of
+  which cares what number was asked for.
+- Built: the dashboard reads real numbers for the first time (leads, reachability, sources, runs,
+  credits) and deliberately shows no lead score, verification rate or hot/warm/cold split, because
+  Phases 4 and 6 do not exist and a dashboard that invents those is a lying one. The research
+  history can be searched, filtered by status, shows what each run delivered and why a failed one
+  failed, and can re-run a previous spec. The credits pill shows the balance it always had. CSV
+  exports name their sources. The depth picker stopped advertising people, hiring and verification,
+  none of which depth touches.
+- **The method that worked, after two days of the one that did not:** run the real code path, not
+  a copy of it. The dashboard's SQL was checked against the live database with raw postgres-js and
+  passed; through Drizzle it failed with "cannot cast type record to text[]", because Drizzle
+  expands a JS array to `($1, $2, ...)`. The same mistake as (1): `@testing-library/react` renders
+  everything as client, so the grid rendered the exact failing rows green.
+- Tests/checks status: workers 741, api 122, web 92; ruff, mypy and both tsc passes clean.
+- Open issues / blockers: **email coverage is 10%** and the reason is now measured rather than
+  guessed — of 231 gym sites crawled, 113 (49%) refused us, and Quick depth reads exactly one
+  page, so the 39-of-71 clinics whose address sits on a contact page were never going to be
+  found. Standard reads six. Still unknown: why two Places calls failed `transient` on 9 Oct.
+- Next step: a Standard-depth run to measure what the contact page is worth, then Phase 4 — the
+  lead quality work the customer has asked for twice.
+
+
 ### 2026-10-10 — The same search could only ever be run once a day
 
 - Done: found why a whole day of "I ran it and nothing happened". The API log settled it in one

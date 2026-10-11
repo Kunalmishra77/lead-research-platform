@@ -11,7 +11,9 @@ with a research task and should not share its retry, budget or cancellation mach
 """
 
 import argparse
+import json
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 
 import structlog
@@ -21,7 +23,7 @@ from app.places.geofabrik import REGIONS, fetch_extract
 from app.places.index import PlaceIndex
 from app.places.osm import DEFAULT_LOCATION_STORAGE
 from app.places.osm import build_index as build_osm_index
-from app.places.overture import DEFAULT_RELEASE, INDIA_BBOX
+from app.places.overture import DEFAULT_RELEASE, INDIA_BBOX, category_counts
 from app.places.overture import build_index as build_overture_index
 
 log = structlog.get_logger("leadforge.places")
@@ -70,6 +72,17 @@ def main(argv: list[str] | None = None) -> int:
     )
     osm.add_argument("--skip-checksum", action="store_true")
 
+    cats = sub.add_parser(
+        "categories", help="regenerate the Overture category vocabulary seed from the dataset"
+    )
+    cats.add_argument("--release", default=DEFAULT_RELEASE)
+    cats.add_argument(
+        "--out",
+        type=Path,
+        default=Path("../../db/seeds/data/overture-categories-in.json"),
+        help="where to write the snapshot, relative to services/workers",
+    )
+
     sub.add_parser("stats", help="what the built indexes hold")
 
     args = parser.parse_args(argv)
@@ -79,6 +92,8 @@ def main(argv: list[str] | None = None) -> int:
         return _build_overture(args)
     if args.command == "build-osm":
         return _build_osm(args)
+    if args.command == "categories":
+        return _categories(args)
     return _stats(args)
 
 
@@ -120,6 +135,39 @@ def _build_osm(args: argparse.Namespace) -> int:
     )
     _report(report.places, report.top_categories)
     return 1 if report.places == 0 else 0
+
+
+def _categories(args: argparse.Namespace) -> int:
+    """Writes the category vocabulary a release actually uses in India.
+
+    Run when the pinned release changes. The mapping in `overture-category-map.json` is tested
+    against this file, so a category that disappears between releases fails the build rather
+    than quietly matching nothing.
+    """
+    counts = category_counts(release=args.release)
+    document = {
+        "$comment": [
+            "Overture Places category vocabulary as it appears in India, with how many places "
+            "in the country carry each one at any level of their hierarchy.",
+            "",
+            f"Source: Overture Maps release {args.release}, theme=places, bbox "
+            "6.5,68.0 to 36.0,97.5. Overture publishes no category list as a file, so this is "
+            "read from the data itself.",
+            "",
+            "Counts are category mentions, not places: a place appears once per level of its "
+            "hierarchy. They exist to keep the mapping honest about what is worth mapping, and "
+            "must never be used to rank or bill anything.",
+            "",
+            "Regenerate with `uv run python -m app.places categories`.",
+        ],
+        "release": args.release,
+        "retrieved": datetime.now(UTC).date().isoformat(),
+        "categories": [{"category": c, "places_in_india": n} for c, n in counts],
+    }
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+    log.info("overture categories written", path=str(args.out), categories=len(counts))
+    return 0 if counts else 1
 
 
 def _report(places: int, categories: list[tuple[str, int]]) -> None:

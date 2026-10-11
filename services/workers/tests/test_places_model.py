@@ -157,6 +157,7 @@ def test_a_full_place_keeps_every_part_of_the_address() -> None:
         external_id="w42",
         name="Fit Factory",
         category="leisure=fitness_centre",
+        categories=("leisure=fitness_centre",),
         lat=28.45,
         lon=77.10,
         source_url="https://www.openstreetmap.org/way/42",

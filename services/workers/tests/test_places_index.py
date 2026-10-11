@@ -23,6 +23,7 @@ def _place(osm_id: int, name: str, category: str, lat: float, lon: float, **kw: 
         external_id=f"n{osm_id}",
         name=name,
         category=category,
+        categories=(category,),
         lat=lat,
         lon=lon,
         **kw,

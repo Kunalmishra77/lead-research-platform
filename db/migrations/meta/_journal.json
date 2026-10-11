@@ -183,6 +183,13 @@
       "when": 1791547088004,
       "tag": "0025_research_job_leads_security",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791547089004,
+      "tag": "0026_industries_overture_categories",
+      "breakpoints": true
     }
   ]
 }

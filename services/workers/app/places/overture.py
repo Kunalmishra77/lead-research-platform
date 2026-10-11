@@ -90,6 +90,39 @@ def places_url(release: str = DEFAULT_RELEASE) -> str:
     return f"{S3_BUCKET}/{release}/theme=places/type=place/*"
 
 
+def category_counts(
+    *,
+    bbox: tuple[float, float, float, float] = INDIA_BBOX,
+    release: str = DEFAULT_RELEASE,
+    connection: Any | None = None,
+) -> list[tuple[str, int]]:
+    """Every category in use inside `bbox`, with how many places carry it, commonest first.
+
+    Overture publishes no category list as a file, so the vocabulary is read from the data. The
+    result is checked in as a seed (`db/seeds/data/overture-categories-in.json`) and the taxonomy
+    mapping is validated against it, so a mapping naming a category Overture does not publish
+    fails the build instead of silently matching nothing.
+
+    Counted over `taxonomy.hierarchy`, so a place is counted once per level it belongs to. These
+    are category mentions, not places: they exist to show what is worth mapping and must never
+    rank or bill anything.
+    """
+    con, source = _connect(release, connection)
+    min_lat, min_lng, max_lat, max_lng = bbox
+    rows = con.execute(
+        f"""
+        select cat, count(*) as n from (
+          select unnest(taxonomy.hierarchy) as cat
+            from {source}
+           where bbox.ymin between ? and ? and bbox.xmin between ? and ?
+             and names.primary is not null
+        ) group by 1 order by n desc
+        """,  # noqa: S608 -- `source` is a constant or a fixed test table name
+        [min_lat, max_lat, min_lng, max_lng],
+    ).fetchall()
+    return [(str(c), int(n)) for c, n in rows]
+
+
 def build_index(
     out: Path,
     *,
@@ -153,7 +186,7 @@ def _places(
     # spatial predicate on `geometry` cannot be pushed down and reads everything.
     result = con.execute(
         f"""
-        select id, names.primary, basic_category, taxonomy.primary,
+        select id, names.primary, basic_category, taxonomy.primary, taxonomy.hierarchy,
                (bbox.ymin + bbox.ymax) / 2, (bbox.xmin + bbox.xmax) / 2,
                phones, emails, websites, socials,
                addresses, confidence, operating_status
@@ -193,6 +226,7 @@ def _to_place(row: tuple[Any, ...], url: str, report: OvertureReport) -> Place |
         name,
         basic_category,
         taxonomy,
+        hierarchy,
         lat,
         lon,
         phones,
@@ -204,8 +238,18 @@ def _to_place(row: tuple[Any, ...], url: str, report: OvertureReport) -> Place |
         operating_status,
     ) = row
 
-    category = basic_category or taxonomy
-    if not is_business(category, operating_status):
+    # The leaf is the most specific thing known about this place, and the hierarchy is every
+    # level above it. Both are kept: the leaf is what a person reads, the hierarchy is what a
+    # search matches. Storing only one of them was measured at 12-16% recall against the
+    # taxonomy, against 96.2% for the whole path -- a request for restaurants matches 4,276
+    # places by leaf and 11,631 by hierarchy.
+    category = taxonomy or basic_category
+    categories = tuple(dict.fromkeys(c for c in (hierarchy or []) if c)) or (
+        (category,) if category else ()
+    )
+    # The deny list names mid-level categories (`atm`, `bus_stop`), so it is tested against every
+    # level rather than the leaf alone: an `atm` whose leaf is `bank_atm` is still an ATM.
+    if not category or any(not is_business(c, operating_status) for c in (category, *categories)):
         report.not_a_business += 1
         return None
 
@@ -222,6 +266,7 @@ def _to_place(row: tuple[Any, ...], url: str, report: OvertureReport) -> Place |
         external_id=str(place_id),
         name=str(name),
         category=str(category),
+        categories=categories,
         lat=float(lat),
         lon=float(lon),
         # Overture publishes no per-record web page, so provenance points at the release object

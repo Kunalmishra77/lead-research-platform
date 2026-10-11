@@ -24,7 +24,14 @@ import { geoKind } from './enums.ts';
  * writable by app_worker only (RLS policies in the custom migration).
  */
 
-/** Industry taxonomy (seeded). `google_types` maps to Places API (New) place types. */
+/**
+ * Industry taxonomy (seeded).
+ *
+ * Each category carries the source-specific categories it means, because every discovery source
+ * names things differently and the translation belongs with the taxonomy rather than in whichever
+ * connector happens to need it. `google_types` are Places API (New) types; `overture_categories`
+ * are Overture Places categories (ADR-0017), matched against every level of a place's hierarchy.
+ */
 export const industries = app.table(
   'industries',
   {
@@ -38,6 +45,12 @@ export const industries = app.table(
       .notNull()
       .default(sql`'{}'::text[]`),
     googleTypes: text('google_types')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    // Empty is a real answer, not a gap: Overture has no category for an EV dealer, so the
+    // connector searches names in the area instead of filtering to something broader and wrong.
+    overtureCategories: text('overture_categories')
       .array()
       .notNull()
       .default(sql`'{}'::text[]`),

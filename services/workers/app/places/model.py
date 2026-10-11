@@ -28,9 +28,23 @@ class Place:
     #: Stable within `source`: an Overture GERS id, or `n574533684` for an OSM node.
     external_id: str
     name: str
-    #: The source's own category string, kept raw (`leisure=fitness_centre`, `pizza_restaurant`)
-    #: rather than mapped to our taxonomy, so the mapping can change without re-reading gigabytes.
+    #: The source's most specific category, kept raw (`leisure=fitness_centre`,
+    #: `pizza_restaurant`) rather than mapped to our taxonomy, so the mapping can change without
+    #: re-reading gigabytes.
     category: str
+    #: Every category this place belongs to, including `category` itself. Overture publishes a
+    #: hierarchy (`food_and_drink` > `restaurant` > `indian_restaurant`); OSM has one level, so
+    #: for it this holds the single category.
+    #:
+    #: Searching all of them rather than the leaf is what makes a request for restaurants return
+    #: the Indian, Chinese and pizza ones too: 4,276 Delhi places carry `restaurant` as their
+    #: leaf and 11,631 carry it somewhere in their hierarchy.
+    #:
+    #: A set, not a path: read back from the index it comes in whatever order SQLite returns,
+    #: because nothing needs the ordering and storing a position column to preserve an order no
+    #: caller reads is a column that can only ever go stale. The most specific one is in
+    #: `category`, which is the only level anything displays.
+    categories: tuple[str, ...]
     lat: float
     lon: float
     #: Where a person can check this record. Overture publishes no per-record page, so for it
@@ -207,6 +221,7 @@ def osm_place(
         external_id=f"{osm_type}{osm_id}",
         name=name,
         category=category,
+        categories=(category,),
         lat=lat,
         lon=lon,
         source_url=f"https://www.openstreetmap.org/{kind}/{osm_id}",

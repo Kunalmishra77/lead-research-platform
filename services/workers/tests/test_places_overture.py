@@ -24,7 +24,7 @@ create table places_src (
   id               varchar,
   names            struct("primary" varchar),
   basic_category   varchar,
-  taxonomy         struct("primary" varchar),
+  taxonomy         struct("primary" varchar, hierarchy varchar[], alternates varchar[]),
   bbox             struct(xmin double, xmax double, ymin double, ymax double),
   phones           varchar[],
   emails           varchar[],
@@ -52,6 +52,7 @@ def _row(
     confidence: float = 0.9,
     operating_status: str | None = "open",
     address: dict[str, str] | None = None,
+    hierarchy: list[str] | None = None,
 ) -> tuple[Any, ...]:
     addr = address or {
         "freeform": "2nd floor, Elan Miracle",
@@ -64,7 +65,7 @@ def _row(
         place_id,
         {"primary": name},
         category,
-        {"primary": category},
+        {"primary": category, "hierarchy": hierarchy or [category], "alternates": None},
         # A point's bbox has equal corners; the reader takes the centre either way.
         {"xmin": lon, "xmax": lon, "ymin": lat, "ymax": lat},
         phones,
@@ -313,3 +314,138 @@ def test_the_index_records_the_release_its_data_is_from(
     out = tmp_path / "overture.sqlite"
     build_index(out, bbox=(28.0, 77.0, 29.0, 78.0), release="2026-09-23.1", connection=con)
     assert PlaceIndex(out).stats().extract_date == datetime(2026, 9, 23, tzinfo=UTC)
+
+
+def test_a_search_matches_any_level_of_the_hierarchy(
+    con: duckdb.DuckDBPyConnection, tmp_path: Path
+) -> None:
+    """The measurement this whole table exists for.
+
+    Matching Overture's leaf category alone reached 16.1% of Delhi's places, and the mid-level
+    `basic_category` 12.1%, against 96.2% for every level. Concretely: 4,276 Delhi places carry
+    `restaurant` as their leaf and 11,631 carry it somewhere in their hierarchy, because most
+    are filed as `indian_restaurant` or `pizza_restaurant` underneath it.
+    """
+    _insert(
+        con,
+        [
+            _row(
+                "s1",
+                "Nalli Silks",
+                "sari_store",
+                hierarchy=["shopping", "fashion_and_apparel_store", "sari_store"],
+            ),
+            _row(
+                "s2",
+                "Zara",
+                "clothing_store",
+                hierarchy=["shopping", "fashion_and_apparel_store", "clothing_store"],
+            ),
+            _row(
+                "s3",
+                "Khan Boutique",
+                "boutique",
+                hierarchy=["shopping", "fashion_and_apparel_store", "boutique"],
+            ),
+            _row(
+                "s4", "Sharma Sweets", "dessert_shop", hierarchy=["food_and_drink", "dessert_shop"]
+            ),
+        ],
+    )
+    out = tmp_path / "overture.sqlite"
+    build_index(out, bbox=(28.0, 77.0, 29.0, 78.0), connection=con)
+    index = PlaceIndex(out)
+    box = (28.0, 77.0, 29.0, 78.0)
+
+    # The parent catches every clothing shop, whatever each one's leaf happens to be.
+    assert {p.name for p in index.search(bbox=box, categories=["fashion_and_apparel_store"])} == {
+        "Nalli Silks",
+        "Zara",
+        "Khan Boutique",
+    }
+    # The leaf still works, and still means only itself.
+    assert [p.name for p in index.search(bbox=box, categories=["sari_store"])] == ["Nalli Silks"]
+    # The root catches the lot without touching the sweet shop.
+    assert index.count(bbox=box, categories=["shopping"]) == 3
+    assert index.count(bbox=box, categories=["food_and_drink"]) == 1
+
+
+def test_a_place_matching_two_requested_categories_is_returned_once(
+    con: duckdb.DuckDBPyConnection, tmp_path: Path
+) -> None:
+    """An `exists`, not a join. A join returns the row once per matching category, which is how
+    a result set quietly grows and `limit` starts cutting off real results."""
+    _insert(
+        con,
+        [
+            _row(
+                "d1",
+                "Dual",
+                "clothing_store",
+                hierarchy=["shopping", "fashion_and_apparel_store", "clothing_store"],
+            )
+        ],
+    )
+    out = tmp_path / "overture.sqlite"
+    build_index(out, bbox=(28.0, 77.0, 29.0, 78.0), connection=con)
+    index = PlaceIndex(out)
+    box = (28.0, 77.0, 29.0, 78.0)
+    cats = ["shopping", "fashion_and_apparel_store", "clothing_store"]
+    assert len(index.search(bbox=box, categories=cats)) == 1
+    assert index.count(bbox=box, categories=cats) == 1
+
+
+def test_the_hierarchy_survives_the_round_trip(
+    con: duckdb.DuckDBPyConnection, tmp_path: Path
+) -> None:
+    _insert(
+        con,
+        [
+            _row(
+                "h1",
+                "Bikanervala",
+                "indian_restaurant",
+                hierarchy=["food_and_drink", "restaurant", "asian_restaurant", "indian_restaurant"],
+            )
+        ],
+    )
+    out = tmp_path / "overture.sqlite"
+    build_index(out, bbox=(28.0, 77.0, 29.0, 78.0), connection=con)
+    [place] = PlaceIndex(out).search(bbox=(28.0, 77.0, 29.0, 78.0))
+    # The leaf is what a person reads; every level is what a search matches. Compared as a set,
+    # because the index stores them as rows and reads them back in its own order.
+    assert place.category == "indian_restaurant"
+    assert set(place.categories) == {
+        "food_and_drink",
+        "restaurant",
+        "asian_restaurant",
+        "indian_restaurant",
+    }
+
+
+def test_a_machine_is_refused_at_any_level_of_its_hierarchy(
+    con: duckdb.DuckDBPyConnection, tmp_path: Path
+) -> None:
+    """The deny list names mid-level categories, so an ATM whose leaf is `bank_atm` is still one."""
+    _insert(
+        con,
+        [
+            _row(
+                "m1",
+                "HDFC ATM",
+                "bank_atm",
+                hierarchy=["services_and_business", "atm", "bank_atm"],
+                phones=["+9118002026161"],
+            ),
+            _row(
+                "m2",
+                "HDFC Bank",
+                "bank_or_credit_union",
+                hierarchy=["services_and_business", "financial_service", "bank_or_credit_union"],
+            ),
+        ],
+    )
+    out = tmp_path / "overture.sqlite"
+    report = build_index(out, bbox=(28.0, 77.0, 29.0, 78.0), connection=con)
+    assert report.not_a_business == 1
+    assert [p.name for p in PlaceIndex(out).search(bbox=(28.0, 77.0, 29.0, 78.0))] == ["HDFC Bank"]

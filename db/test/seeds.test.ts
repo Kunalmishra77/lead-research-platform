@@ -76,6 +76,82 @@ describe('industry taxonomy seed', () => {
   });
 });
 
+describe('Overture category mapping', () => {
+  const read = (name: string): unknown =>
+    JSON.parse(readFileSync(resolve(import.meta.dirname, '..', 'seeds', 'data', name), 'utf8'));
+
+  const vocabulary = read('overture-categories-in.json') as {
+    release: string;
+    categories: { category: string; places_in_india: number }[];
+  };
+  const known = new Map(vocabulary.categories.map((c) => [c.category, c.places_in_india]));
+  const { map } = read('overture-category-map.json') as { map: Record<string, string[]> };
+
+  it('records the release it was read from', () => {
+    expect(vocabulary.release).toMatch(/^\d{4}-\d{2}-\d{2}/);
+  });
+
+  it('names only categories the dataset publishes', () => {
+    // The point of the snapshot. A category Overture drops or renames between releases becomes
+    // a filter that matches nothing, and a search returning zero leads looks identical to an
+    // area with no businesses in it. This turns that into a failing build.
+    const invalid = Object.entries(map).flatMap(([slug, cats]) =>
+      cats.filter((c) => !known.has(c)).map((c) => `${slug}: ${c}`),
+    );
+    expect(invalid).toEqual([]);
+  });
+
+  it('covers every sector and category in the taxonomy', () => {
+    const missing = INDUSTRY_SEEDS.filter((s) => map[s.slug] === undefined).map((s) => s.slug);
+    expect(missing).toEqual([]);
+  });
+
+  it('leaves a category unmapped rather than mapping it to something broader', () => {
+    // 24 entries are deliberately empty because Overture has no equivalent -- there is no EV
+    // dealer category, so `ev-dealer` maps to nothing and the connector falls back to searching
+    // names. Mapping it to `vehicle_dealer` would have answered "EV dealers in Delhi" with
+    // 70,109 car showrooms, which is worse than admitting the gap.
+    const empty = Object.entries(map).filter(([, cats]) => cats.length === 0);
+    expect(empty.length).toBeGreaterThan(0);
+    expect(empty.length).toBeLessThan(INDUSTRY_SEEDS.length / 4);
+  });
+
+  it('maps the categories that carry the most of the market', () => {
+    // Measured on Delhi: mapping only what Google's type names happened to match reached 19.4%
+    // of businesses, and this mapping reaches 96.2%. These are the mappings that moved it, so
+    // a refactor that quietly drops one should fail here.
+    for (const [slug, expected] of [
+      ['retail', 'shopping'],
+      ['professional-services', 'professional_service'],
+      ['finance', 'financial_service'],
+      ['construction-and-real-estate', 'real_estate_service'],
+      ['education', 'education'],
+      ['gym', 'gym'],
+      // Deliberately NOT widened to `fashion_and_apparel_store`: that parent also holds
+      // jewelry_store, shoe_store and eyewear_store, so a request for clothing shops would
+      // come back with jewellers and opticians in it.
+      ['clothing-store', 'clothing_store'],
+    ] as const) {
+      expect(map[slug], slug).toContain(expected);
+    }
+  });
+
+  it('translates the names Overture does not share with Google', () => {
+    // Each of these was wrong before it was checked against the data: Overture has no
+    // `car_repair`, no `university`, no `physiotherapist` and no `bicycle_store`.
+    for (const [slug, expected] of [
+      ['car-repair', 'automotive_repair'],
+      ['university', 'college_university'],
+      ['physiotherapy-clinic', 'physical_therapy'],
+      ['bicycle-store', 'bike_store'],
+      ['hindu-temple', 'hindu_place_of_worship'],
+      ['packers-movers', 'mover'],
+    ] as const) {
+      expect(map[slug], slug).toContain(expected);
+    }
+  });
+});
+
 describe('geography seed', () => {
   const geo = loadGeoSeeds();
   const byKey = new Map(geo.areas.map((a) => [`${a.kind}:${a.slug}`, a]));

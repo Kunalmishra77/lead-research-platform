@@ -1,0 +1,6928 @@
+{
+  "$comment": [
+    "Overture Places category vocabulary as it appears in India, with how many places in the",
+    "country carry each one at any level of their hierarchy.",
+    "",
+    "Source: Overture Maps release 2026-09-23.1, theme=places, bbox 6.5,68.0 to 36.0,97.5,",
+    "counted on 2026-10-11 by unnesting taxonomy.hierarchy. Overture publishes no category list",
+    "as a file, so this is read from the data itself.",
+    "",
+    "Counts are category mentions, not places: a place appears once per level of its hierarchy.",
+    "They exist to keep the mapping honest about what is worth mapping, and must never be used",
+    "to rank or bill anything.",
+    "",
+    "Regenerate with `cd services/workers && uv run python -m app.places categories` when the pinned release changes."
+  ],
+  "release": "2026-09-23.1",
+  "retrieved": "2026-10-11",
+  "categories": [
+    {
+      "category": "services_and_business",
+      "places_in_india": 1264763
+    },
+    {
+      "category": "shopping",
+      "places_in_india": 1122328
+    },
+    {
+      "category": "education",
+      "places_in_india": 553437
+    },
+    {
+      "category": "specialty_store",
+      "places_in_india": 402142
+    },
+    {
+      "category": "food_and_drink",
+      "places_in_india": 373793
+    },
+    {
+      "category": "place_of_learning",
+      "places_in_india": 368765
+    },
+    {
+      "category": "financial_service",
+      "places_in_india": 321726
+    },
+    {
+      "category": "health_care",
+      "places_in_india": 310216
+    },
+    {
+      "category": "cultural_and_historic",
+      "places_in_india": 298734
+    },
+    {
+      "category": "travel_and_transportation",
+      "places_in_india": 257519
+    },
+    {
+      "category": "fashion_and_apparel_store",
+      "places_in_india": 246597
+    },
+    {
+      "category": "lodging",
+      "places_in_india": 241818
+    },
+    {
+      "category": "school",
+      "places_in_india": 234770
+    },
+    {
+      "category": "restaurant",
+      "places_in_india": 204100
+    },
+    {
+      "category": "b2b_service",
+      "places_in_india": 183213
+    },
+    {
+      "category": "place_of_worship",
+      "places_in_india": 172087
+    },
+    {
+      "category": "community_and_government",
+      "places_in_india": 161417
+    },
+    {
+      "category": "outpatient_care_facility",
+      "places_in_india": 161063
+    },
+    {
+      "category": "bank_or_credit_union",
+      "places_in_india": 155209
+    },
+    {
+      "category": "clothing_store",
+      "places_in_india": 147756
+    },
+    {
+      "category": "hotel",
+      "places_in_india": 146977
+    },
+    {
+      "category": "professional_service",
+      "places_in_india": 129506
+    },
+    {
+      "category": "casual_eatery",
+      "places_in_india": 127379
+    },
+    {
+      "category": "lifestyle_services",
+      "places_in_india": 127038
+    },
+    {
+      "category": "real_estate_service",
+      "places_in_india": 122126
+    },
+    {
+      "category": "electronics_store",
+      "places_in_india": 120327
+    },
+    {
+      "category": "hindu_place_of_worship",
+      "places_in_india": 119779
+    },
+    {
+      "category": "hardware_home_and_garden_store",
+      "places_in_india": 108524
+    },
+    {
+      "category": "sports_and_recreation",
+      "places_in_india": 106850
+    },
+    {
+      "category": "event_or_party_service",
+      "places_in_india": 106538
+    },
+    {
+      "category": "hospital",
+      "places_in_india": 101674
+    },
+    {
+      "category": "party_and_event_planning",
+      "places_in_india": 94011
+    },
+    {
+      "category": "historic_site",
+      "places_in_india": 92237
+    },
+    {
+      "category": "personal_or_beauty_service",
+      "places_in_india": 83054
+    },
+    {
+      "category": "manufacturer",
+      "places_in_india": 78514
+    },
+    {
+      "category": "college_university",
+      "places_in_india": 76488
+    },
+    {
+      "category": "travel_service",
+      "places_in_india": 76007
+    },
+    {
+      "category": "food_and_beverage_store",
+      "places_in_india": 71523
+    },
+    {
+      "category": "vehicle_dealer",
+      "places_in_india": 70109
+    },
+    {
+      "category": "home_service",
+      "places_in_india": 69725
+    },
+    {
+      "category": "arts_and_entertainment",
+      "places_in_india": 67944
+    },
+    {
+      "category": "corporate_or_business_office",
+      "places_in_india": 67933
+    },
+    {
+      "category": "sport_or_fitness_facility",
+      "places_in_india": 67091
+    },
+    {
+      "category": "vehicle_service",
+      "places_in_india": 66146
+    },
+    {
+      "category": "bank",
+      "places_in_india": 62974
+    },
+    {
+      "category": "automotive_service",
+      "places_in_india": 61388
+    },
+    {
+      "category": "educational_service",
+      "places_in_india": 60834
+    },
+    {
+      "category": "asian_restaurant",
+      "places_in_india": 58189
+    },
+    {
+      "category": "specialty_school",
+      "places_in_india": 57411
+    },
+    {
+      "category": "government_office",
+      "places_in_india": 56632
+    },
+    {
+      "category": "technical_service",
+      "places_in_india": 55700
+    },
+    {
+      "category": "fueling_station",
+      "places_in_india": 53949
+    },
+    {
+      "category": "gas_station",
+      "places_in_india": 53558
+    },
+    {
+      "category": "mobile_phone_store",
+      "places_in_india": 53202
+    },
+    {
+      "category": "grocery_store",
+      "places_in_india": 50187
+    },
+    {
+      "category": "pharmacy_and_drug_store",
+      "places_in_india": 50066
+    },
+    {
+      "category": "pharmacy",
+      "places_in_india": 50004
+    },
+    {
+      "category": "beauty_salon",
+      "places_in_india": 49857
+    },
+    {
+      "category": "diagnostics_imaging_or_lab_service",
+      "places_in_india": 49796
+    },
+    {
+      "category": "south_asian_restaurant",
+      "places_in_india": 45937
+    },
+    {
+      "category": "atm",
+      "places_in_india": 44705
+    },
+    {
+      "category": "auto_dealer",
+      "places_in_india": 44388
+    },
+    {
+      "category": "social_or_community_service",
+      "places_in_india": 43614
+    },
+    {
+      "category": "indian_restaurant",
+      "places_in_india": 43591
+    },
+    {
+      "category": "jewelry_store",
+      "places_in_india": 39095
+    },
+    {
+      "category": "resort",
+      "places_in_india": 38984
+    },
+    {
+      "category": "ground_transport_facility_or_service",
+      "places_in_india": 38945
+    },
+    {
+      "category": "gym",
+      "places_in_india": 36822
+    },
+    {
+      "category": "dental_clinic",
+      "places_in_india": 36713
+    },
+    {
+      "category": "media_service",
+      "places_in_india": 35299
+    },
+    {
+      "category": "bakery",
+      "places_in_india": 34394
+    },
+    {
+      "category": "cafe",
+      "places_in_india": 34119
+    },
+    {
+      "category": "wellness_service",
+      "places_in_india": 32405
+    },
+    {
+      "category": "womens_clothing_store",
+      "places_in_india": 31725
+    },
+    {
+      "category": "building_or_construction_service",
+      "places_in_india": 31377
+    },
+    {
+      "category": "religious_organization",
+      "places_in_india": 30799
+    },
+    {
+      "category": "automotive_repair",
+      "places_in_india": 30724
+    },
+    {
+      "category": "christian_place_of_worship",
+      "places_in_india": 30199
+    },
+    {
+      "category": "high_school",
+      "places_in_india": 30100
+    },
+    {
+      "category": "shipping_or_delivery_service",
+      "places_in_india": 29295
+    },
+    {
+      "category": "vehicle_parts_store",
+      "places_in_india": 28340
+    },
+    {
+      "category": "hardware_store",
+      "places_in_india": 28244
+    },
+    {
+      "category": "auto_parts_store",
+      "places_in_india": 27610
+    },
+    {
+      "category": "post_office",
+      "places_in_india": 27237
+    },
+    {
+      "category": "fast_food_restaurant",
+      "places_in_india": 26953
+    },
+    {
+      "category": "geographic_entities",
+      "places_in_india": 26841
+    },
+    {
+      "category": "furniture_store",
+      "places_in_india": 26179
+    },
+    {
+      "category": "doctors_office",
+      "places_in_india": 25689
+    },
+    {
+      "category": "credit_union",
+      "places_in_india": 25632
+    },
+    {
+      "category": "spa",
+      "places_in_india": 25601
+    },
+    {
+      "category": "software_development",
+      "places_in_india": 25560
+    },
+    {
+      "category": "preschool",
+      "places_in_india": 23947
+    },
+    {
+      "category": "public_transit_facility_or_service",
+      "places_in_india": 23938
+    },
+    {
+      "category": "park",
+      "places_in_india": 23797
+    },
+    {
+      "category": "tutoring_service",
+      "places_in_india": 23514
+    },
+    {
+      "category": "bus_station",
+      "places_in_india": 23391
+    },
+    {
+      "category": "agricultural_service",
+      "places_in_india": 22693
+    },
+    {
+      "category": "interior_design",
+      "places_in_india": 22184
+    },
+    {
+      "category": "design_service",
+      "places_in_india": 21479
+    },
+    {
+      "category": "motorcycle_dealer",
+      "places_in_india": 21275
+    },
+    {
+      "category": "non_alcoholic_beverage_venue",
+      "places_in_india": 20870
+    },
+    {
+      "category": "dessert_shop",
+      "places_in_india": 20558
+    },
+    {
+      "category": "shoe_store",
+      "places_in_india": 20420
+    },
+    {
+      "category": "elementary_school",
+      "places_in_india": 19514
+    },
+    {
+      "category": "printing_service",
+      "places_in_india": 19240
+    },
+    {
+      "category": "specialized_health_care",
+      "places_in_india": 19219
+    },
+    {
+      "category": "machinery_and_tool_manufacturer",
+      "places_in_india": 19116
+    },
+    {
+      "category": "industrial_equipment_manufacturer",
+      "places_in_india": 19074
+    },
+    {
+      "category": "supplier_or_distributor",
+      "places_in_india": 19037
+    },
+    {
+      "category": "b2b_office_and_professional_service",
+      "places_in_india": 18958
+    },
+    {
+      "category": "computer_coaching",
+      "places_in_india": 18419
+    },
+    {
+      "category": "computer_store",
+      "places_in_india": 18401
+    },
+    {
+      "category": "shopping_mall",
+      "places_in_india": 18220
+    },
+    {
+      "category": "mens_clothing_store",
+      "places_in_india": 17735
+    },
+    {
+      "category": "media_news_company",
+      "places_in_india": 17196
+    },
+    {
+      "category": "builder",
+      "places_in_india": 17021
+    },
+    {
+      "category": "civic_organization",
+      "places_in_india": 16980
+    },
+    {
+      "category": "home_developer",
+      "places_in_india": 16949
+    },
+    {
+      "category": "alcoholic_beverage_venue",
+      "places_in_india": 16616
+    },
+    {
+      "category": "tour_operator",
+      "places_in_india": 16447
+    },
+    {
+      "category": "information_technology_company",
+      "places_in_india": 16352
+    },
+    {
+      "category": "it_service_and_computer_repair",
+      "places_in_india": 16134
+    },
+    {
+      "category": "flowers_and_gifts_store",
+      "places_in_india": 15938
+    },
+    {
+      "category": "property_management",
+      "places_in_india": 15334
+    },
+    {
+      "category": "hostel",
+      "places_in_india": 15186
+    },
+    {
+      "category": "public_safety_service",
+      "places_in_india": 14894
+    },
+    {
+      "category": "medical_supply_store",
+      "places_in_india": 14812
+    },
+    {
+      "category": "muslim_place_of_worship",
+      "places_in_india": 14568
+    },
+    {
+      "category": "complementary_and_alternative_medicine",
+      "places_in_india": 14405
+    },
+    {
+      "category": "diagnostic_imaging",
+      "places_in_india": 14292
+    },
+    {
+      "category": "european_restaurant",
+      "places_in_india": 14288
+    },
+    {
+      "category": "police_station",
+      "places_in_india": 13701
+    },
+    {
+      "category": "legal_service",
+      "places_in_india": 13592
+    },
+    {
+      "category": "mediterranean_restaurant",
+      "places_in_india": 13505
+    },
+    {
+      "category": "books_music_and_video_store",
+      "places_in_india": 13393
+    },
+    {
+      "category": "italian_restaurant",
+      "places_in_india": 13378
+    },
+    {
+      "category": "sporting_goods_store",
+      "places_in_india": 13221
+    },
+    {
+      "category": "insurance_agency",
+      "places_in_india": 13145
+    },
+    {
+      "category": "bar",
+      "places_in_india": 13030
+    },
+    {
+      "category": "marketing_agency",
+      "places_in_india": 12658
+    },
+    {
+      "category": "warehouse_club_store",
+      "places_in_india": 12596
+    },
+    {
+      "category": "pizza_restaurant",
+      "places_in_india": 12132
+    },
+    {
+      "category": "vocational_and_technical_school",
+      "places_in_india": 12020
+    },
+    {
+      "category": "naturopathic_medicine",
+      "places_in_india": 11980
+    },
+    {
+      "category": "photography_service",
+      "places_in_india": 11944
+    },
+    {
+      "category": "coffee_shop",
+      "places_in_india": 11886
+    },
+    {
+      "category": "farm",
+      "places_in_india": 11843
+    },
+    {
+      "category": "eyewear_store",
+      "places_in_india": 11734
+    },
+    {
+      "category": "real_estate_agent",
+      "places_in_india": 11730
+    },
+    {
+      "category": "event_photography_service",
+      "places_in_india": 11625
+    },
+    {
+      "category": "b2b_transportation_and_storage_service",
+      "places_in_india": 11599
+    },
+    {
+      "category": "industrial_company",
+      "places_in_india": 11476
+    },
+    {
+      "category": "bookstore",
+      "places_in_india": 11438
+    },
+    {
+      "category": "arts_crafts_and_hobby_store",
+      "places_in_india": 11261
+    },
+    {
+      "category": "broker",
+      "places_in_india": 11248
+    },
+    {
+      "category": "hair_salon",
+      "places_in_india": 11035
+    },
+    {
+      "category": "performing_arts_venue",
+      "places_in_india": 11016
+    },
+    {
+      "category": "land_feature",
+      "places_in_india": 10889
+    },
+    {
+      "category": "public_utility",
+      "places_in_india": 10483
+    },
+    {
+      "category": "rail_facility_or_service",
+      "places_in_india": 10403
+    },
+    {
+      "category": "physical_medicine_and_rehabilitation",
+      "places_in_india": 10394
+    },
+    {
+      "category": "advertising_agency",
+      "places_in_india": 10393
+    },
+    {
+      "category": "b2b_industrial_and_machine_service",
+      "places_in_india": 10389
+    },
+    {
+      "category": "train_station",
+      "places_in_india": 10367
+    },
+    {
+      "category": "b2b_advertising_and_marketing_service",
+      "places_in_india": 10134
+    },
+    {
+      "category": "commercial_industrial",
+      "places_in_india": 10056
+    },
+    {
+      "category": "stock_and_bond_broker",
+      "places_in_india": 10041
+    },
+    {
+      "category": "ice_cream_shop",
+      "places_in_india": 9765
+    },
+    {
+      "category": "freight_and_cargo_service",
+      "places_in_india": 9691
+    },
+    {
+      "category": "attorney_or_law_firm",
+      "places_in_india": 9664
+    },
+    {
+      "category": "engineering_service",
+      "places_in_india": 9645
+    },
+    {
+      "category": "jewelry_and_watches_manufacturer",
+      "places_in_india": 9549
+    },
+    {
+      "category": "b2b_energy_and_utility_service",
+      "places_in_india": 9369
+    },
+    {
+      "category": "laboratory_testing",
+      "places_in_india": 9187
+    },
+    {
+      "category": "home_improvement_store",
+      "places_in_india": 9179
+    },
+    {
+      "category": "travel_company",
+      "places_in_india": 9154
+    },
+    {
+      "category": "water_feature",
+      "places_in_india": 9116
+    },
+    {
+      "category": "non_governmental_association",
+      "places_in_india": 9112
+    },
+    {
+      "category": "b2b_agriculture_service",
+      "places_in_india": 8874
+    },
+    {
+      "category": "beauty_supply_store",
+      "places_in_india": 8850
+    },
+    {
+      "category": "personal_care_and_beauty_store",
+      "places_in_india": 8850
+    },
+    {
+      "category": "skin_care_and_makeup",
+      "places_in_india": 8769
+    },
+    {
+      "category": "movie_theater",
+      "places_in_india": 8616
+    },
+    {
+      "category": "fashion_boutique",
+      "places_in_india": 8589
+    },
+    {
+      "category": "physical_therapy",
+      "places_in_india": 8585
+    },
+    {
+      "category": "metal_fabricator",
+      "places_in_india": 8456
+    },
+    {
+      "category": "private_school",
+      "places_in_india": 8360
+    },
+    {
+      "category": "architectural_designer",
+      "places_in_india": 8118
+    },
+    {
+      "category": "general_dentistry",
+      "places_in_india": 8092
+    },
+    {
+      "category": "b2b_business_management_service",
+      "places_in_india": 8016
+    },
+    {
+      "category": "building_supply_store",
+      "places_in_india": 7977
+    },
+    {
+      "category": "family_service",
+      "places_in_india": 7853
+    },
+    {
+      "category": "spiritual_advising",
+      "places_in_india": 7758
+    },
+    {
+      "category": "medical_service",
+      "places_in_india": 7540
+    },
+    {
+      "category": "meat_restaurant",
+      "places_in_india": 7473
+    },
+    {
+      "category": "specialized_medical_facility",
+      "places_in_india": 7456
+    },
+    {
+      "category": "east_asian_restaurant",
+      "places_in_india": 7447
+    },
+    {
+      "category": "stadium_arena",
+      "places_in_india": 7358
+    },
+    {
+      "category": "research_institute",
+      "places_in_india": 7179
+    },
+    {
+      "category": "educational_facility",
+      "places_in_india": 7170
+    },
+    {
+      "category": "chemical_plant",
+      "places_in_india": 7139
+    },
+    {
+      "category": "animal_or_pet_service",
+      "places_in_india": 7117
+    },
+    {
+      "category": "music_venue",
+      "places_in_india": 7103
+    },
+    {
+      "category": "natural_gas_utility_provider",
+      "places_in_india": 6970
+    },
+    {
+      "category": "dance_studio",
+      "places_in_india": 6865
+    },
+    {
+      "category": "library",
+      "places_in_india": 6854
+    },
+    {
+      "category": "test_preparation",
+      "places_in_india": 6808
+    },
+    {
+      "category": "community_center",
+      "places_in_india": 6585
+    },
+    {
+      "category": "campus_building",
+      "places_in_india": 6479
+    },
+    {
+      "category": "bike_store",
+      "places_in_india": 6442
+    },
+    {
+      "category": "chinese_restaurant",
+      "places_in_india": 6378
+    },
+    {
+      "category": "textile_manufacturer",
+      "places_in_india": 6376
+    },
+    {
+      "category": "tire_dealer_and_repair",
+      "places_in_india": 6330
+    },
+    {
+      "category": "makeup_artist",
+      "places_in_india": 6203
+    },
+    {
+      "category": "nursery_and_gardening_store",
+      "places_in_india": 6179
+    },
+    {
+      "category": "fitness_studio",
+      "places_in_india": 6176
+    },
+    {
+      "category": "reproductive_perinatal_and_womens_care",
+      "places_in_india": 6169
+    },
+    {
+      "category": "appliance_store",
+      "places_in_india": 6106
+    },
+    {
+      "category": "web_designer",
+      "places_in_india": 6068
+    },
+    {
+      "category": "childrens_clothing_store",
+      "places_in_india": 6053
+    },
+    {
+      "category": "caterer",
+      "places_in_india": 6032
+    },
+    {
+      "category": "fashion_accessories_store",
+      "places_in_india": 6028
+    },
+    {
+      "category": "vision_or_eye_care_clinic",
+      "places_in_india": 6019
+    },
+    {
+      "category": "sport_league",
+      "places_in_india": 6003
+    },
+    {
+      "category": "rental_service",
+      "places_in_india": 5956
+    },
+    {
+      "category": "mountain",
+      "places_in_india": 5918
+    },
+    {
+      "category": "home_goods_store",
+      "places_in_india": 5917
+    },
+    {
+      "category": "candy_store",
+      "places_in_india": 5910
+    },
+    {
+      "category": "language_school",
+      "places_in_india": 5884
+    },
+    {
+      "category": "pharmaceutical_company",
+      "places_in_india": 5854
+    },
+    {
+      "category": "auto_company",
+      "places_in_india": 5829
+    },
+    {
+      "category": "accountant",
+      "places_in_india": 5819
+    },
+    {
+      "category": "laundry_service",
+      "places_in_india": 5805
+    },
+    {
+      "category": "yoga_studio",
+      "places_in_india": 5785
+    },
+    {
+      "category": "animal_and_pet_store",
+      "places_in_india": 5736
+    },
+    {
+      "category": "tea_room",
+      "places_in_india": 5720
+    },
+    {
+      "category": "pet_store",
+      "places_in_india": 5680
+    },
+    {
+      "category": "fitness_trainer",
+      "places_in_india": 5657
+    },
+    {
+      "category": "indian_grocery_store",
+      "places_in_india": 5626
+    },
+    {
+      "category": "public_school",
+      "places_in_india": 5499
+    },
+    {
+      "category": "convenience_store",
+      "places_in_india": 5417
+    },
+    {
+      "category": "tattoo_and_piercing",
+      "places_in_india": 5328
+    },
+    {
+      "category": "body_modification",
+      "places_in_india": 5328
+    },
+    {
+      "category": "special_diet_restaurant",
+      "places_in_india": 5316
+    },
+    {
+      "category": "educational_research_institute",
+      "places_in_india": 5300
+    },
+    {
+      "category": "child_care_and_day_care",
+      "places_in_india": 5255
+    },
+    {
+      "category": "housing_or_property_service",
+      "places_in_india": 5246
+    },
+    {
+      "category": "telecommunications_service",
+      "places_in_india": 5122
+    },
+    {
+      "category": "day_care_preschool",
+      "places_in_india": 5085
+    },
+    {
+      "category": "astrological_advising",
+      "places_in_india": 5084
+    },
+    {
+      "category": "social_media_agency",
+      "places_in_india": 5049
+    },
+    {
+      "category": "graphic_designer",
+      "places_in_india": 4960
+    },
+    {
+      "category": "behavioral_or_mental_health_clinic",
+      "places_in_india": 4959
+    },
+    {
+      "category": "specialty_foods_store",
+      "places_in_india": 4905
+    },
+    {
+      "category": "auto_detailing",
+      "places_in_india": 4896
+    },
+    {
+      "category": "wedding_planning",
+      "places_in_india": 4797
+    },
+    {
+      "category": "agriculture",
+      "places_in_india": 4795
+    },
+    {
+      "category": "internet_service_provider",
+      "places_in_india": 4787
+    },
+    {
+      "category": "employment_agency",
+      "places_in_india": 4719
+    },
+    {
+      "category": "lodge",
+      "places_in_india": 4701
+    },
+    {
+      "category": "vegetarian_restaurant",
+      "places_in_india": 4623
+    },
+    {
+      "category": "taxi_or_ride_share_service",
+      "places_in_india": 4598
+    },
+    {
+      "category": "river",
+      "places_in_india": 4555
+    },
+    {
+      "category": "private_lodging",
+      "places_in_india": 4548
+    },
+    {
+      "category": "surgery",
+      "places_in_india": 4542
+    },
+    {
+      "category": "contractor",
+      "places_in_india": 4490
+    },
+    {
+      "category": "medical_skin_care",
+      "places_in_india": 4482
+    },
+    {
+      "category": "dermatology",
+      "places_in_india": 4481
+    },
+    {
+      "category": "motorcycle_service",
+      "places_in_india": 4464
+    },
+    {
+      "category": "motorcycle_repair",
+      "places_in_india": 4464
+    },
+    {
+      "category": "food_service",
+      "places_in_india": 4462
+    },
+    {
+      "category": "taxi_service",
+      "places_in_india": 4402
+    },
+    {
+      "category": "passport_and_visa_service",
+      "places_in_india": 4370
+    },
+    {
+      "category": "obstetrics_and_gynecology",
+      "places_in_india": 4337
+    },
+    {
+      "category": "food_delivery_service",
+      "places_in_india": 4252
+    },
+    {
+      "category": "vehicle_rental_service",
+      "places_in_india": 4245
+    },
+    {
+      "category": "telecommunications_company",
+      "places_in_india": 4235
+    },
+    {
+      "category": "dry_cleaning",
+      "places_in_india": 4195
+    },
+    {
+      "category": "fabric_store",
+      "places_in_india": 4189
+    },
+    {
+      "category": "senior_living_facility",
+      "places_in_india": 4097
+    },
+    {
+      "category": "installment_loans",
+      "places_in_india": 4056
+    },
+    {
+      "category": "tire_shop",
+      "places_in_india": 4036
+    },
+    {
+      "category": "retirement_home",
+      "places_in_india": 4020
+    },
+    {
+      "category": "clothing_company",
+      "places_in_india": 4010
+    },
+    {
+      "category": "sikh_place_of_worship",
+      "places_in_india": 3999
+    },
+    {
+      "category": "b2b_environmental_service",
+      "places_in_india": 3986
+    },
+    {
+      "category": "wholesaler",
+      "places_in_india": 3972
+    },
+    {
+      "category": "electronic_equipment_supplier",
+      "places_in_india": 3937
+    },
+    {
+      "category": "computer_hardware_company",
+      "places_in_india": 3926
+    },
+    {
+      "category": "financial_advising",
+      "places_in_india": 3884
+    },
+    {
+      "category": "car_rental_service",
+      "places_in_india": 3884
+    },
+    {
+      "category": "internet_marketing_service",
+      "places_in_india": 3859
+    },
+    {
+      "category": "health_food_store",
+      "places_in_india": 3851
+    },
+    {
+      "category": "home_cleaning",
+      "places_in_india": 3804
+    },
+    {
+      "category": "b2b_medical_support_service",
+      "places_in_india": 3738
+    },
+    {
+      "category": "life_insurance",
+      "places_in_india": 3732
+    },
+    {
+      "category": "political_organization",
+      "places_in_india": 3722
+    },
+    {
+      "category": "department_store",
+      "places_in_india": 3709
+    },
+    {
+      "category": "arts_and_crafts_space",
+      "places_in_india": 3700
+    },
+    {
+      "category": "internet_cafe",
+      "places_in_india": 3660
+    },
+    {
+      "category": "charity_organization",
+      "places_in_india": 3647
+    },
+    {
+      "category": "lighting_store",
+      "places_in_india": 3639
+    },
+    {
+      "category": "air_transport_facility_or_service",
+      "places_in_india": 3558
+    },
+    {
+      "category": "b2b_water_treatment_service",
+      "places_in_india": 3552
+    },
+    {
+      "category": "art_gallery",
+      "places_in_india": 3548
+    },
+    {
+      "category": "middle_school",
+      "places_in_india": 3543
+    },
+    {
+      "category": "lake",
+      "places_in_india": 3537
+    },
+    {
+      "category": "counseling",
+      "places_in_india": 3491
+    },
+    {
+      "category": "music_production",
+      "places_in_india": 3450
+    },
+    {
+      "category": "travel_agent",
+      "places_in_india": 3438
+    },
+    {
+      "category": "buddhist_place_of_worship",
+      "places_in_india": 3413
+    },
+    {
+      "category": "trusts",
+      "places_in_india": 3381
+    },
+    {
+      "category": "produce_store",
+      "places_in_india": 3381
+    },
+    {
+      "category": "storage_facility",
+      "places_in_india": 3375
+    },
+    {
+      "category": "carpet_store",
+      "places_in_india": 3343
+    },
+    {
+      "category": "paint_store",
+      "places_in_india": 3296
+    },
+    {
+      "category": "musculoskeletal_medicine",
+      "places_in_india": 3244
+    },
+    {
+      "category": "music_school",
+      "places_in_india": 3192
+    },
+    {
+      "category": "hvac_service",
+      "places_in_india": 3161
+    },
+    {
+      "category": "orthopedics",
+      "places_in_india": 3153
+    },
+    {
+      "category": "car_wash",
+      "places_in_india": 3120
+    },
+    {
+      "category": "holiday_rental_home",
+      "places_in_india": 3070
+    },
+    {
+      "category": "driving_school",
+      "places_in_india": 3044
+    },
+    {
+      "category": "toy_store",
+      "places_in_india": 3006
+    },
+    {
+      "category": "toys_and_games_store",
+      "places_in_india": 3006
+    },
+    {
+      "category": "plastic_manufacturer",
+      "places_in_india": 2960
+    },
+    {
+      "category": "roman_catholic_place_of_worship",
+      "places_in_india": 2948
+    },
+    {
+      "category": "beach",
+      "places_in_india": 2942
+    },
+    {
+      "category": "medical_service_organization",
+      "places_in_india": 2938
+    },
+    {
+      "category": "sport_or_recreation_club",
+      "places_in_india": 2929
+    },
+    {
+      "category": "barber",
+      "places_in_india": 2911
+    },
+    {
+      "category": "broadcasting_media_production",
+      "places_in_india": 2842
+    },
+    {
+      "category": "chicken_restaurant",
+      "places_in_india": 2834
+    },
+    {
+      "category": "organic_grocery_store",
+      "places_in_india": 2832
+    },
+    {
+      "category": "lounge",
+      "places_in_india": 2830
+    },
+    {
+      "category": "bridal_shop",
+      "places_in_india": 2791
+    },
+    {
+      "category": "smoothie_juice_bar",
+      "places_in_india": 2791
+    },
+    {
+      "category": "solar_installation",
+      "places_in_india": 2782
+    },
+    {
+      "category": "dairy_farm",
+      "places_in_india": 2766
+    },
+    {
+      "category": "event_venue",
+      "places_in_india": 2755
+    },
+    {
+      "category": "metal_supplier",
+      "places_in_india": 2717
+    },
+    {
+      "category": "martial_arts_club",
+      "places_in_india": 2681
+    },
+    {
+      "category": "psychic_advising",
+      "places_in_india": 2674
+    },
+    {
+      "category": "b2b_surgical_appliances_and_supplies",
+      "places_in_india": 2673
+    },
+    {
+      "category": "veterinary_care",
+      "places_in_india": 2657
+    },
+    {
+      "category": "veterinarian",
+      "places_in_india": 2634
+    },
+    {
+      "category": "painting",
+      "places_in_india": 2581
+    },
+    {
+      "category": "pediatric_clinic",
+      "places_in_india": 2543
+    },
+    {
+      "category": "museum",
+      "places_in_india": 2524
+    },
+    {
+      "category": "bed_and_breakfast",
+      "places_in_india": 2520
+    },
+    {
+      "category": "airport",
+      "places_in_india": 2518
+    },
+    {
+      "category": "funeral_service",
+      "places_in_india": 2518
+    },
+    {
+      "category": "appliance_repair_service",
+      "places_in_india": 2514
+    },
+    {
+      "category": "town_hall",
+      "places_in_india": 2514
+    },
+    {
+      "category": "publisher",
+      "places_in_india": 2503
+    },
+    {
+      "category": "optometry",
+      "places_in_india": 2503
+    },
+    {
+      "category": "home_security",
+      "places_in_india": 2478
+    },
+    {
+      "category": "office_supply_store",
+      "places_in_india": 2475
+    },
+    {
+      "category": "built_feature",
+      "places_in_india": 2473
+    },
+    {
+      "category": "memorial_site",
+      "places_in_india": 2450
+    },
+    {
+      "category": "monument",
+      "places_in_india": 2448
+    },
+    {
+      "category": "luggage_store",
+      "places_in_india": 2447
+    },
+    {
+      "category": "electronic_parts_supplier",
+      "places_in_india": 2435
+    },
+    {
+      "category": "machine_shop",
+      "places_in_india": 2429
+    },
+    {
+      "category": "automation_service",
+      "places_in_india": 2411
+    },
+    {
+      "category": "pest_control_service",
+      "places_in_india": 2382
+    },
+    {
+      "category": "sportswear_store",
+      "places_in_india": 2354
+    },
+    {
+      "category": "vehicle_manufacturer",
+      "places_in_india": 2334
+    },
+    {
+      "category": "burger_restaurant",
+      "places_in_india": 2325
+    },
+    {
+      "category": "food_beverage_distributor",
+      "places_in_india": 2292
+    },
+    {
+      "category": "campground",
+      "places_in_india": 2253
+    },
+    {
+      "category": "stadium",
+      "places_in_india": 2247
+    },
+    {
+      "category": "auditorium",
+      "places_in_india": 2238
+    },
+    {
+      "category": "money_transfer_service",
+      "places_in_india": 2220
+    },
+    {
+      "category": "b2b_oil_and_gas",
+      "places_in_india": 2195
+    },
+    {
+      "category": "parking",
+      "places_in_india": 2176
+    },
+    {
+      "category": "ear_nose_and_throat",
+      "places_in_india": 2133
+    },
+    {
+      "category": "art_school",
+      "places_in_india": 2129
+    },
+    {
+      "category": "bar_and_grill_restaurant",
+      "places_in_india": 2114
+    },
+    {
+      "category": "investing",
+      "places_in_india": 2105
+    },
+    {
+      "category": "electrician",
+      "places_in_india": 2104
+    },
+    {
+      "category": "used_auto_dealer",
+      "places_in_india": 2102
+    },
+    {
+      "category": "energy_company",
+      "places_in_india": 2090
+    },
+    {
+      "category": "barbecue_restaurant",
+      "places_in_india": 2086
+    },
+    {
+      "category": "animal_attraction",
+      "places_in_india": 2064
+    },
+    {
+      "category": "liquor_store",
+      "places_in_india": 2062
+    },
+    {
+      "category": "granite_supplier",
+      "places_in_india": 2062
+    },
+    {
+      "category": "movie_television_studio",
+      "places_in_india": 2058
+    },
+    {
+      "category": "b2b_marketing_consultant",
+      "places_in_india": 2052
+    },
+    {
+      "category": "meditation_center",
+      "places_in_india": 2047
+    },
+    {
+      "category": "nightlife_venue",
+      "places_in_india": 2041
+    },
+    {
+      "category": "mattress_store",
+      "places_in_india": 2038
+    },
+    {
+      "category": "theatre_venue",
+      "places_in_india": 2023
+    },
+    {
+      "category": "diner",
+      "places_in_india": 2019
+    },
+    {
+      "category": "bridge",
+      "places_in_india": 2019
+    },
+    {
+      "category": "glass_and_mirror_sales_service",
+      "places_in_india": 1993
+    },
+    {
+      "category": "youth_organization",
+      "places_in_india": 1987
+    },
+    {
+      "category": "blood_and_plasma_donation_center",
+      "places_in_india": 1942
+    },
+    {
+      "category": "vitamin_and_supplement_store",
+      "places_in_india": 1930
+    },
+    {
+      "category": "internal_medicine",
+      "places_in_india": 1902
+    },
+    {
+      "category": "sewing_and_alterations",
+      "places_in_india": 1900
+    },
+    {
+      "category": "theme_restaurant",
+      "places_in_india": 1899
+    },
+    {
+      "category": "print_media",
+      "places_in_india": 1896
+    },
+    {
+      "category": "dance_club",
+      "places_in_india": 1889
+    },
+    {
+      "category": "protestant_place_of_worship",
+      "places_in_india": 1885
+    },
+    {
+      "category": "cricket_ground",
+      "places_in_india": 1820
+    },
+    {
+      "category": "truck_dealer",
+      "places_in_india": 1805
+    },
+    {
+      "category": "medical_research_institute",
+      "places_in_india": 1798
+    },
+    {
+      "category": "playground",
+      "places_in_india": 1793
+    },
+    {
+      "category": "camera_and_photography_store",
+      "places_in_india": 1790
+    },
+    {
+      "category": "seafood_restaurant",
+      "places_in_india": 1786
+    },
+    {
+      "category": "sign_making",
+      "places_in_india": 1771
+    },
+    {
+      "category": "public_facility",
+      "places_in_india": 1764
+    },
+    {
+      "category": "medical_school",
+      "places_in_india": 1760
+    },
+    {
+      "category": "cupcake_shop",
+      "places_in_india": 1753
+    },
+    {
+      "category": "cottage",
+      "places_in_india": 1746
+    },
+    {
+      "category": "b2b_science_and_technology_service",
+      "places_in_india": 1712
+    },
+    {
+      "category": "religious_school",
+      "places_in_india": 1697
+    },
+    {
+      "category": "nutrition_service",
+      "places_in_india": 1694
+    },
+    {
+      "category": "auto_manufacturer",
+      "places_in_india": 1691
+    },
+    {
+      "category": "nature_reserve",
+      "places_in_india": 1682
+    },
+    {
+      "category": "nursing_school",
+      "places_in_india": 1666
+    },
+    {
+      "category": "immigration_law",
+      "places_in_india": 1655
+    },
+    {
+      "category": "nail_salon",
+      "places_in_india": 1633
+    },
+    {
+      "category": "swimming_pool",
+      "places_in_india": 1612
+    },
+    {
+      "category": "primary_care_or_general_clinic",
+      "places_in_india": 1607
+    },
+    {
+      "category": "courthouse",
+      "places_in_india": 1597
+    },
+    {
+      "category": "screen_printing_service",
+      "places_in_india": 1586
+    },
+    {
+      "category": "t_shirt_printing_service",
+      "places_in_india": 1586
+    },
+    {
+      "category": "shipping_center",
+      "places_in_india": 1584
+    },
+    {
+      "category": "mobile_phone_repair",
+      "places_in_india": 1576
+    },
+    {
+      "category": "middle_eastern_restaurant",
+      "places_in_india": 1561
+    },
+    {
+      "category": "agricultural_cooperative",
+      "places_in_india": 1551
+    },
+    {
+      "category": "appraisal_service",
+      "places_in_india": 1550
+    },
+    {
+      "category": "musical_instrument_and_pro_audio_store",
+      "places_in_india": 1550
+    },
+    {
+      "category": "musical_instrument_store",
+      "places_in_india": 1550
+    },
+    {
+      "category": "audio_visual_equipment_store",
+      "places_in_india": 1548
+    },
+    {
+      "category": "cardiovascular_and_vascular_medicine",
+      "places_in_india": 1546
+    },
+    {
+      "category": "cardiology",
+      "places_in_india": 1546
+    },
+    {
+      "category": "home_health_care",
+      "places_in_india": 1526
+    },
+    {
+      "category": "massage_therapy",
+      "places_in_india": 1521
+    },
+    {
+      "category": "service_apartment",
+      "places_in_india": 1504
+    },
+    {
+      "category": "lumber_store",
+      "places_in_india": 1498
+    },
+    {
+      "category": "laundromat",
+      "places_in_india": 1498
+    },
+    {
+      "category": "currency_exchange",
+      "places_in_india": 1492
+    },
+    {
+      "category": "family_practice",
+      "places_in_india": 1486
+    },
+    {
+      "category": "guest_house",
+      "places_in_india": 1478
+    },
+    {
+      "category": "market",
+      "places_in_india": 1472
+    },
+    {
+      "category": "gaming_venue",
+      "places_in_india": 1466
+    },
+    {
+      "category": "hair_replacement",
+      "places_in_india": 1444
+    },
+    {
+      "category": "psychiatry_or_psychology_service",
+      "places_in_india": 1438
+    },
+    {
+      "category": "lingerie_store",
+      "places_in_india": 1433
+    },
+    {
+      "category": "second_hand_store",
+      "places_in_india": 1433
+    },
+    {
+      "category": "sandwich_shop",
+      "places_in_india": 1432
+    },
+    {
+      "category": "political_party_office",
+      "places_in_india": 1424
+    },
+    {
+      "category": "sport_court",
+      "places_in_india": 1415
+    },
+    {
+      "category": "commercial_real_estate",
+      "places_in_india": 1414
+    },
+    {
+      "category": "food_truck_stand",
+      "places_in_india": 1411
+    },
+    {
+      "category": "career_counseling",
+      "places_in_india": 1409
+    },
+    {
+      "category": "appliance_manufacturer",
+      "places_in_india": 1402
+    },
+    {
+      "category": "amusement_attraction",
+      "places_in_india": 1400
+    },
+    {
+      "category": "military_site",
+      "places_in_india": 1392
+    },
+    {
+      "category": "butcher_shop",
+      "places_in_india": 1390
+    },
+    {
+      "category": "media_news_website",
+      "places_in_india": 1385
+    },
+    {
+      "category": "environmental_or_ecological_service",
+      "places_in_india": 1381
+    },
+    {
+      "category": "motorsport_vehicle_dealer",
+      "places_in_india": 1377
+    },
+    {
+      "category": "fertility_clinic",
+      "places_in_india": 1372
+    },
+    {
+      "category": "pub",
+      "places_in_india": 1359
+    },
+    {
+      "category": "amusement_park",
+      "places_in_india": 1357
+    },
+    {
+      "category": "electric_utility_provider",
+      "places_in_india": 1351
+    },
+    {
+      "category": "kitchen_and_bath_store",
+      "places_in_india": 1343
+    },
+    {
+      "category": "battery_store",
+      "places_in_india": 1342
+    },
+    {
+      "category": "e_commerce_service",
+      "places_in_india": 1330
+    },
+    {
+      "category": "linen_store",
+      "places_in_india": 1327
+    },
+    {
+      "category": "farmers_market",
+      "places_in_india": 1323
+    },
+    {
+      "category": "plastic_and_reconstructive_surgery",
+      "places_in_india": 1289
+    },
+    {
+      "category": "oncology",
+      "places_in_india": 1282
+    },
+    {
+      "category": "neurology",
+      "places_in_india": 1263
+    },
+    {
+      "category": "cosmetic_dentistry",
+      "places_in_india": 1263
+    },
+    {
+      "category": "uniform_store",
+      "places_in_india": 1249
+    },
+    {
+      "category": "bottled_water_company",
+      "places_in_india": 1244
+    },
+    {
+      "category": "gastroenterology",
+      "places_in_india": 1243
+    },
+    {
+      "category": "aquatic_pet_store",
+      "places_in_india": 1231
+    },
+    {
+      "category": "media_agency",
+      "places_in_india": 1174
+    },
+    {
+      "category": "beach_resort",
+      "places_in_india": 1171
+    },
+    {
+      "category": "fire_protection_service",
+      "places_in_india": 1166
+    },
+    {
+      "category": "speech_therapy",
+      "places_in_india": 1165
+    },
+    {
+      "category": "breakfast_and_brunch_restaurant",
+      "places_in_india": 1162
+    },
+    {
+      "category": "cultural_center",
+      "places_in_india": 1161
+    },
+    {
+      "category": "flight_school",
+      "places_in_india": 1160
+    },
+    {
+      "category": "abuse_and_addiction_treatment_center",
+      "places_in_india": 1159
+    },
+    {
+      "category": "urology",
+      "places_in_india": 1154
+    },
+    {
+      "category": "windows_installation",
+      "places_in_india": 1123
+    },
+    {
+      "category": "apparel_manufacturer",
+      "places_in_india": 1119
+    },
+    {
+      "category": "landscaping",
+      "places_in_india": 1116
+    },
+    {
+      "category": "auto_customization",
+      "places_in_india": 1109
+    },
+    {
+      "category": "gift_shop",
+      "places_in_india": 1099
+    },
+    {
+      "category": "patisserie_cake_shop",
+      "places_in_india": 1088
+    },
+    {
+      "category": "beauty_product_supplier",
+      "places_in_india": 1074
+    },
+    {
+      "category": "truck_and_industrial_vehicle_services",
+      "places_in_india": 1062
+    },
+    {
+      "category": "wholesale_grocer",
+      "places_in_india": 1060
+    },
+    {
+      "category": "bangladeshi_restaurant",
+      "places_in_india": 1051
+    },
+    {
+      "category": "weight_loss_center",
+      "places_in_india": 1050
+    },
+    {
+      "category": "tractor_dealer",
+      "places_in_india": 1026
+    },
+    {
+      "category": "chocolatier",
+      "places_in_india": 1026
+    },
+    {
+      "category": "pool_billiards",
+      "places_in_india": 1024
+    },
+    {
+      "category": "party_supply_store",
+      "places_in_india": 1017
+    },
+    {
+      "category": "recreational_equipment_rental",
+      "places_in_india": 1016
+    },
+    {
+      "category": "plastics_company",
+      "places_in_india": 1007
+    },
+    {
+      "category": "water_park",
+      "places_in_india": 999
+    },
+    {
+      "category": "medical_transportation",
+      "places_in_india": 986
+    },
+    {
+      "category": "hair_supply_store",
+      "places_in_india": 982
+    },
+    {
+      "category": "airline",
+      "places_in_india": 980
+    },
+    {
+      "category": "environmental_conservation_organization",
+      "places_in_india": 979
+    },
+    {
+      "category": "tile_store",
+      "places_in_india": 976
+    },
+    {
+      "category": "fishmonger",
+      "places_in_india": 966
+    },
+    {
+      "category": "public_fountain",
+      "places_in_india": 959
+    },
+    {
+      "category": "cabin",
+      "places_in_india": 948
+    },
+    {
+      "category": "countertop_installation",
+      "places_in_india": 943
+    },
+    {
+      "category": "southeast_asian_restaurant",
+      "places_in_india": 937
+    },
+    {
+      "category": "commercial_vehicle_dealer",
+      "places_in_india": 936
+    },
+    {
+      "category": "plumbing",
+      "places_in_india": 935
+    },
+    {
+      "category": "pentecostal_place_of_worship",
+      "places_in_india": 930
+    },
+    {
+      "category": "furniture_manufacturer",
+      "places_in_india": 928
+    },
+    {
+      "category": "designer_clothing",
+      "places_in_india": 926
+    },
+    {
+      "category": "pet_care_service",
+      "places_in_india": 915
+    },
+    {
+      "category": "fire_station",
+      "places_in_india": 911
+    },
+    {
+      "category": "cleaning_service",
+      "places_in_india": 900
+    },
+    {
+      "category": "cosmetology_school",
+      "places_in_india": 898
+    },
+    {
+      "category": "b2b_clinical_lab",
+      "places_in_india": 889
+    },
+    {
+      "category": "b2b_farming",
+      "places_in_india": 879
+    },
+    {
+      "category": "badminton_court",
+      "places_in_india": 878
+    },
+    {
+      "category": "orthodontics",
+      "places_in_india": 878
+    },
+    {
+      "category": "embassy",
+      "places_in_india": 872
+    },
+    {
+      "category": "tobacco_shop",
+      "places_in_india": 870
+    },
+    {
+      "category": "elevator_service",
+      "places_in_india": 867
+    },
+    {
+      "category": "biotechnology_company",
+      "places_in_india": 865
+    },
+    {
+      "category": "freight_forwarding_agency",
+      "places_in_india": 864
+    },
+    {
+      "category": "mill",
+      "places_in_india": 862
+    },
+    {
+      "category": "national_park",
+      "places_in_india": 862
+    },
+    {
+      "category": "comedy_club",
+      "places_in_india": 862
+    },
+    {
+      "category": "palace",
+      "places_in_india": 848
+    },
+    {
+      "category": "apartment",
+      "places_in_india": 846
+    },
+    {
+      "category": "cooking_school",
+      "places_in_india": 828
+    },
+    {
+      "category": "wildlife_sanctuary",
+      "places_in_india": 823
+    },
+    {
+      "category": "video_game_store",
+      "places_in_india": 822
+    },
+    {
+      "category": "life_coach",
+      "places_in_india": 805
+    },
+    {
+      "category": "b2b_mining",
+      "places_in_india": 800
+    },
+    {
+      "category": "real_estate_investment",
+      "places_in_india": 799
+    },
+    {
+      "category": "ethical_grocery_store",
+      "places_in_india": 799
+    },
+    {
+      "category": "emergency_or_urgent_care_facility",
+      "places_in_india": 798
+    },
+    {
+      "category": "carpenter",
+      "places_in_india": 788
+    },
+    {
+      "category": "audiology",
+      "places_in_india": 786
+    },
+    {
+      "category": "animal_adoption_or_rescue",
+      "places_in_india": 785
+    },
+    {
+      "category": "watch_store",
+      "places_in_india": 784
+    },
+    {
+      "category": "discount_store",
+      "places_in_india": 765
+    },
+    {
+      "category": "laboratory",
+      "places_in_india": 757
+    },
+    {
+      "category": "aquarium",
+      "places_in_india": 743
+    },
+    {
+      "category": "television_service_provider",
+      "places_in_india": 735
+    },
+    {
+      "category": "fish_farm_hatchery",
+      "places_in_india": 722
+    },
+    {
+      "category": "b2b_oil_and_gas_extraction",
+      "places_in_india": 720
+    },
+    {
+      "category": "student_union",
+      "places_in_india": 720
+    },
+    {
+      "category": "fish_farm",
+      "places_in_india": 716
+    },
+    {
+      "category": "japanese_restaurant",
+      "places_in_india": 713
+    },
+    {
+      "category": "baptist_place_of_worship",
+      "places_in_india": 712
+    },
+    {
+      "category": "garbage_collection_service",
+      "places_in_india": 707
+    },
+    {
+      "category": "farm_equipment_and_supply",
+      "places_in_india": 706
+    },
+    {
+      "category": "international_fusion_restaurant",
+      "places_in_india": 703
+    },
+    {
+      "category": "educational_camp",
+      "places_in_india": 691
+    },
+    {
+      "category": "arcade",
+      "places_in_india": 691
+    },
+    {
+      "category": "traditional_clothing",
+      "places_in_india": 686
+    },
+    {
+      "category": "health_spa",
+      "places_in_india": 685
+    },
+    {
+      "category": "water_utility_provider",
+      "places_in_india": 676
+    },
+    {
+      "category": "educational_supply_store",
+      "places_in_india": 674
+    },
+    {
+      "category": "restaurant_equipment_and_supply",
+      "places_in_india": 672
+    },
+    {
+      "category": "marriage_or_relationship_counseling",
+      "places_in_india": 670
+    },
+    {
+      "category": "auto_restoration_service",
+      "places_in_india": 665
+    },
+    {
+      "category": "auto_body_shop",
+      "places_in_india": 664
+    },
+    {
+      "category": "public_plaza",
+      "places_in_india": 662
+    },
+    {
+      "category": "woodworking_supply_store",
+      "places_in_india": 659
+    },
+    {
+      "category": "pakistani_restaurant",
+      "places_in_india": 657
+    },
+    {
+      "category": "psychology",
+      "places_in_india": 651
+    },
+    {
+      "category": "history_museum",
+      "places_in_india": 649
+    },
+    {
+      "category": "surgery_center",
+      "places_in_india": 647
+    },
+    {
+      "category": "cement_supplier",
+      "places_in_india": 644
+    },
+    {
+      "category": "oil_change_station",
+      "places_in_india": 644
+    },
+    {
+      "category": "asian_fusion_restaurant",
+      "places_in_india": 641
+    },
+    {
+      "category": "maternity_center",
+      "places_in_india": 641
+    },
+    {
+      "category": "ambulance_or_ems_service",
+      "places_in_india": 641
+    },
+    {
+      "category": "electrical_supply_store",
+      "places_in_india": 630
+    },
+    {
+      "category": "homeopathy",
+      "places_in_india": 629
+    },
+    {
+      "category": "furniture_assembly",
+      "places_in_india": 623
+    },
+    {
+      "category": "psychiatry",
+      "places_in_india": 622
+    },
+    {
+      "category": "pediatric_dentistry",
+      "places_in_india": 621
+    },
+    {
+      "category": "car_stereo_store",
+      "places_in_india": 619
+    },
+    {
+      "category": "masonry_concrete",
+      "places_in_india": 618
+    },
+    {
+      "category": "motorcycle_manufacturer",
+      "places_in_india": 617
+    },
+    {
+      "category": "hair_stylist",
+      "places_in_india": 616
+    },
+    {
+      "category": "animal_shelter",
+      "places_in_india": 614
+    },
+    {
+      "category": "day_spa",
+      "places_in_india": 608
+    },
+    {
+      "category": "thai_restaurant",
+      "places_in_india": 600
+    },
+    {
+      "category": "import_export_service",
+      "places_in_india": 599
+    },
+    {
+      "category": "cosmetics_and_fragrance_store",
+      "places_in_india": 597
+    },
+    {
+      "category": "sightseeing_tour_agency",
+      "places_in_india": 596
+    },
+    {
+      "category": "sport_team",
+      "places_in_india": 595
+    },
+    {
+      "category": "costume_store",
+      "places_in_india": 595
+    },
+    {
+      "category": "water_purification_service",
+      "places_in_india": 590
+    },
+    {
+      "category": "hookah_bar",
+      "places_in_india": 584
+    },
+    {
+      "category": "hair_removal",
+      "places_in_india": 582
+    },
+    {
+      "category": "fireworks_store",
+      "places_in_india": 576
+    },
+    {
+      "category": "buffet_restaurant",
+      "places_in_india": 573
+    },
+    {
+      "category": "pulmonology",
+      "places_in_india": 569
+    },
+    {
+      "category": "structural_engineer",
+      "places_in_india": 569
+    },
+    {
+      "category": "kitchen_supply_store",
+      "places_in_india": 561
+    },
+    {
+      "category": "b2b_oil_refinery",
+      "places_in_india": 560
+    },
+    {
+      "category": "acupuncture",
+      "places_in_india": 560
+    },
+    {
+      "category": "glass_manufacturer",
+      "places_in_india": 556
+    },
+    {
+      "category": "fort",
+      "places_in_india": 553
+    },
+    {
+      "category": "nursing",
+      "places_in_india": 552
+    },
+    {
+      "category": "motorsports_store",
+      "places_in_india": 546
+    },
+    {
+      "category": "videographer",
+      "places_in_india": 539
+    },
+    {
+      "category": "hearing_aid_store",
+      "places_in_india": 534
+    },
+    {
+      "category": "endocrinology",
+      "places_in_india": 533
+    },
+    {
+      "category": "bags_luggage_company",
+      "places_in_india": 533
+    },
+    {
+      "category": "government_department",
+      "places_in_india": 533
+    },
+    {
+      "category": "commercial_refrigeration",
+      "places_in_india": 532
+    },
+    {
+      "category": "mover",
+      "places_in_india": 532
+    },
+    {
+      "category": "rubber_and_plastics_manufacturer",
+      "places_in_india": 529
+    },
+    {
+      "category": "building_contractor",
+      "places_in_india": 527
+    },
+    {
+      "category": "steel_fabricator",
+      "places_in_india": 522
+    },
+    {
+      "category": "ceiling_and_roofing_repair_and_service",
+      "places_in_india": 517
+    },
+    {
+      "category": "cocktail_bar",
+      "places_in_india": 517
+    },
+    {
+      "category": "roofing",
+      "places_in_india": 515
+    },
+    {
+      "category": "recreational_trail_or_path",
+      "places_in_india": 512
+    },
+    {
+      "category": "turkish_restaurant",
+      "places_in_india": 504
+    },
+    {
+      "category": "waterfall",
+      "places_in_india": 502
+    },
+    {
+      "category": "sport_field",
+      "places_in_india": 500
+    },
+    {
+      "category": "zoo",
+      "places_in_india": 498
+    },
+    {
+      "category": "inn",
+      "places_in_india": 494
+    },
+    {
+      "category": "canal",
+      "places_in_india": 494
+    },
+    {
+      "category": "alcohol_and_drug_treatment_center",
+      "places_in_india": 492
+    },
+    {
+      "category": "livestock_breeder",
+      "places_in_india": 488
+    },
+    {
+      "category": "lottery_vendor",
+      "places_in_india": 488
+    },
+    {
+      "category": "meat_wholesaler",
+      "places_in_india": 487
+    },
+    {
+      "category": "private_association",
+      "places_in_india": 484
+    },
+    {
+      "category": "auto_insurance",
+      "places_in_india": 484
+    },
+    {
+      "category": "pet_breeder",
+      "places_in_india": 483
+    },
+    {
+      "category": "hotel_supply_service",
+      "places_in_india": 483
+    },
+    {
+      "category": "bike_rental",
+      "places_in_india": 483
+    },
+    {
+      "category": "ophthalmology",
+      "places_in_india": 479
+    },
+    {
+      "category": "urban_farm",
+      "places_in_india": 477
+    },
+    {
+      "category": "outlet_store",
+      "places_in_india": 475
+    },
+    {
+      "category": "architect",
+      "places_in_india": 474
+    },
+    {
+      "category": "north_american_restaurant",
+      "places_in_india": 468
+    },
+    {
+      "category": "american_restaurant",
+      "places_in_india": 467
+    },
+    {
+      "category": "bubble_tea_shop",
+      "places_in_india": 467
+    },
+    {
+      "category": "radio_station",
+      "places_in_india": 465
+    },
+    {
+      "category": "music_and_dvd_store",
+      "places_in_india": 464
+    },
+    {
+      "category": "animation_studio",
+      "places_in_india": 461
+    },
+    {
+      "category": "pharmaceutical_products_wholesaler",
+      "places_in_india": 460
+    },
+    {
+      "category": "mattress_manufacturing",
+      "places_in_india": 460
+    },
+    {
+      "category": "antique_store",
+      "places_in_india": 457
+    },
+    {
+      "category": "chiropractic",
+      "places_in_india": 454
+    },
+    {
+      "category": "land_surveying",
+      "places_in_india": 451
+    },
+    {
+      "category": "home_decor_store",
+      "places_in_india": 450
+    },
+    {
+      "category": "poultry_farm",
+      "places_in_india": 449
+    },
+    {
+      "category": "nepalese_restaurant",
+      "places_in_india": 448
+    },
+    {
+      "category": "himalayan_restaurant",
+      "places_in_india": 448
+    },
+    {
+      "category": "packing_supply_store",
+      "places_in_india": 447
+    },
+    {
+      "category": "brewery",
+      "places_in_india": 446
+    },
+    {
+      "category": "dairy_store",
+      "places_in_india": 442
+    },
+    {
+      "category": "public_relations",
+      "places_in_india": 441
+    },
+    {
+      "category": "newspaper_and_magazines_store",
+      "places_in_india": 438
+    },
+    {
+      "category": "radiology",
+      "places_in_india": 437
+    },
+    {
+      "category": "cards_and_stationery_store",
+      "places_in_india": 432
+    },
+    {
+      "category": "hiking_trail",
+      "places_in_india": 429
+    },
+    {
+      "category": "bike_repair_maintenance",
+      "places_in_india": 426
+    },
+    {
+      "category": "pet_groomer",
+      "places_in_india": 417
+    },
+    {
+      "category": "health_food_restaurant",
+      "places_in_india": 417
+    },
+    {
+      "category": "latin_american_restaurant",
+      "places_in_india": 416
+    },
+    {
+      "category": "nephrology",
+      "places_in_india": 412
+    },
+    {
+      "category": "drive_in_theater",
+      "places_in_india": 407
+    },
+    {
+      "category": "security_service",
+      "places_in_india": 404
+    },
+    {
+      "category": "hunting_and_fishing_store",
+      "places_in_india": 401
+    },
+    {
+      "category": "shooting_range",
+      "places_in_india": 398
+    },
+    {
+      "category": "computer_wholesaler",
+      "places_in_india": 396
+    },
+    {
+      "category": "security_systems",
+      "places_in_india": 392
+    },
+    {
+      "category": "ev_charging_station",
+      "places_in_india": 391
+    },
+    {
+      "category": "pool_cleaning",
+      "places_in_india": 390
+    },
+    {
+      "category": "doner_kebab_restaurant",
+      "places_in_india": 385
+    },
+    {
+      "category": "courier_and_delivery_service",
+      "places_in_india": 384
+    },
+    {
+      "category": "process_server",
+      "places_in_india": 384
+    },
+    {
+      "category": "engine_repair_service",
+      "places_in_india": 382
+    },
+    {
+      "category": "tiling",
+      "places_in_india": 381
+    },
+    {
+      "category": "well_drilling",
+      "places_in_india": 379
+    },
+    {
+      "category": "pawn_shop",
+      "places_in_india": 377
+    },
+    {
+      "category": "record_label",
+      "places_in_india": 376
+    },
+    {
+      "category": "laser_hair_removal",
+      "places_in_india": 371
+    },
+    {
+      "category": "exporter",
+      "places_in_india": 366
+    },
+    {
+      "category": "occupational_safety",
+      "places_in_india": 366
+    },
+    {
+      "category": "tennis_court",
+      "places_in_india": 361
+    },
+    {
+      "category": "janitorial_service",
+      "places_in_india": 357
+    },
+    {
+      "category": "coworking_space",
+      "places_in_india": 355
+    },
+    {
+      "category": "occupational_therapy",
+      "places_in_india": 354
+    },
+    {
+      "category": "prenatal_and_perinatal_care",
+      "places_in_india": 353
+    },
+    {
+      "category": "writing_service",
+      "places_in_india": 352
+    },
+    {
+      "category": "bus_tour",
+      "places_in_india": 351
+    },
+    {
+      "category": "b2b_international_trade_service",
+      "places_in_india": 350
+    },
+    {
+      "category": "social_and_human_service",
+      "places_in_india": 349
+    },
+    {
+      "category": "gymnastics_center",
+      "places_in_india": 346
+    },
+    {
+      "category": "printing_equipment_supplier",
+      "places_in_india": 345
+    },
+    {
+      "category": "korean_restaurant",
+      "places_in_india": 345
+    },
+    {
+      "category": "rheumatology",
+      "places_in_india": 340
+    },
+    {
+      "category": "outdoor_store",
+      "places_in_india": 339
+    },
+    {
+      "category": "tax_law",
+      "places_in_india": 334
+    },
+    {
+      "category": "kids_recreation_and_party",
+      "places_in_india": 334
+    },
+    {
+      "category": "proctology",
+      "places_in_india": 332
+    },
+    {
+      "category": "garden",
+      "places_in_india": 331
+    },
+    {
+      "category": "botanical_garden",
+      "places_in_india": 331
+    },
+    {
+      "category": "business_consulting",
+      "places_in_india": 331
+    },
+    {
+      "category": "hobby_shop",
+      "places_in_india": 330
+    },
+    {
+      "category": "b2b_telemarketing_service",
+      "places_in_india": 330
+    },
+    {
+      "category": "arabian_restaurant",
+      "places_in_india": 329
+    },
+    {
+      "category": "b2b_newspaper_advertising",
+      "places_in_india": 328
+    },
+    {
+      "category": "fur_clothing",
+      "places_in_india": 324
+    },
+    {
+      "category": "golf_course",
+      "places_in_india": 320
+    },
+    {
+      "category": "criminal_defense_law",
+      "places_in_india": 320
+    },
+    {
+      "category": "trophy_store",
+      "places_in_india": 317
+    },
+    {
+      "category": "medical_spa",
+      "places_in_india": 316
+    },
+    {
+      "category": "soccer_field",
+      "places_in_india": 316
+    },
+    {
+      "category": "gardener",
+      "places_in_india": 315
+    },
+    {
+      "category": "boat_tour",
+      "places_in_india": 313
+    },
+    {
+      "category": "crops_production",
+      "places_in_india": 313
+    },
+    {
+      "category": "tv_mounting",
+      "places_in_india": 311
+    },
+    {
+      "category": "hydraulic_equipment_supplier",
+      "places_in_india": 307
+    },
+    {
+      "category": "labor_union",
+      "places_in_india": 302
+    },
+    {
+      "category": "professional_sport_team",
+      "places_in_india": 302
+    },
+    {
+      "category": "auto_glass_service",
+      "places_in_india": 296
+    },
+    {
+      "category": "motel",
+      "places_in_india": 296
+    },
+    {
+      "category": "sunglasses_store",
+      "places_in_india": 293
+    },
+    {
+      "category": "mobile_home_dealer",
+      "places_in_india": 293
+    },
+    {
+      "category": "senior_citizen_service",
+      "places_in_india": 290
+    },
+    {
+      "category": "superstore",
+      "places_in_india": 289
+    },
+    {
+      "category": "art_museum",
+      "places_in_india": 285
+    },
+    {
+      "category": "smoke_and_vape_store",
+      "places_in_india": 284
+    },
+    {
+      "category": "session_photography_service",
+      "places_in_india": 284
+    },
+    {
+      "category": "beer_bar",
+      "places_in_india": 284
+    },
+    {
+      "category": "jail_or_prison",
+      "places_in_india": 282
+    },
+    {
+      "category": "gun_and_ammo_store",
+      "places_in_india": 282
+    },
+    {
+      "category": "oral_and_maxillofacial_surgery",
+      "places_in_india": 278
+    },
+    {
+      "category": "department_of_motor_vehicles",
+      "places_in_india": 277
+    },
+    {
+      "category": "video_film_production",
+      "places_in_india": 277
+    },
+    {
+      "category": "dj_service",
+      "places_in_india": 276
+    },
+    {
+      "category": "airport_terminal",
+      "places_in_india": 271
+    },
+    {
+      "category": "mexican_restaurant",
+      "places_in_india": 269
+    },
+    {
+      "category": "indo_chinese_restaurant",
+      "places_in_india": 269
+    },
+    {
+      "category": "football_stadium",
+      "places_in_india": 267
+    },
+    {
+      "category": "dialysis_clinic",
+      "places_in_india": 265
+    },
+    {
+      "category": "auto_leasing",
+      "places_in_india": 264
+    },
+    {
+      "category": "flea_market",
+      "places_in_india": 263
+    },
+    {
+      "category": "health_department",
+      "places_in_india": 256
+    },
+    {
+      "category": "electronics_repair_shop",
+      "places_in_india": 255
+    },
+    {
+      "category": "private_investigation",
+      "places_in_india": 254
+    },
+    {
+      "category": "boat_service",
+      "places_in_india": 252
+    },
+    {
+      "category": "railroad_freight",
+      "places_in_india": 252
+    },
+    {
+      "category": "prosthetics",
+      "places_in_india": 251
+    },
+    {
+      "category": "pet_boarding",
+      "places_in_india": 250
+    },
+    {
+      "category": "donut_shop",
+      "places_in_india": 249
+    },
+    {
+      "category": "motor_freight_trucking",
+      "places_in_india": 248
+    },
+    {
+      "category": "theatrical_production",
+      "places_in_india": 247
+    },
+    {
+      "category": "b2b_storage",
+      "places_in_india": 246
+    },
+    {
+      "category": "grain_production",
+      "places_in_india": 246
+    },
+    {
+      "category": "waterproofing",
+      "places_in_india": 244
+    },
+    {
+      "category": "book_magazine_distribution",
+      "places_in_india": 244
+    },
+    {
+      "category": "game_publisher",
+      "places_in_india": 243
+    },
+    {
+      "category": "b2b_secretarial_service",
+      "places_in_india": 243
+    },
+    {
+      "category": "karaoke_venue",
+      "places_in_india": 242
+    },
+    {
+      "category": "canoe_and_kayak_hire_service",
+      "places_in_india": 240
+    },
+    {
+      "category": "endodontics",
+      "places_in_india": 238
+    },
+    {
+      "category": "festival_venue",
+      "places_in_india": 236
+    },
+    {
+      "category": "key_and_locksmith",
+      "places_in_india": 231
+    },
+    {
+      "category": "cable_car_service",
+      "places_in_india": 231
+    },
+    {
+      "category": "dumpling_restaurant",
+      "places_in_india": 230
+    },
+    {
+      "category": "pilates_studio",
+      "places_in_india": 229
+    },
+    {
+      "category": "disability_services_and_support_organization",
+      "places_in_india": 226
+    },
+    {
+      "category": "divorce_and_family_law",
+      "places_in_india": 225
+    },
+    {
+      "category": "sex_therapy",
+      "places_in_india": 224
+    },
+    {
+      "category": "fairgrounds",
+      "places_in_india": 224
+    },
+    {
+      "category": "gastropub",
+      "places_in_india": 223
+    },
+    {
+      "category": "home_theater_systems_stores",
+      "places_in_india": 222
+    },
+    {
+      "category": "souvenir_store",
+      "places_in_india": 222
+    },
+    {
+      "category": "truck_rental_service",
+      "places_in_india": 222
+    },
+    {
+      "category": "baby_gear_and_nursery_store",
+      "places_in_india": 221
+    },
+    {
+      "category": "korean_grocery_store",
+      "places_in_india": 221
+    },
+    {
+      "category": "ferry_boat_company",
+      "places_in_india": 220
+    },
+    {
+      "category": "paper_mill",
+      "places_in_india": 219
+    },
+    {
+      "category": "condominium",
+      "places_in_india": 219
+    },
+    {
+      "category": "central_asian_restaurant",
+      "places_in_india": 218
+    },
+    {
+      "category": "comfort_food_restaurant",
+      "places_in_india": 218
+    },
+    {
+      "category": "gold_buyer",
+      "places_in_india": 218
+    },
+    {
+      "category": "afghani_restaurant",
+      "places_in_india": 216
+    },
+    {
+      "category": "delicatessen",
+      "places_in_india": 215
+    },
+    {
+      "category": "translating_and_interpreting_service",
+      "places_in_india": 214
+    },
+    {
+      "category": "recycling_center",
+      "places_in_india": 212
+    },
+    {
+      "category": "housing_authority",
+      "places_in_india": 212
+    },
+    {
+      "category": "auto_electrical_repair",
+      "places_in_india": 212
+    },
+    {
+      "category": "food_consultant",
+      "places_in_india": 210
+    },
+    {
+      "category": "mortgage_broker",
+      "places_in_india": 210
+    },
+    {
+      "category": "textile_mill",
+      "places_in_india": 207
+    },
+    {
+      "category": "notary_public",
+      "places_in_india": 205
+    },
+    {
+      "category": "boxing_class",
+      "places_in_india": 204
+    },
+    {
+      "category": "ayurveda",
+      "places_in_india": 203
+    },
+    {
+      "category": "florist",
+      "places_in_india": 203
+    },
+    {
+      "category": "refractive_surgery_or_lasik",
+      "places_in_india": 202
+    },
+    {
+      "category": "beverage_supplier",
+      "places_in_india": 202
+    },
+    {
+      "category": "neuropathology",
+      "places_in_india": 201
+    },
+    {
+      "category": "steakhouse",
+      "places_in_india": 201
+    },
+    {
+      "category": "b2b_human_resource_service",
+      "places_in_india": 200
+    },
+    {
+      "category": "pathology",
+      "places_in_india": 191
+    },
+    {
+      "category": "diving_center",
+      "places_in_india": 191
+    },
+    {
+      "category": "horse_riding",
+      "places_in_india": 191
+    },
+    {
+      "category": "vending_machine_supplier",
+      "places_in_india": 190
+    },
+    {
+      "category": "burmese_restaurant",
+      "places_in_india": 190
+    },
+    {
+      "category": "sri_lankan_restaurant",
+      "places_in_india": 190
+    },
+    {
+      "category": "wig_store",
+      "places_in_india": 189
+    },
+    {
+      "category": "sports_bar",
+      "places_in_india": 188
+    },
+    {
+      "category": "business_office_supplies_and_stationery",
+      "places_in_india": 185
+    },
+    {
+      "category": "automotive_consultant",
+      "places_in_india": 184
+    },
+    {
+      "category": "forest",
+      "places_in_india": 183
+    },
+    {
+      "category": "hair_extensions",
+      "places_in_india": 181
+    },
+    {
+      "category": "merchandising_service",
+      "places_in_india": 180
+    },
+    {
+      "category": "bank_equipment_service",
+      "places_in_india": 180
+    },
+    {
+      "category": "boat_rental_and_training",
+      "places_in_india": 179
+    },
+    {
+      "category": "industrial_facility_or_service",
+      "places_in_india": 179
+    },
+    {
+      "category": "packing_service",
+      "places_in_india": 178
+    },
+    {
+      "category": "hematology",
+      "places_in_india": 176
+    },
+    {
+      "category": "scuba_diving_center",
+      "places_in_india": 174
+    },
+    {
+      "category": "farming_service",
+      "places_in_india": 172
+    },
+    {
+      "category": "bowling_alley",
+      "places_in_india": 171
+    },
+    {
+      "category": "bus_rental",
+      "places_in_india": 171
+    },
+    {
+      "category": "halal_restaurant",
+      "places_in_india": 171
+    },
+    {
+      "category": "airport_lounge",
+      "places_in_india": 169
+    },
+    {
+      "category": "boat_parts_store",
+      "places_in_india": 169
+    },
+    {
+      "category": "amateur_sport_team",
+      "places_in_india": 169
+    },
+    {
+      "category": "web_hosting_service",
+      "places_in_india": 168
+    },
+    {
+      "category": "emissions_inspection",
+      "places_in_india": 168
+    },
+    {
+      "category": "sushi_restaurant",
+      "places_in_india": 166
+    },
+    {
+      "category": "psychotherapy",
+      "places_in_india": 165
+    },
+    {
+      "category": "race_track",
+      "places_in_india": 165
+    },
+    {
+      "category": "lebanese_restaurant",
+      "places_in_india": 165
+    },
+    {
+      "category": "pet_training",
+      "places_in_india": 164
+    },
+    {
+      "category": "dog_trainer",
+      "places_in_india": 163
+    },
+    {
+      "category": "ip_and_internet_law",
+      "places_in_india": 163
+    },
+    {
+      "category": "b2b_coal_and_coke",
+      "places_in_india": 161
+    },
+    {
+      "category": "b2b_hospital_equipment_and_supplies",
+      "places_in_india": 160
+    },
+    {
+      "category": "boot_camp",
+      "places_in_india": 159
+    },
+    {
+      "category": "warehouse",
+      "places_in_india": 159
+    },
+    {
+      "category": "tanning_salon",
+      "places_in_india": 158
+    },
+    {
+      "category": "soup_restaurant",
+      "places_in_india": 156
+    },
+    {
+      "category": "audiovisual_equipment_rental",
+      "places_in_india": 155
+    },
+    {
+      "category": "digitizing_service",
+      "places_in_india": 154
+    },
+    {
+      "category": "powder_coating_service",
+      "places_in_india": 154
+    },
+    {
+      "category": "hair_loss_center",
+      "places_in_india": 154
+    },
+    {
+      "category": "swimming_instructor",
+      "places_in_india": 152
+    },
+    {
+      "category": "tax_service",
+      "places_in_india": 152
+    },
+    {
+      "category": "adult_entertainment_venue",
+      "places_in_india": 152
+    },
+    {
+      "category": "animal_rescue_service",
+      "places_in_india": 151
+    },
+    {
+      "category": "salad_bar",
+      "places_in_india": 151
+    },
+    {
+      "category": "recreational_vehicle_dealer",
+      "places_in_india": 149
+    },
+    {
+      "category": "truck_repair",
+      "places_in_india": 149
+    },
+    {
+      "category": "casino",
+      "places_in_india": 148
+    },
+    {
+      "category": "prosthodontics",
+      "places_in_india": 148
+    },
+    {
+      "category": "health_coaching",
+      "places_in_india": 148
+    },
+    {
+      "category": "science_museum",
+      "places_in_india": 147
+    },
+    {
+      "category": "baseball_field",
+      "places_in_india": 146
+    },
+    {
+      "category": "hotel_bar",
+      "places_in_india": 145
+    },
+    {
+      "category": "public_restroom",
+      "places_in_india": 143
+    },
+    {
+      "category": "wine_bar",
+      "places_in_india": 140
+    },
+    {
+      "category": "visa_agent",
+      "places_in_india": 140
+    },
+    {
+      "category": "anglican_or_episcopal_place_of_worship",
+      "places_in_india": 138
+    },
+    {
+      "category": "western_european_restaurant",
+      "places_in_india": 138
+    },
+    {
+      "category": "towing_service",
+      "places_in_india": 137
+    },
+    {
+      "category": "cave",
+      "places_in_india": 137
+    },
+    {
+      "category": "fence_and_gate_sales_service",
+      "places_in_india": 137
+    },
+    {
+      "category": "maternity_wear",
+      "places_in_india": 136
+    },
+    {
+      "category": "lighthouse",
+      "places_in_india": 135
+    },
+    {
+      "category": "historic_mission",
+      "places_in_india": 134
+    },
+    {
+      "category": "metal_plating_service",
+      "places_in_india": 134
+    },
+    {
+      "category": "hvac_supplier",
+      "places_in_india": 132
+    },
+    {
+      "category": "frozen_yogurt_shop",
+      "places_in_india": 131
+    },
+    {
+      "category": "logging_service",
+      "places_in_india": 131
+    },
+    {
+      "category": "shoe_repair",
+      "places_in_india": 130
+    },
+    {
+      "category": "science_attraction",
+      "places_in_india": 130
+    },
+    {
+      "category": "pain_management",
+      "places_in_india": 127
+    },
+    {
+      "category": "periodontics",
+      "places_in_india": 127
+    },
+    {
+      "category": "comic_books_store",
+      "places_in_india": 125
+    },
+    {
+      "category": "craft_store",
+      "places_in_india": 122
+    },
+    {
+      "category": "social_media_company",
+      "places_in_india": 121
+    },
+    {
+      "category": "homeless_shelter",
+      "places_in_india": 121
+    },
+    {
+      "category": "basketball_court",
+      "places_in_india": 121
+    },
+    {
+      "category": "skating_rink",
+      "places_in_india": 121
+    },
+    {
+      "category": "aromatherapy",
+      "places_in_india": 119
+    },
+    {
+      "category": "emergency_department",
+      "places_in_india": 118
+    },
+    {
+      "category": "food_safety_training",
+      "places_in_india": 117
+    },
+    {
+      "category": "public_health_clinic",
+      "places_in_india": 117
+    },
+    {
+      "category": "motorcycle_rental_service",
+      "places_in_india": 117
+    },
+    {
+      "category": "tools_wholesaler",
+      "places_in_india": 116
+    },
+    {
+      "category": "pop_up_store",
+      "places_in_india": 114
+    },
+    {
+      "category": "winery",
+      "places_in_india": 113
+    },
+    {
+      "category": "t_shirt_store",
+      "places_in_india": 113
+    },
+    {
+      "category": "second_hand_clothing_store",
+      "places_in_india": 112
+    },
+    {
+      "category": "scooter_dealer",
+      "places_in_india": 111
+    },
+    {
+      "category": "mortgage_lender",
+      "places_in_india": 111
+    },
+    {
+      "category": "distillery",
+      "places_in_india": 110
+    },
+    {
+      "category": "ramen_restaurant",
+      "places_in_india": 109
+    },
+    {
+      "category": "allergy_and_immunology",
+      "places_in_india": 109
+    },
+    {
+      "category": "escape_room",
+      "places_in_india": 107
+    },
+    {
+      "category": "fish_and_chips_restaurant",
+      "places_in_india": 106
+    },
+    {
+      "category": "restaurant_wholesale",
+      "places_in_india": 106
+    },
+    {
+      "category": "auction_house",
+      "places_in_india": 105
+    },
+    {
+      "category": "furniture_accessory_store",
+      "places_in_india": 104
+    },
+    {
+      "category": "emergency_roadside_service",
+      "places_in_india": 103
+    },
+    {
+      "category": "bartender",
+      "places_in_india": 103
+    },
+    {
+      "category": "real_estate_law",
+      "places_in_india": 103
+    },
+    {
+      "category": "fishing_club",
+      "places_in_india": 103
+    },
+    {
+      "category": "cancer_treatment_center",
+      "places_in_india": 101
+    },
+    {
+      "category": "image_consultant",
+      "places_in_india": 100
+    },
+    {
+      "category": "health_insurance_office",
+      "places_in_india": 100
+    },
+    {
+      "category": "visitor_center",
+      "places_in_india": 100
+    },
+    {
+      "category": "go_kart_club",
+      "places_in_india": 100
+    },
+    {
+      "category": "garage_door_service",
+      "places_in_india": 100
+    },
+    {
+      "category": "jewish_place_of_worship",
+      "places_in_india": 99
+    },
+    {
+      "category": "french_restaurant",
+      "places_in_india": 98
+    },
+    {
+      "category": "dental_supply_store",
+      "places_in_india": 97
+    },
+    {
+      "category": "adventure_sport",
+      "places_in_india": 97
+    },
+    {
+      "category": "rock_climbing_spot",
+      "places_in_india": 96
+    },
+    {
+      "category": "central_european_restaurant",
+      "places_in_india": 96
+    },
+    {
+      "category": "cotton_mill",
+      "places_in_india": 96
+    },
+    {
+      "category": "wheel_and_rim_repair",
+      "places_in_india": 95
+    },
+    {
+      "category": "septic_service",
+      "places_in_india": 94
+    },
+    {
+      "category": "indian_sweets_shop",
+      "places_in_india": 94
+    },
+    {
+      "category": "credit_and_debt_counseling",
+      "places_in_india": 93
+    },
+    {
+      "category": "brake_service_and_repair",
+      "places_in_india": 92
+    },
+    {
+      "category": "leather_goods_store",
+      "places_in_india": 92
+    },
+    {
+      "category": "handyman",
+      "places_in_india": 92
+    },
+    {
+      "category": "herb_and_spice_store",
+      "places_in_india": 92
+    },
+    {
+      "category": "business_school",
+      "places_in_india": 91
+    },
+    {
+      "category": "podiatry",
+      "places_in_india": 91
+    },
+    {
+      "category": "iberian_restaurant",
+      "places_in_india": 90
+    },
+    {
+      "category": "custom_t_shirt_store",
+      "places_in_india": 90
+    },
+    {
+      "category": "roller_skating_rink",
+      "places_in_india": 90
+    },
+    {
+      "category": "housing_cooperative",
+      "places_in_india": 89
+    },
+    {
+      "category": "product_design",
+      "places_in_india": 88
+    },
+    {
+      "category": "b2b_food_products",
+      "places_in_india": 88
+    },
+    {
+      "category": "water_sport",
+      "places_in_india": 88
+    },
+    {
+      "category": "fitness_equipment_wholesaler",
+      "places_in_india": 87
+    },
+    {
+      "category": "heliport",
+      "places_in_india": 87
+    },
+    {
+      "category": "beer_garden",
+      "places_in_india": 87
+    },
+    {
+      "category": "private_tutor",
+      "places_in_india": 86
+    },
+    {
+      "category": "excavation_service",
+      "places_in_india": 85
+    },
+    {
+      "category": "threads_and_yarns_wholesaler",
+      "places_in_india": 85
+    },
+    {
+      "category": "hat_store",
+      "places_in_india": 85
+    },
+    {
+      "category": "german_restaurant",
+      "places_in_india": 83
+    },
+    {
+      "category": "handbag_store",
+      "places_in_india": 83
+    },
+    {
+      "category": "geological_service",
+      "places_in_india": 83
+    },
+    {
+      "category": "gelato_shop",
+      "places_in_india": 83
+    },
+    {
+      "category": "soccer_stadium",
+      "places_in_india": 83
+    },
+    {
+      "category": "sculpture_statue",
+      "places_in_india": 83
+    },
+    {
+      "category": "b2b_radio_and_television_commercials",
+      "places_in_india": 83
+    },
+    {
+      "category": "mountain_bike_trail",
+      "places_in_india": 82
+    },
+    {
+      "category": "dim_sum_restaurant",
+      "places_in_india": 81
+    },
+    {
+      "category": "cardiothoracic_surgery",
+      "places_in_india": 81
+    },
+    {
+      "category": "musician",
+      "places_in_india": 79
+    },
+    {
+      "category": "adult_education_center",
+      "places_in_india": 79
+    },
+    {
+      "category": "drywall_service",
+      "places_in_india": 78
+    },
+    {
+      "category": "health_market",
+      "places_in_india": 77
+    },
+    {
+      "category": "assisted_living_facility",
+      "places_in_india": 77
+    },
+    {
+      "category": "driving_range",
+      "places_in_india": 76
+    },
+    {
+      "category": "pediatric_cardiology",
+      "places_in_india": 76
+    },
+    {
+      "category": "home_automation",
+      "places_in_india": 76
+    },
+    {
+      "category": "automobile_registration_service",
+      "places_in_india": 76
+    },
+    {
+      "category": "junkyard",
+      "places_in_india": 75
+    },
+    {
+      "category": "cleaning_products_supplier",
+      "places_in_india": 75
+    },
+    {
+      "category": "self_storage_facility",
+      "places_in_india": 74
+    },
+    {
+      "category": "ski_resort",
+      "places_in_india": 74
+    },
+    {
+      "category": "reflexology",
+      "places_in_india": 74
+    },
+    {
+      "category": "equestrian_facility",
+      "places_in_india": 74
+    },
+    {
+      "category": "water_heater_installation_repair",
+      "places_in_india": 74
+    },
+    {
+      "category": "collection_agency",
+      "places_in_india": 74
+    },
+    {
+      "category": "pipeline_transportation",
+      "places_in_india": 73
+    },
+    {
+      "category": "furniture_wholesaler",
+      "places_in_india": 73
+    },
+    {
+      "category": "optical_wholesaler",
+      "places_in_india": 72
+    },
+    {
+      "category": "flooring_store",
+      "places_in_india": 72
+    },
+    {
+      "category": "tapas_bar",
+      "places_in_india": 72
+    },
+    {
+      "category": "after_school_program",
+      "places_in_india": 72
+    },
+    {
+      "category": "laboratory_equipment_supplier",
+      "places_in_india": 72
+    },
+    {
+      "category": "home_staging",
+      "places_in_india": 71
+    },
+    {
+      "category": "window_supplier",
+      "places_in_india": 71
+    },
+    {
+      "category": "bartending_school",
+      "places_in_india": 70
+    },
+    {
+      "category": "employment_law",
+      "places_in_india": 70
+    },
+    {
+      "category": "tattoo",
+      "places_in_india": 70
+    },
+    {
+      "category": "town_car_service",
+      "places_in_india": 70
+    },
+    {
+      "category": "planetarium",
+      "places_in_india": 70
+    },
+    {
+      "category": "pizza_delivery_service",
+      "places_in_india": 69
+    },
+    {
+      "category": "beach_equipment_rental",
+      "places_in_india": 68
+    },
+    {
+      "category": "limo_service",
+      "places_in_india": 66
+    },
+    {
+      "category": "school_sport_team",
+      "places_in_india": 65
+    },
+    {
+      "category": "iron_and_steel_store",
+      "places_in_india": 65
+    },
+    {
+      "category": "glass_blowing_venue",
+      "places_in_india": 64
+    },
+    {
+      "category": "rice_mill",
+      "places_in_india": 64
+    },
+    {
+      "category": "surfing",
+      "places_in_india": 63
+    },
+    {
+      "category": "flour_mill",
+      "places_in_india": 63
+    },
+    {
+      "category": "flooring_contractor",
+      "places_in_india": 63
+    },
+    {
+      "category": "drugstore",
+      "places_in_india": 62
+    },
+    {
+      "category": "recording_and_rehearsal_studio",
+      "places_in_india": 61
+    },
+    {
+      "category": "fmcg_wholesaler",
+      "places_in_india": 60
+    },
+    {
+      "category": "marble_and_granite_professional",
+      "places_in_india": 60
+    },
+    {
+      "category": "manufacturing_and_industrial_consultant",
+      "places_in_india": 60
+    },
+    {
+      "category": "cycling_class",
+      "places_in_india": 60
+    },
+    {
+      "category": "industrial_spares_and_products_wholesaler",
+      "places_in_india": 60
+    },
+    {
+      "category": "fertilizer_store",
+      "places_in_india": 60
+    },
+    {
+      "category": "horseback_riding_service",
+      "places_in_india": 60
+    },
+    {
+      "category": "anesthesiology",
+      "places_in_india": 60
+    },
+    {
+      "category": "esports_team",
+      "places_in_india": 59
+    },
+    {
+      "category": "cheese_shop",
+      "places_in_india": 59
+    },
+    {
+      "category": "child_psychiatry",
+      "places_in_india": 59
+    },
+    {
+      "category": "food_and_beverage_consultant",
+      "places_in_india": 59
+    },
+    {
+      "category": "ride_share_service",
+      "places_in_india": 58
+    },
+    {
+      "category": "family_counseling",
+      "places_in_india": 58
+    },
+    {
+      "category": "sand_and_gravel_supplier",
+      "places_in_india": 58
+    },
+    {
+      "category": "frozen_foods_store",
+      "places_in_india": 58
+    },
+    {
+      "category": "pet_sitting",
+      "places_in_india": 57
+    },
+    {
+      "category": "skate_park",
+      "places_in_india": 57
+    },
+    {
+      "category": "castle",
+      "places_in_india": 57
+    },
+    {
+      "category": "marina",
+      "places_in_india": 57
+    },
+    {
+      "category": "inspection_service",
+      "places_in_india": 57
+    },
+    {
+      "category": "pier",
+      "places_in_india": 56
+    },
+    {
+      "category": "stone_supplier",
+      "places_in_india": 55
+    },
+    {
+      "category": "laser_tag",
+      "places_in_india": 55
+    },
+    {
+      "category": "paving_contractor",
+      "places_in_india": 55
+    },
+    {
+      "category": "livestock_feed_and_supply_store",
+      "places_in_india": 55
+    },
+    {
+      "category": "certification_agency",
+      "places_in_india": 55
+    },
+    {
+      "category": "observatory",
+      "places_in_india": 54
+    },
+    {
+      "category": "engineering_school",
+      "places_in_india": 54
+    },
+    {
+      "category": "it_consultant",
+      "places_in_india": 54
+    },
+    {
+      "category": "personal_assistant",
+      "places_in_india": 53
+    },
+    {
+      "category": "sporting_goods_manufacturer",
+      "places_in_india": 53
+    },
+    {
+      "category": "spanish_restaurant",
+      "places_in_india": 52
+    },
+    {
+      "category": "paintball",
+      "places_in_india": 52
+    },
+    {
+      "category": "electrical_wholesaler",
+      "places_in_india": 52
+    },
+    {
+      "category": "home_inspector",
+      "places_in_india": 51
+    },
+    {
+      "category": "food_bank",
+      "places_in_india": 51
+    },
+    {
+      "category": "historical_tour",
+      "places_in_india": 51
+    },
+    {
+      "category": "university_housing",
+      "places_in_india": 51
+    },
+    {
+      "category": "corporate_entertainment_service",
+      "places_in_india": 50
+    },
+    {
+      "category": "car_window_tinting",
+      "places_in_india": 50
+    },
+    {
+      "category": "b2b_oil_and_gas_equipment",
+      "places_in_india": 49
+    },
+    {
+      "category": "health_and_wellness_club",
+      "places_in_india": 48
+    },
+    {
+      "category": "welding_supply_store",
+      "places_in_india": 48
+    },
+    {
+      "category": "vehicle_shipping",
+      "places_in_india": 48
+    },
+    {
+      "category": "bedding_and_bath_store",
+      "places_in_india": 48
+    },
+    {
+      "category": "house_sitting",
+      "places_in_india": 48
+    },
+    {
+      "category": "civil_engineer",
+      "places_in_india": 48
+    },
+    {
+      "category": "childrens_hospital",
+      "places_in_india": 47
+    },
+    {
+      "category": "carpet_cleaning",
+      "places_in_india": 47
+    },
+    {
+      "category": "equine_service",
+      "places_in_india": 47
+    },
+    {
+      "category": "specialty_hospital",
+      "places_in_india": 47
+    },
+    {
+      "category": "rv_park",
+      "places_in_india": 46
+    },
+    {
+      "category": "home_organization",
+      "places_in_india": 46
+    },
+    {
+      "category": "translation_service",
+      "places_in_india": 45
+    },
+    {
+      "category": "importer",
+      "places_in_india": 45
+    },
+    {
+      "category": "child_protection_service",
+      "places_in_india": 45
+    },
+    {
+      "category": "immigration_and_naturalization_office",
+      "places_in_india": 44
+    },
+    {
+      "category": "saree_shop",
+      "places_in_india": 44
+    },
+    {
+      "category": "holding_company",
+      "places_in_india": 43
+    },
+    {
+      "category": "atv_recreation_park",
+      "places_in_india": 43
+    },
+    {
+      "category": "persian_restaurant",
+      "places_in_india": 42
+    },
+    {
+      "category": "southern_american_restaurant",
+      "places_in_india": 42
+    },
+    {
+      "category": "metal_material_expert",
+      "places_in_india": 42
+    },
+    {
+      "category": "night_market",
+      "places_in_india": 42
+    },
+    {
+      "category": "pancake_house",
+      "places_in_india": 42
+    },
+    {
+      "category": "apartment_agent",
+      "places_in_india": 42
+    },
+    {
+      "category": "automotive_storage_facility",
+      "places_in_india": 42
+    },
+    {
+      "category": "fastener_supplier",
+      "places_in_india": 42
+    },
+    {
+      "category": "medical_sciences_school",
+      "places_in_india": 42
+    },
+    {
+      "category": "archery_range",
+      "places_in_india": 41
+    },
+    {
+      "category": "mechanical_engineer",
+      "places_in_india": 41
+    },
+    {
+      "category": "wallpaper_store",
+      "places_in_india": 41
+    },
+    {
+      "category": "dog_park",
+      "places_in_india": 41
+    },
+    {
+      "category": "personal_chef",
+      "places_in_india": 40
+    },
+    {
+      "category": "cosmetic_surgery",
+      "places_in_india": 40
+    },
+    {
+      "category": "swimwear_store",
+      "places_in_india": 40
+    },
+    {
+      "category": "vegan_restaurant",
+      "places_in_india": 40
+    },
+    {
+      "category": "volleyball_court",
+      "places_in_india": 40
+    },
+    {
+      "category": "mobile_phone_accessory_store",
+      "places_in_india": 40
+    },
+    {
+      "category": "architecture_school",
+      "places_in_india": 40
+    },
+    {
+      "category": "fitness_exercise_store",
+      "places_in_india": 40
+    },
+    {
+      "category": "textile_museum",
+      "places_in_india": 39
+    },
+    {
+      "category": "tobacco_company",
+      "places_in_india": 39
+    },
+    {
+      "category": "social_club",
+      "places_in_india": 39
+    },
+    {
+      "category": "airport_shuttle",
+      "places_in_india": 39
+    },
+    {
+      "category": "texmex_restaurant",
+      "places_in_india": 39
+    },
+    {
+      "category": "pipe_supplier",
+      "places_in_india": 39
+    },
+    {
+      "category": "walk_in_clinic",
+      "places_in_india": 39
+    },
+    {
+      "category": "portuguese_restaurant",
+      "places_in_india": 38
+    },
+    {
+      "category": "window_treatment_store",
+      "places_in_india": 38
+    },
+    {
+      "category": "art_restoration_service",
+      "places_in_india": 38
+    },
+    {
+      "category": "b2b_publicity_service",
+      "places_in_india": 38
+    },
+    {
+      "category": "custom_clothing_store",
+      "places_in_india": 38
+    },
+    {
+      "category": "hospice",
+      "places_in_india": 38
+    },
+    {
+      "category": "archaeological_service",
+      "places_in_india": 38
+    },
+    {
+      "category": "religious_and_spiritual_goods_store",
+      "places_in_india": 37
+    },
+    {
+      "category": "aluminum_supplier",
+      "places_in_india": 37
+    },
+    {
+      "category": "rehabilitation_center",
+      "places_in_india": 37
+    },
+    {
+      "category": "teeth_whitening",
+      "places_in_india": 37
+    },
+    {
+      "category": "african_restaurant",
+      "places_in_india": 37
+    },
+    {
+      "category": "live_and_raw_food_restaurant",
+      "places_in_india": 36
+    },
+    {
+      "category": "business_broker",
+      "places_in_india": 36
+    },
+    {
+      "category": "metro_station",
+      "places_in_india": 36
+    },
+    {
+      "category": "food_court",
+      "places_in_india": 36
+    },
+    {
+      "category": "vietnamese_restaurant",
+      "places_in_india": 36
+    },
+    {
+      "category": "indonesian_restaurant",
+      "places_in_india": 35
+    },
+    {
+      "category": "pediatric_neurology",
+      "places_in_india": 35
+    },
+    {
+      "category": "food_and_beverage_exporter",
+      "places_in_india": 35
+    },
+    {
+      "category": "forestry_service",
+      "places_in_india": 35
+    },
+    {
+      "category": "esports_league",
+      "places_in_india": 34
+    },
+    {
+      "category": "chimney_service",
+      "places_in_india": 34
+    },
+    {
+      "category": "filipino_restaurant",
+      "places_in_india": 34
+    },
+    {
+      "category": "leather_products_manufacturer",
+      "places_in_india": 34
+    },
+    {
+      "category": "circus_venue",
+      "places_in_india": 33
+    },
+    {
+      "category": "event_technology_service",
+      "places_in_india": 33
+    },
+    {
+      "category": "copywriting_service",
+      "places_in_india": 33
+    },
+    {
+      "category": "sawmill",
+      "places_in_india": 33
+    },
+    {
+      "category": "chimney_sweep",
+      "places_in_india": 33
+    },
+    {
+      "category": "shaved_ice_shop",
+      "places_in_india": 33
+    },
+    {
+      "category": "pan_asian_restaurant",
+      "places_in_india": 33
+    },
+    {
+      "category": "malaysian_restaurant",
+      "places_in_india": 32
+    },
+    {
+      "category": "south_american_restaurant",
+      "places_in_india": 32
+    },
+    {
+      "category": "train",
+      "places_in_india": 32
+    },
+    {
+      "category": "tailor",
+      "places_in_india": 32
+    },
+    {
+      "category": "entertainment_law",
+      "places_in_india": 32
+    },
+    {
+      "category": "rug_store",
+      "places_in_india": 32
+    },
+    {
+      "category": "community_museum",
+      "places_in_india": 32
+    },
+    {
+      "category": "henna_artist",
+      "places_in_india": 32
+    },
+    {
+      "category": "beer_wine_spirits_store",
+      "places_in_india": 31
+    },
+    {
+      "category": "childrens_museum",
+      "places_in_india": 31
+    },
+    {
+      "category": "infectious_disease",
+      "places_in_india": 31
+    },
+    {
+      "category": "basque_restaurant",
+      "places_in_india": 31
+    },
+    {
+      "category": "poultry_farming",
+      "places_in_india": 31
+    },
+    {
+      "category": "ice_skating_rink",
+      "places_in_india": 30
+    },
+    {
+      "category": "b2b_cleaning_and_waste_management",
+      "places_in_india": 30
+    },
+    {
+      "category": "duty_free_store",
+      "places_in_india": 30
+    },
+    {
+      "category": "boat_dealer",
+      "places_in_india": 29
+    },
+    {
+      "category": "automotive_wheel_polishing_service",
+      "places_in_india": 29
+    },
+    {
+      "category": "petting_zoo",
+      "places_in_india": 29
+    },
+    {
+      "category": "caribbean_restaurant",
+      "places_in_india": 29
+    },
+    {
+      "category": "pen_store",
+      "places_in_india": 29
+    },
+    {
+      "category": "officiating_service",
+      "places_in_india": 29
+    },
+    {
+      "category": "mobile_home_park",
+      "places_in_india": 29
+    },
+    {
+      "category": "track_stadium",
+      "places_in_india": 29
+    },
+    {
+      "category": "civilization_museum",
+      "places_in_india": 29
+    },
+    {
+      "category": "b2b_signage_service",
+      "places_in_india": 29
+    },
+    {
+      "category": "gemstone_and_mineral_store",
+      "places_in_india": 29
+    },
+    {
+      "category": "skate_store",
+      "places_in_india": 28
+    },
+    {
+      "category": "horse_boarding",
+      "places_in_india": 28
+    },
+    {
+      "category": "jazz_and_blues_venue",
+      "places_in_india": 28
+    },
+    {
+      "category": "montessori_school",
+      "places_in_india": 28
+    },
+    {
+      "category": "furniture_rental_service",
+      "places_in_india": 28
+    },
+    {
+      "category": "hot_springs",
+      "places_in_india": 28
+    },
+    {
+      "category": "damage_restoration",
+      "places_in_india": 27
+    },
+    {
+      "category": "hockey_field",
+      "places_in_india": 27
+    },
+    {
+      "category": "pediatric_surgery",
+      "places_in_india": 27
+    },
+    {
+      "category": "japanese_confectionery_shop",
+      "places_in_india": 27
+    },
+    {
+      "category": "cosmetic_products_manufacturer",
+      "places_in_india": 27
+    },
+    {
+      "category": "hot_dog_restaurant",
+      "places_in_india": 26
+    },
+    {
+      "category": "patent_law",
+      "places_in_india": 26
+    },
+    {
+      "category": "footwear_wholesaler",
+      "places_in_india": 26
+    },
+    {
+      "category": "vehicle_parts_manufacturer",
+      "places_in_india": 26
+    },
+    {
+      "category": "demolition_service",
+      "places_in_india": 26
+    },
+    {
+      "category": "public_market",
+      "places_in_india": 26
+    },
+    {
+      "category": "first_aid_class",
+      "places_in_india": 26
+    },
+    {
+      "category": "law_school",
+      "places_in_india": 26
+    },
+    {
+      "category": "opera_and_ballet",
+      "places_in_india": 26
+    },
+    {
+      "category": "bookkeeper",
+      "places_in_india": 26
+    },
+    {
+      "category": "aircraft_service",
+      "places_in_india": 26
+    },
+    {
+      "category": "piercing",
+      "places_in_india": 26
+    },
+    {
+      "category": "tires_manufacturer",
+      "places_in_india": 26
+    },
+    {
+      "category": "dog_walker",
+      "places_in_india": 25
+    },
+    {
+      "category": "amateur_sport_league",
+      "places_in_india": 25
+    },
+    {
+      "category": "jewelry_manufacturer",
+      "places_in_india": 25
+    },
+    {
+      "category": "furniture_repair",
+      "places_in_india": 25
+    },
+    {
+      "category": "fireplace_service",
+      "places_in_india": 25
+    },
+    {
+      "category": "jehovahs_witness_place_of_worship",
+      "places_in_india": 25
+    },
+    {
+      "category": "adoption_service",
+      "places_in_india": 25
+    },
+    {
+      "category": "restorationist_place_of_worship",
+      "places_in_india": 25
+    },
+    {
+      "category": "laser_cutting_service",
+      "places_in_india": 24
+    },
+    {
+      "category": "shipping_collection_service",
+      "places_in_india": 24
+    },
+    {
+      "category": "b2b_equipment_maintenance_and_repair",
+      "places_in_india": 24
+    },
+    {
+      "category": "bookbinding",
+      "places_in_india": 24
+    },
+    {
+      "category": "spices_wholesaler",
+      "places_in_india": 24
+    },
+    {
+      "category": "surf_store",
+      "places_in_india": 23
+    },
+    {
+      "category": "stone_and_masonry",
+      "places_in_india": 23
+    },
+    {
+      "category": "sandblasting_service",
+      "places_in_india": 23
+    },
+    {
+      "category": "charter_school",
+      "places_in_india": 23
+    },
+    {
+      "category": "central_american_restaurant",
+      "places_in_india": 23
+    },
+    {
+      "category": "irish_pub",
+      "places_in_india": 23
+    },
+    {
+      "category": "academic_bookstore",
+      "places_in_india": 23
+    },
+    {
+      "category": "environmental_testing_service",
+      "places_in_india": 23
+    },
+    {
+      "category": "scale_supplier",
+      "places_in_india": 23
+    },
+    {
+      "category": "island",
+      "places_in_india": 23
+    },
+    {
+      "category": "british_restaurant",
+      "places_in_india": 23
+    },
+    {
+      "category": "seafood_wholesaler",
+      "places_in_india": 22
+    },
+    {
+      "category": "civic_center",
+      "places_in_india": 22
+    },
+    {
+      "category": "massage_school",
+      "places_in_india": 22
+    },
+    {
+      "category": "bagel_shop",
+      "places_in_india": 22
+    },
+    {
+      "category": "sugaring",
+      "places_in_india": 22
+    },
+    {
+      "category": "kiteboarding",
+      "places_in_india": 22
+    },
+    {
+      "category": "weaving_mill",
+      "places_in_india": 22
+    },
+    {
+      "category": "media_restoration_service",
+      "places_in_india": 22
+    },
+    {
+      "category": "coffee_roastery",
+      "places_in_india": 22
+    },
+    {
+      "category": "safety_equipment_store",
+      "places_in_india": 22
+    },
+    {
+      "category": "clothing_rental",
+      "places_in_india": 21
+    },
+    {
+      "category": "hockey_arena",
+      "places_in_india": 21
+    },
+    {
+      "category": "magician",
+      "places_in_india": 21
+    },
+    {
+      "category": "osteopathic_medicine",
+      "places_in_india": 21
+    },
+    {
+      "category": "adventure_sports_center",
+      "places_in_india": 21
+    },
+    {
+      "category": "business_financing",
+      "places_in_india": 21
+    },
+    {
+      "category": "produce_wholesaler",
+      "places_in_india": 21
+    },
+    {
+      "category": "animal_hospital",
+      "places_in_india": 21
+    },
+    {
+      "category": "corporate_gift_supplier",
+      "places_in_india": 21
+    },
+    {
+      "category": "auto_loan_provider",
+      "places_in_india": 21
+    },
+    {
+      "category": "machine_and_tool_rental",
+      "places_in_india": 21
+    },
+    {
+      "category": "tree_service",
+      "places_in_india": 21
+    },
+    {
+      "category": "greek_restaurant",
+      "places_in_india": 21
+    },
+    {
+      "category": "pediatric_pulmonology",
+      "places_in_india": 21
+    },
+    {
+      "category": "eastern_european_restaurant",
+      "places_in_india": 21
+    },
+    {
+      "category": "school_sport_league",
+      "places_in_india": 21
+    },
+    {
+      "category": "nanny_service",
+      "places_in_india": 21
+    },
+    {
+      "category": "whiskey_bar",
+      "places_in_india": 20
+    },
+    {
+      "category": "pet_adoption",
+      "places_in_india": 20
+    },
+    {
+      "category": "auto_broker",
+      "places_in_india": 20
+    },
+    {
+      "category": "panamanian_restaurant",
+      "places_in_india": 20
+    },
+    {
+      "category": "soul_food",
+      "places_in_india": 20
+    },
+    {
+      "category": "crane_service",
+      "places_in_india": 20
+    },
+    {
+      "category": "weather_station",
+      "places_in_india": 20
+    },
+    {
+      "category": "inventory_control_service",
+      "places_in_india": 20
+    },
+    {
+      "category": "fencing_club",
+      "places_in_india": 20
+    },
+    {
+      "category": "grain_elevator",
+      "places_in_india": 20
+    },
+    {
+      "category": "threading_service",
+      "places_in_india": 20
+    },
+    {
+      "category": "aircraft_manufacturer",
+      "places_in_india": 20
+    },
+    {
+      "category": "b2b_records_storage_service",
+      "places_in_india": 20
+    },
+    {
+      "category": "waxing",
+      "places_in_india": 20
+    },
+    {
+      "category": "tea_wholesaler",
+      "places_in_india": 20
+    },
+    {
+      "category": "commercial_printer",
+      "places_in_india": 20
+    },
+    {
+      "category": "wholesale_florist",
+      "places_in_india": 20
+    },
+    {
+      "category": "tableware_supplier",
+      "places_in_india": 19
+    },
+    {
+      "category": "framing_store",
+      "places_in_india": 19
+    },
+    {
+      "category": "embroidery_and_crochet_store",
+      "places_in_india": 19
+    },
+    {
+      "category": "bathroom_fixture_store",
+      "places_in_india": 19
+    },
+    {
+      "category": "kitchen_remodeling",
+      "places_in_india": 19
+    },
+    {
+      "category": "horse_trainer",
+      "places_in_india": 19
+    },
+    {
+      "category": "wills_trusts_and_probate",
+      "places_in_india": 19
+    },
+    {
+      "category": "cooking_classes",
+      "places_in_india": 18
+    },
+    {
+      "category": "road_contractor",
+      "places_in_india": 18
+    },
+    {
+      "category": "atv_rental_tour",
+      "places_in_india": 18
+    },
+    {
+      "category": "ski_and_snowboard_school",
+      "places_in_india": 18
+    },
+    {
+      "category": "lighting_fixture_manufacturer",
+      "places_in_india": 18
+    },
+    {
+      "category": "bail_bonds_service",
+      "places_in_india": 18
+    },
+    {
+      "category": "pediatric_endocrinology",
+      "places_in_india": 18
+    },
+    {
+      "category": "packaging_contractors_and_service",
+      "places_in_india": 18
+    },
+    {
+      "category": "golf_instructor",
+      "places_in_india": 18
+    },
+    {
+      "category": "modern_art_museum",
+      "places_in_india": 18
+    },
+    {
+      "category": "music_production_service",
+      "places_in_india": 18
+    },
+    {
+      "category": "choir",
+      "places_in_india": 18
+    },
+    {
+      "category": "door_sales_service",
+      "places_in_india": 18
+    },
+    {
+      "category": "betting_center",
+      "places_in_india": 17
+    },
+    {
+      "category": "balloon_service",
+      "places_in_india": 17
+    },
+    {
+      "category": "trailer_dealer",
+      "places_in_india": 17
+    },
+    {
+      "category": "design_museum",
+      "places_in_india": 17
+    },
+    {
+      "category": "speakeasy",
+      "places_in_india": 17
+    },
+    {
+      "category": "computer_museum",
+      "places_in_india": 17
+    },
+    {
+      "category": "trailer_rental_service",
+      "places_in_india": 17
+    },
+    {
+      "category": "civil_examinations_academy",
+      "places_in_india": 17
+    },
+    {
+      "category": "academy",
+      "places_in_india": 17
+    },
+    {
+      "category": "coach_bus",
+      "places_in_india": 17
+    },
+    {
+      "category": "genetics",
+      "places_in_india": 17
+    },
+    {
+      "category": "gerontology",
+      "places_in_india": 17
+    },
+    {
+      "category": "investment_management_company",
+      "places_in_india": 17
+    },
+    {
+      "category": "exhibition_and_trade_fair_venue",
+      "places_in_india": 17
+    },
+    {
+      "category": "b2b_executive_search_consultants",
+      "places_in_india": 17
+    },
+    {
+      "category": "drama_school",
+      "places_in_india": 17
+    },
+    {
+      "category": "patio_covers",
+      "places_in_india": 17
+    },
+    {
+      "category": "business_banking_service",
+      "places_in_india": 17
+    },
+    {
+      "category": "b2b_power_plants_and_power_plant_service",
+      "places_in_india": 17
+    },
+    {
+      "category": "lawn_service",
+      "places_in_india": 17
+    },
+    {
+      "category": "television_station",
+      "places_in_india": 17
+    },
+    {
+      "category": "washer_and_dryer_repair_service",
+      "places_in_india": 17
+    },
+    {
+      "category": "international_grocery_store",
+      "places_in_india": 17
+    },
+    {
+      "category": "junk_removal_and_hauling",
+      "places_in_india": 16
+    },
+    {
+      "category": "pacific_rim_restaurant",
+      "places_in_india": 16
+    },
+    {
+      "category": "seaplane_base",
+      "places_in_india": 16
+    },
+    {
+      "category": "fishing_charter",
+      "places_in_india": 16
+    },
+    {
+      "category": "abortion_clinic",
+      "places_in_india": 16
+    },
+    {
+      "category": "agriculture_association",
+      "places_in_india": 16
+    },
+    {
+      "category": "batting_cage",
+      "places_in_india": 16
+    },
+    {
+      "category": "3d_printing_service",
+      "places_in_india": 16
+    },
+    {
+      "category": "food_tour",
+      "places_in_india": 16
+    },
+    {
+      "category": "fishing",
+      "places_in_india": 16
+    },
+    {
+      "category": "hang_gliding_center",
+      "places_in_india": 16
+    },
+    {
+      "category": "diving_instruction",
+      "places_in_india": 15
+    },
+    {
+      "category": "otology",
+      "places_in_india": 15
+    },
+    {
+      "category": "pediatric_oncology",
+      "places_in_india": 15
+    },
+    {
+      "category": "otolaryngology",
+      "places_in_india": 15
+    },
+    {
+      "category": "scuba_diving_instruction",
+      "places_in_india": 15
+    },
+    {
+      "category": "business_law",
+      "places_in_india": 15
+    },
+    {
+      "category": "art_supply_store",
+      "places_in_india": 15
+    },
+    {
+      "category": "bingo_hall",
+      "places_in_india": 15
+    },
+    {
+      "category": "squash_court",
+      "places_in_india": 15
+    },
+    {
+      "category": "distribution_service",
+      "places_in_india": 15
+    },
+    {
+      "category": "education_office",
+      "places_in_india": 15
+    },
+    {
+      "category": "traffic_school",
+      "places_in_india": 14
+    },
+    {
+      "category": "media_critic",
+      "places_in_india": 14
+    },
+    {
+      "category": "b2b_scientific_equipment",
+      "places_in_india": 14
+    },
+    {
+      "category": "farming_equipment_and_supply_store",
+      "places_in_india": 14
+    },
+    {
+      "category": "sky_diving",
+      "places_in_india": 14
+    },
+    {
+      "category": "indoor_playcenter",
+      "places_in_india": 14
+    },
+    {
+      "category": "wildlife_control",
+      "places_in_india": 14
+    },
+    {
+      "category": "pharmacy_school",
+      "places_in_india": 14
+    },
+    {
+      "category": "cafeteria",
+      "places_in_india": 14
+    },
+    {
+      "category": "b2b_promotional_products_and_services",
+      "places_in_india": 14
+    },
+    {
+      "category": "shades_and_blinds",
+      "places_in_india": 14
+    },
+    {
+      "category": "public_bath_house",
+      "places_in_india": 14
+    },
+    {
+      "category": "scooter_rental",
+      "places_in_india": 14
+    },
+    {
+      "category": "shredding_service",
+      "places_in_india": 14
+    },
+    {
+      "category": "belgian_restaurant",
+      "places_in_india": 14
+    },
+    {
+      "category": "billing_service",
+      "places_in_india": 13
+    },
+    {
+      "category": "mobility_equipment_service",
+      "places_in_india": 13
+    },
+    {
+      "category": "miniature_golf_course",
+      "places_in_india": 13
+    },
+    {
+      "category": "talent_agency",
+      "places_in_india": 13
+    },
+    {
+      "category": "motorcycle_parts_store",
+      "places_in_india": 13
+    },
+    {
+      "category": "ranch",
+      "places_in_india": 13
+    },
+    {
+      "category": "airline_ticket_agency",
+      "places_in_india": 13
+    },
+    {
+      "category": "payroll_service",
+      "places_in_india": 13
+    },
+    {
+      "category": "archery_store",
+      "places_in_india": 13
+    },
+    {
+      "category": "sports_school",
+      "places_in_india": 13
+    },
+    {
+      "category": "formal_wear_store",
+      "places_in_india": 13
+    },
+    {
+      "category": "pension_office",
+      "places_in_india": 13
+    },
+    {
+      "category": "hot_air_balloons_tour",
+      "places_in_india": 13
+    },
+    {
+      "category": "rice_store",
+      "places_in_india": 13
+    },
+    {
+      "category": "argentine_restaurant",
+      "places_in_india": 13
+    },
+    {
+      "category": "bearing_supplier",
+      "places_in_india": 13
+    },
+    {
+      "category": "outdoor_furniture_store",
+      "places_in_india": 13
+    },
+    {
+      "category": "welder",
+      "places_in_india": 12
+    },
+    {
+      "category": "b2b_domestic_trade_service",
+      "places_in_india": 12
+    },
+    {
+      "category": "transcription_service",
+      "places_in_india": 12
+    },
+    {
+      "category": "wedding_chapel",
+      "places_in_india": 12
+    },
+    {
+      "category": "reiki",
+      "places_in_india": 12
+    },
+    {
+      "category": "reptile_store",
+      "places_in_india": 12
+    },
+    {
+      "category": "brazilian_restaurant",
+      "places_in_india": 12
+    },
+    {
+      "category": "recreation_vehicle_repair",
+      "places_in_india": 12
+    },
+    {
+      "category": "family_service_center",
+      "places_in_india": 12
+    },
+    {
+      "category": "gluten_free_restaurant",
+      "places_in_india": 12
+    },
+    {
+      "category": "orthopedic_surgery",
+      "places_in_india": 12
+    },
+    {
+      "category": "pediatric_orthopedic_surgery",
+      "places_in_india": 12
+    },
+    {
+      "category": "recreation_vehicle_service",
+      "places_in_india": 12
+    },
+    {
+      "category": "knitting_supply_store",
+      "places_in_india": 12
+    },
+    {
+      "category": "agricultural_seed_store",
+      "places_in_india": 12
+    },
+    {
+      "category": "customs_broker",
+      "places_in_india": 12
+    },
+    {
+      "category": "jet_skis_rental",
+      "places_in_india": 12
+    },
+    {
+      "category": "logging_contractor",
+      "places_in_india": 11
+    },
+    {
+      "category": "bankruptcy_law",
+      "places_in_india": 11
+    },
+    {
+      "category": "fabric_wholesaler",
+      "places_in_india": 11
+    },
+    {
+      "category": "australian_restaurant",
+      "places_in_india": 11
+    },
+    {
+      "category": "tennis_stadium",
+      "places_in_india": 11
+    },
+    {
+      "category": "auto_upholstery",
+      "places_in_india": 11
+    },
+    {
+      "category": "karate_club",
+      "places_in_india": 11
+    },
+    {
+      "category": "seafood_market",
+      "places_in_india": 11
+    },
+    {
+      "category": "abrasives_supplier",
+      "places_in_india": 11
+    },
+    {
+      "category": "hardware_and_fastener_manufacturer",
+      "places_in_india": 11
+    },
+    {
+      "category": "board_of_education_office",
+      "places_in_india": 11
+    },
+    {
+      "category": "dentistry_school",
+      "places_in_india": 11
+    },
+    {
+      "category": "unemployment_office",
+      "places_in_india": 11
+    },
+    {
+      "category": "bathroom_remodeling",
+      "places_in_india": 11
+    },
+    {
+      "category": "aircraft_dealer",
+      "places_in_india": 11
+    },
+    {
+      "category": "tent_house_supplier",
+      "places_in_india": 11
+    },
+    {
+      "category": "candle_store",
+      "places_in_india": 10
+    },
+    {
+      "category": "commissioned_artist",
+      "places_in_india": 10
+    },
+    {
+      "category": "north_african_restaurant",
+      "places_in_india": 10
+    },
+    {
+      "category": "haunted_house",
+      "places_in_india": 10
+    },
+    {
+      "category": "private_equity_firm",
+      "places_in_india": 10
+    },
+    {
+      "category": "contract_law",
+      "places_in_india": 10
+    },
+    {
+      "category": "b2b_outdoor_advertising",
+      "places_in_india": 10
+    },
+    {
+      "category": "cuban_restaurant",
+      "places_in_india": 10
+    },
+    {
+      "category": "molecular_gastronomy_restaurant",
+      "places_in_india": 10
+    },
+    {
+      "category": "cannabis_clinic",
+      "places_in_india": 10
+    },
+    {
+      "category": "cremation_service",
+      "places_in_india": 10
+    },
+    {
+      "category": "immigration_assistance_service",
+      "places_in_india": 10
+    },
+    {
+      "category": "b2b_scientific_lab",
+      "places_in_india": 10
+    },
+    {
+      "category": "taco_restaurant",
+      "places_in_india": 10
+    },
+    {
+      "category": "onsen",
+      "places_in_india": 10
+    },
+    {
+      "category": "party_equipment_rental",
+      "places_in_india": 10
+    },
+    {
+      "category": "medical_cannabis",
+      "places_in_india": 10
+    },
+    {
+      "category": "temp_agency",
+      "places_in_india": 9
+    },
+    {
+      "category": "pool_and_hot_tub_service",
+      "places_in_india": 9
+    },
+    {
+      "category": "rugby_stadium",
+      "places_in_india": 9
+    },
+    {
+      "category": "genealogist",
+      "places_in_india": 9
+    },
+    {
+      "category": "hot_tub_and_pool_store",
+      "places_in_india": 9
+    },
+    {
+      "category": "diamond_dealer",
+      "places_in_india": 9
+    },
+    {
+      "category": "lime_professional",
+      "places_in_india": 9
+    },
+    {
+      "category": "car_stereo_installation",
+      "places_in_india": 9
+    },
+    {
+      "category": "social_welfare_center",
+      "places_in_india": 9
+    },
+    {
+      "category": "mongolian_restaurant",
+      "places_in_india": 9
+    },
+    {
+      "category": "water_softening_equipment_supplier",
+      "places_in_india": 9
+    },
+    {
+      "category": "quay",
+      "places_in_india": 8
+    },
+    {
+      "category": "dive_bar",
+      "places_in_india": 8
+    },
+    {
+      "category": "retreat",
+      "places_in_india": 8
+    },
+    {
+      "category": "sports_psychology",
+      "places_in_india": 8
+    },
+    {
+      "category": "customized_merchandise_store",
+      "places_in_india": 8
+    },
+    {
+      "category": "architectural_tour",
+      "places_in_india": 8
+    },
+    {
+      "category": "addiction_rehabilitation_center",
+      "places_in_india": 8
+    },
+    {
+      "category": "altering_and_remodeling_contractor",
+      "places_in_india": 8
+    },
+    {
+      "category": "behavioral_or_crisis_service",
+      "places_in_india": 8
+    },
+    {
+      "category": "football_club",
+      "places_in_india": 8
+    },
+    {
+      "category": "landscape_architect",
+      "places_in_india": 8
+    },
+    {
+      "category": "b2b_audio_visual_production",
+      "places_in_india": 8
+    },
+    {
+      "category": "professional_sport_league",
+      "places_in_india": 8
+    },
+    {
+      "category": "rugby_pitch",
+      "places_in_india": 8
+    },
+    {
+      "category": "spring_supplier",
+      "places_in_india": 8
+    },
+    {
+      "category": "health_retreat",
+      "places_in_india": 8
+    },
+    {
+      "category": "b2b_media_service",
+      "places_in_india": 8
+    },
+    {
+      "category": "salsa_club",
+      "places_in_india": 8
+    },
+    {
+      "category": "aviation_museum",
+      "places_in_india": 7
+    },
+    {
+      "category": "avionics_shop",
+      "places_in_india": 7
+    },
+    {
+      "category": "b2b_dental_lab",
+      "places_in_india": 7
+    },
+    {
+      "category": "sake_bar",
+      "places_in_india": 7
+    },
+    {
+      "category": "tiki_bar",
+      "places_in_india": 7
+    },
+    {
+      "category": "telephone_service",
+      "places_in_india": 7
+    },
+    {
+      "category": "golf_cart_dealer",
+      "places_in_india": 7
+    },
+    {
+      "category": "typing_service",
+      "places_in_india": 7
+    },
+    {
+      "category": "crisis_intervention_service",
+      "places_in_india": 7
+    },
+    {
+      "category": "honey_farm_shop",
+      "places_in_india": 7
+    },
+    {
+      "category": "floral_designer",
+      "places_in_india": 7
+    },
+    {
+      "category": "car_auction",
+      "places_in_india": 7
+    },
+    {
+      "category": "ethiopian_restaurant",
+      "places_in_india": 7
+    },
+    {
+      "category": "aircraft_parts_and_supplies",
+      "places_in_india": 7
+    },
+    {
+      "category": "estate_liquidation",
+      "places_in_india": 7
+    },
+    {
+      "category": "custom_cakes_shop",
+      "places_in_india": 7
+    },
+    {
+      "category": "general_litigation",
+      "places_in_india": 7
+    },
+    {
+      "category": "musical_instrument_service",
+      "places_in_india": 7
+    },
+    {
+      "category": "kosher_restaurant",
+      "places_in_india": 7
+    },
+    {
+      "category": "occupational_medicine",
+      "places_in_india": 7
+    },
+    {
+      "category": "east_african_restaurant",
+      "places_in_india": 7
+    },
+    {
+      "category": "moroccan_restaurant",
+      "places_in_india": 7
+    },
+    {
+      "category": "fondue_restaurant",
+      "places_in_india": 7
+    },
+    {
+      "category": "preventive_medicine",
+      "places_in_india": 7
+    },
+    {
+      "category": "soccer_club",
+      "places_in_india": 7
+    },
+    {
+      "category": "lawn_mower_store",
+      "places_in_india": 7
+    },
+    {
+      "category": "hong_kong_style_cafe",
+      "places_in_india": 7
+    },
+    {
+      "category": "vinyl_record_store",
+      "places_in_india": 7
+    },
+    {
+      "category": "dui_law",
+      "places_in_india": 7
+    },
+    {
+      "category": "geriatric_medicine",
+      "places_in_india": 7
+    },
+    {
+      "category": "paralegal_service",
+      "places_in_india": 7
+    },
+    {
+      "category": "hepatology",
+      "places_in_india": 6
+    },
+    {
+      "category": "rural_attraction",
+      "places_in_india": 6
+    },
+    {
+      "category": "ski_and_snowboard_store",
+      "places_in_india": 6
+    },
+    {
+      "category": "shoe_factory_manufacturer",
+      "places_in_india": 6
+    },
+    {
+      "category": "balloon_port",
+      "places_in_india": 6
+    },
+    {
+      "category": "road_structures_and_service",
+      "places_in_india": 6
+    },
+    {
+      "category": "singaporean_restaurant",
+      "places_in_india": 6
+    },
+    {
+      "category": "sports_museum",
+      "places_in_india": 6
+    },
+    {
+      "category": "registry_office",
+      "places_in_india": 6
+    },
+    {
+      "category": "sports_medicine",
+      "places_in_india": 6
+    },
+    {
+      "category": "pediatric_nephrology",
+      "places_in_india": 6
+    },
+    {
+      "category": "coffee_and_tea_supplies",
+      "places_in_india": 6
+    },
+    {
+      "category": "bus_ticket_agency",
+      "places_in_india": 6
+    },
+    {
+      "category": "makerspace",
+      "places_in_india": 6
+    },
+    {
+      "category": "awning_supplier",
+      "places_in_india": 6
+    },
+    {
+      "category": "milk_bar",
+      "places_in_india": 6
+    },
+    {
+      "category": "acoustical_consultant",
+      "places_in_india": 6
+    },
+    {
+      "category": "transmission_repair",
+      "places_in_india": 6
+    },
+    {
+      "category": "bistro",
+      "places_in_india": 6
+    },
+    {
+      "category": "watch_repair_service",
+      "places_in_india": 6
+    },
+    {
+      "category": "pressure_washing",
+      "places_in_india": 6
+    },
+    {
+      "category": "energy_management_service",
+      "places_in_india": 6
+    },
+    {
+      "category": "rv_rental_service",
+      "places_in_india": 5
+    },
+    {
+      "category": "home_window_tinting",
+      "places_in_india": 5
+    },
+    {
+      "category": "go_kart_track",
+      "places_in_india": 5
+    },
+    {
+      "category": "basketball_stadium",
+      "places_in_india": 5
+    },
+    {
+      "category": "decorative_arts_museum",
+      "places_in_india": 5
+    },
+    {
+      "category": "personal_injury_law",
+      "places_in_india": 5
+    },
+    {
+      "category": "volunteer_association",
+      "places_in_india": 5
+    },
+    {
+      "category": "street_art",
+      "places_in_india": 5
+    },
+    {
+      "category": "russian_restaurant",
+      "places_in_india": 5
+    },
+    {
+      "category": "dumpster_rental",
+      "places_in_india": 5
+    },
+    {
+      "category": "blacksmith",
+      "places_in_india": 5
+    },
+    {
+      "category": "polynesian_restaurant",
+      "places_in_india": 5
+    },
+    {
+      "category": "medical_law",
+      "places_in_india": 5
+    },
+    {
+      "category": "sheet_metal_fabricator",
+      "places_in_india": 5
+    },
+    {
+      "category": "rafting_kayaking_area",
+      "places_in_india": 5
+    },
+    {
+      "category": "armenian_restaurant",
+      "places_in_india": 5
+    },
+    {
+      "category": "rest_stop",
+      "places_in_india": 5
+    },
+    {
+      "category": "diy_foods_restaurant",
+      "places_in_india": 5
+    },
+    {
+      "category": "orthopedic_shoe_store",
+      "places_in_india": 5
+    },
+    {
+      "category": "jamaican_restaurant",
+      "places_in_india": 4
+    },
+    {
+      "category": "community_health_center",
+      "places_in_india": 4
+    },
+    {
+      "category": "polish_restaurant",
+      "places_in_india": 4
+    },
+    {
+      "category": "rodeo",
+      "places_in_india": 4
+    },
+    {
+      "category": "logging_equipment_and_supplies",
+      "places_in_india": 4
+    },
+    {
+      "category": "peruvian_restaurant",
+      "places_in_india": 4
+    },
+    {
+      "category": "plastic_injection_molding_service",
+      "places_in_india": 4
+    },
+    {
+      "category": "snorkeling",
+      "places_in_india": 4
+    },
+    {
+      "category": "video_game_critic",
+      "places_in_india": 4
+    },
+    {
+      "category": "swiss_restaurant",
+      "places_in_india": 4
+    },
+    {
+      "category": "roadside_assistance",
+      "places_in_india": 4
+    },
+    {
+      "category": "gay_bar",
+      "places_in_india": 4
+    },
+    {
+      "category": "boat_charter",
+      "places_in_india": 4
+    },
+    {
+      "category": "bazaar",
+      "places_in_india": 4
+    },
+    {
+      "category": "foot_care",
+      "places_in_india": 4
+    },
+    {
+      "category": "shared_office_space",
+      "places_in_india": 4
+    },
+    {
+      "category": "boxing_gym",
+      "places_in_india": 4
+    },
+    {
+      "category": "hypnotherapy",
+      "places_in_india": 4
+    },
+    {
+      "category": "military_museum",
+      "places_in_india": 4
+    },
+    {
+      "category": "asian_art_museum",
+      "places_in_india": 4
+    },
+    {
+      "category": "paddleboarding_center",
+      "places_in_india": 4
+    },
+    {
+      "category": "box_lunch_supplier",
+      "places_in_india": 4
+    },
+    {
+      "category": "desert",
+      "places_in_india": 4
+    },
+    {
+      "category": "halfway_house",
+      "places_in_india": 4
+    },
+    {
+      "category": "video_and_video_game_rental",
+      "places_in_india": 4
+    },
+    {
+      "category": "farm_equipment_repair_service",
+      "places_in_india": 4
+    },
+    {
+      "category": "hawaiian_restaurant",
+      "places_in_india": 4
+    },
+    {
+      "category": "forklift_dealer",
+      "places_in_india": 4
+    },
+    {
+      "category": "contemporary_art_museum",
+      "places_in_india": 4
+    },
+    {
+      "category": "hungarian_restaurant",
+      "places_in_india": 4
+    },
+    {
+      "category": "school_district_office",
+      "places_in_india": 4
+    },
+    {
+      "category": "ice_supplier",
+      "places_in_india": 4
+    },
+    {
+      "category": "casting_molding_service",
+      "places_in_india": 4
+    },
+    {
+      "category": "permanent_makeup",
+      "places_in_india": 4
+    },
+    {
+      "category": "cabinet_sales_service",
+      "places_in_india": 4
+    },
+    {
+      "category": "holiday_decor_store",
+      "places_in_india": 4
+    },
+    {
+      "category": "cambodian_restaurant",
+      "places_in_india": 4
+    },
+    {
+      "category": "houseboat",
+      "places_in_india": 4
+    },
+    {
+      "category": "costume_museum",
+      "places_in_india": 4
+    },
+    {
+      "category": "endoscopy",
+      "places_in_india": 4
+    },
+    {
+      "category": "taxidermist",
+      "places_in_india": 4
+    },
+    {
+      "category": "window_washing",
+      "places_in_india": 4
+    },
+    {
+      "category": "flyboarding_center",
+      "places_in_india": 3
+    },
+    {
+      "category": "military_surplus_store",
+      "places_in_india": 3
+    },
+    {
+      "category": "party_character",
+      "places_in_india": 3
+    },
+    {
+      "category": "b2b_telecommunications_service",
+      "places_in_india": 3
+    },
+    {
+      "category": "fraternal_organization",
+      "places_in_india": 3
+    },
+    {
+      "category": "denim_wear_store",
+      "places_in_india": 3
+    },
+    {
+      "category": "tactical_supply_store",
+      "places_in_india": 3
+    },
+    {
+      "category": "railway_ticket_agent",
+      "places_in_india": 3
+    },
+    {
+      "category": "transport_interchange",
+      "places_in_india": 3
+    },
+    {
+      "category": "tower_communication_service",
+      "places_in_india": 3
+    },
+    {
+      "category": "disc_golf_course",
+      "places_in_india": 3
+    },
+    {
+      "category": "photography_class",
+      "places_in_india": 3
+    },
+    {
+      "category": "science_school",
+      "places_in_india": 3
+    },
+    {
+      "category": "cartooning_museum",
+      "places_in_india": 3
+    },
+    {
+      "category": "pediatric_gastroenterology",
+      "places_in_india": 3
+    },
+    {
+      "category": "editorial_service",
+      "places_in_india": 3
+    },
+    {
+      "category": "eyebrow_service",
+      "places_in_india": 3
+    },
+    {
+      "category": "self_defense_class",
+      "places_in_india": 3
+    },
+    {
+      "category": "tai_chi_studio",
+      "places_in_india": 3
+    },
+    {
+      "category": "generator_installation_repair",
+      "places_in_india": 3
+    },
+    {
+      "category": "studio_taping",
+      "places_in_india": 3
+    },
+    {
+      "category": "wallpaper_installer",
+      "places_in_india": 3
+    },
+    {
+      "category": "sleep_medicine",
+      "places_in_india": 3
+    },
+    {
+      "category": "movie_critic",
+      "places_in_india": 3
+    },
+    {
+      "category": "ultrasound_imaging",
+      "places_in_india": 3
+    },
+    {
+      "category": "egyptian_restaurant",
+      "places_in_india": 3
+    },
+    {
+      "category": "goldsmith",
+      "places_in_india": 3
+    },
+    {
+      "category": "beach_bar",
+      "places_in_india": 3
+    },
+    {
+      "category": "southern_african_restaurant",
+      "places_in_india": 3
+    },
+    {
+      "category": "south_african_restaurant",
+      "places_in_india": 3
+    },
+    {
+      "category": "golf_club",
+      "places_in_india": 3
+    },
+    {
+      "category": "dancewear_store",
+      "places_in_india": 3
+    },
+    {
+      "category": "chambers_of_commerce",
+      "places_in_india": 3
+    },
+    {
+      "category": "dive_store",
+      "places_in_india": 3
+    },
+    {
+      "category": "luggage_storage",
+      "places_in_india": 3
+    },
+    {
+      "category": "cajun_and_creole_restaurant",
+      "places_in_india": 3
+    },
+    {
+      "category": "bulgarian_restaurant",
+      "places_in_india": 3
+    },
+    {
+      "category": "piano_service",
+      "places_in_india": 3
+    },
+    {
+      "category": "film_festival_venue",
+      "places_in_india": 3
+    },
+    {
+      "category": "parasailing_ride_service",
+      "places_in_india": 2
+    },
+    {
+      "category": "pet_transportation",
+      "places_in_india": 2
+    },
+    {
+      "category": "greengrocer",
+      "places_in_india": 2
+    },
+    {
+      "category": "taiwanese_restaurant",
+      "places_in_india": 2
+    },
+    {
+      "category": "foster_care_service",
+      "places_in_india": 2
+    },
+    {
+      "category": "cannabis_dispensary",
+      "places_in_india": 2
+    },
+    {
+      "category": "taxi_stand",
+      "places_in_india": 2
+    },
+    {
+      "category": "emergency_pet_hospital",
+      "places_in_india": 2
+    },
+    {
+      "category": "baseball_stadium",
+      "places_in_india": 2
+    },
+    {
+      "category": "rv_parts_store",
+      "places_in_india": 2
+    },
+    {
+      "category": "guatemalan_restaurant",
+      "places_in_india": 2
+    },
+    {
+      "category": "irish_restaurant",
+      "places_in_india": 2
+    },
+    {
+      "category": "lookout",
+      "places_in_india": 2
+    },
+    {
+      "category": "construction_management",
+      "places_in_india": 2
+    },
+    {
+      "category": "engraving",
+      "places_in_india": 2
+    },
+    {
+      "category": "dental_hygiene",
+      "places_in_india": 2
+    },
+    {
+      "category": "instrumentation_engineer",
+      "places_in_india": 2
+    },
+    {
+      "category": "hazardous_waste_disposal",
+      "places_in_india": 2
+    },
+    {
+      "category": "insulation_installation",
+      "places_in_india": 2
+    },
+    {
+      "category": "israeli_restaurant",
+      "places_in_india": 2
+    },
+    {
+      "category": "wine_wholesaler",
+      "places_in_india": 2
+    },
+    {
+      "category": "uzbek_restaurant",
+      "places_in_india": 2
+    },
+    {
+      "category": "photography_museum",
+      "places_in_india": 2
+    },
+    {
+      "category": "farming_equipment_store",
+      "places_in_india": 2
+    },
+    {
+      "category": "mediator",
+      "places_in_india": 2
+    },
+    {
+      "category": "car_sharing",
+      "places_in_india": 2
+    },
+    {
+      "category": "bathtub_and_sink_repair",
+      "places_in_india": 2
+    },
+    {
+      "category": "ceiling_service",
+      "places_in_india": 2
+    },
+    {
+      "category": "water_store",
+      "places_in_india": 2
+    },
+    {
+      "category": "appellate_practice_lawyer",
+      "places_in_india": 2
+    },
+    {
+      "category": "paternity_testing",
+      "places_in_india": 2
+    },
+    {
+      "category": "asian_grocery_store",
+      "places_in_india": 2
+    },
+    {
+      "category": "chinese_martial_arts_club",
+      "places_in_india": 2
+    },
+    {
+      "category": "venezuelan_restaurant",
+      "places_in_india": 2
+    },
+    {
+      "category": "glider_port",
+      "places_in_india": 2
+    },
+    {
+      "category": "flower_market",
+      "places_in_india": 2
+    },
+    {
+      "category": "vacation_rental_agent",
+      "places_in_india": 2
+    },
+    {
+      "category": "bike_tour",
+      "places_in_india": 2
+    },
+    {
+      "category": "taekwondo_club",
+      "places_in_india": 2
+    },
+    {
+      "category": "georgian_restaurant",
+      "places_in_india": 2
+    },
+    {
+      "category": "lighting_fixtures_and_equipment",
+      "places_in_india": 2
+    },
+    {
+      "category": "surfing_school",
+      "places_in_india": 2
+    },
+    {
+      "category": "cardio_class",
+      "places_in_india": 2
+    },
+    {
+      "category": "masonry_contractor",
+      "places_in_india": 2
+    },
+    {
+      "category": "karaoke_rental",
+      "places_in_india": 2
+    },
+    {
+      "category": "civil_rights_lawyer",
+      "places_in_india": 2
+    },
+    {
+      "category": "irrigation_service",
+      "places_in_india": 2
+    },
+    {
+      "category": "orthotics",
+      "places_in_india": 2
+    },
+    {
+      "category": "catalan_restaurant",
+      "places_in_india": 2
+    },
+    {
+      "category": "sport_equipment_rental",
+      "places_in_india": 2
+    },
+    {
+      "category": "college_counseling",
+      "places_in_india": 2
+    },
+    {
+      "category": "popcorn_shop",
+      "places_in_india": 2
+    },
+    {
+      "category": "attraction_farm",
+      "places_in_india": 2
+    },
+    {
+      "category": "dominican_restaurant",
+      "places_in_india": 2
+    },
+    {
+      "category": "valet_service",
+      "places_in_india": 2
+    },
+    {
+      "category": "haitian_restaurant",
+      "places_in_india": 2
+    },
+    {
+      "category": "puerto_rican_restaurant",
+      "places_in_india": 2
+    },
+    {
+      "category": "used_bookstore",
+      "places_in_india": 2
+    },
+    {
+      "category": "pick_your_own_farm",
+      "places_in_india": 2
+    },
+    {
+      "category": "bird_store",
+      "places_in_india": 2
+    },
+    {
+      "category": "artificial_turf",
+      "places_in_india": 1
+    },
+    {
+      "category": "do_it_yourself_store",
+      "places_in_india": 1
+    },
+    {
+      "category": "social_security_service",
+      "places_in_india": 1
+    },
+    {
+      "category": "agritourism",
+      "places_in_india": 1
+    },
+    {
+      "category": "mobile_home_repair",
+      "places_in_india": 1
+    },
+    {
+      "category": "self_catering_accommodation",
+      "places_in_india": 1
+    },
+    {
+      "category": "guitar_store",
+      "places_in_india": 1
+    },
+    {
+      "category": "aerial_tour",
+      "places_in_india": 1
+    },
+    {
+      "category": "kids_hair_salon",
+      "places_in_india": 1
+    },
+    {
+      "category": "country_house",
+      "places_in_india": 1
+    },
+    {
+      "category": "organ_and_tissue_donor_service",
+      "places_in_india": 1
+    },
+    {
+      "category": "canadian_restaurant",
+      "places_in_india": 1
+    },
+    {
+      "category": "kickboxing_club",
+      "places_in_india": 1
+    },
+    {
+      "category": "battery_inverter_supplier",
+      "places_in_india": 1
+    },
+    {
+      "category": "safe_store",
+      "places_in_india": 1
+    },
+    {
+      "category": "gutter_service",
+      "places_in_india": 1
+    },
+    {
+      "category": "gymnastics_club",
+      "places_in_india": 1
+    },
+    {
+      "category": "muay_thai_club",
+      "places_in_india": 1
+    },
+    {
+      "category": "park_and_ride",
+      "places_in_india": 1
+    },
+    {
+      "category": "water_transport_facility_or_service",
+      "places_in_india": 1
+    },
+    {
+      "category": "truck_gas_station",
+      "places_in_india": 1
+    },
+    {
+      "category": "stress_management_service",
+      "places_in_india": 1
+    },
+    {
+      "category": "nigerian_restaurant",
+      "places_in_india": 1
+    },
+    {
+      "category": "motorsport_vehicle_repair",
+      "places_in_india": 1
+    },
+    {
+      "category": "dinner_theater",
+      "places_in_india": 1
+    },
+    {
+      "category": "greenhouse",
+      "places_in_india": 1
+    },
+    {
+      "category": "light_rail_and_subway_station",
+      "places_in_india": 1
+    },
+    {
+      "category": "costa_rican_restaurant",
+      "places_in_india": 1
+    },
+    {
+      "category": "auto_security",
+      "places_in_india": 1
+    },
+    {
+      "category": "cemetery",
+      "places_in_india": 1
+    },
+    {
+      "category": "walking_tour",
+      "places_in_india": 1
+    },
+    {
+      "category": "firewood",
+      "places_in_india": 1
+    },
+    {
+      "category": "esthetician",
+      "places_in_india": 1
+    },
+    {
+      "category": "austrian_restaurant",
+      "places_in_india": 1
+    },
+    {
+      "category": "waldorf_school",
+      "places_in_india": 1
+    },
+    {
+      "category": "environmental_abatement_service",
+      "places_in_india": 1
+    },
+    {
+      "category": "thread_supplier",
+      "places_in_india": 1
+    },
+    {
+      "category": "b2b_oil_and_gas_exploration_and_development",
+      "places_in_india": 1
+    },
+    {
+      "category": "drone_store",
+      "places_in_india": 1
+    },
+    {
+      "category": "matchmaker",
+      "places_in_india": 1
+    },
+    {
+      "category": "climbing_service",
+      "places_in_india": 1
+    },
+    {
+      "category": "drinking_fountain",
+      "places_in_india": 1
+    },
+    {
+      "category": "weather_forecast_service",
+      "places_in_india": 1
+    },
+    {
+      "category": "pretzel_shop",
+      "places_in_india": 1
+    },
+    {
+      "category": "b2b_direct_mail_advertising",
+      "places_in_india": 1
+    },
+    {
+      "category": "syrian_restaurant",
+      "places_in_india": 1
+    },
+    {
+      "category": "coin_dealer",
+      "places_in_india": 1
+    },
+    {
+      "category": "fire_and_water_damage_restoration",
+      "places_in_india": 1
+    },
+    {
+      "category": "chilean_restaurant",
+      "places_in_india": 1
+    },
+    {
+      "category": "eyelash_service",
+      "places_in_india": 1
+    },
+    {
+      "category": "oxygen_bar",
+      "places_in_india": 1
+    },
+    {
+      "category": "knife_sharpening",
+      "places_in_india": 1
+    },
+    {
+      "category": "pool_hall",
+      "places_in_india": 1
+    },
+    {
+      "category": "boat_and_ship_manufacturer",
+      "places_in_india": 1
+    },
+    {
+      "category": "west_african_restaurant",
+      "places_in_india": 1
+    },
+    {
+      "category": "debt_relief_service",
+      "places_in_india": 1
+    },
+    {
+      "category": "furniture_reupholstery",
+      "places_in_india": 1
+    },
+    {
+      "category": "golf_equipment_store",
+      "places_in_india": 1
+    },
+    {
+      "category": "indoor_landscaping",
+      "places_in_india": 1
+    },
+    {
+      "category": "ticket_office_or_booth",
+      "places_in_india": 1
+    },
+    {
+      "category": "b2b_quarry",
+      "places_in_india": 1
+    },
+    {
+      "category": "office_cleaning",
+      "places_in_india": 1
+    },
+    {
+      "category": "truck_parts_and_accessories",
+      "places_in_india": 1
+    },
+    {
+      "category": "falafel_restaurant",
+      "places_in_india": 1
+    },
+    {
+      "category": "ferry_service",
+      "places_in_india": 1
+    },
+    {
+      "category": "adult_store",
+      "places_in_india": 1
+    },
+    {
+      "category": "tax_office",
+      "places_in_india": 1
+    },
+    {
+      "category": "body_contouring",
+      "places_in_india": 1
+    },
+    {
+      "category": "hydraulic_repair_service",
+      "places_in_india": 1
+    },
+    {
+      "category": "feng_shui",
+      "places_in_india": 1
+    },
+    {
+      "category": "tatar_restaurant",
+      "places_in_india": 1
+    },
+    {
+      "category": "memorial_park",
+      "places_in_india": 1
+    },
+    {
+      "category": "toll_station",
+      "places_in_india": 1
+    },
+    {
+      "category": "waffle_restaurant",
+      "places_in_india": 1
+    },
+    {
+      "category": "b2b_farm",
+      "places_in_india": 1
+    },
+    {
+      "category": "private_jet_charter",
+      "places_in_india": 1
+    },
+    {
+      "category": "court_reporter",
+      "places_in_india": 1
+    },
+    {
+      "category": "fingerprinting_service",
+      "places_in_india": 1
+    },
+    {
+      "category": "horse_equipment_shop",
+      "places_in_india": 1
+    },
+    {
+      "category": "csa_farm",
+      "places_in_india": 1
+    },
+    {
+      "category": "scottish_restaurant",
+      "places_in_india": 1
+    },
+    {
+      "category": "retaining_wall_supplier",
+      "places_in_india": 1
+    },
+    {
+      "category": "chicken_wings_restaurant",
+      "places_in_india": 1
+    }
+  ]
+}

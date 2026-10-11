@@ -26,7 +26,7 @@ from app.places.model import Place
 
 #: Bumped when the schema changes in a way that makes an existing file unreadable, which forces
 #: a rebuild rather than a confusing query error against the old shape.
-SCHEMA_VERSION: Final[int] = 2
+SCHEMA_VERSION: Final[int] = 3
 
 SCHEMA: Final[str] = """
 create table if not exists places (
@@ -59,6 +59,23 @@ create unique index if not exists places_record on places (source, external_id);
 create index if not exists places_category on places (category);
 -- Discovery filters on both at once, and a sweep of one city asks for one source.
 create index if not exists places_source_category on places (source, category);
+
+-- Every category a place belongs to, not just its most specific one.
+--
+-- Measured, and the reason this table exists: matching only Overture's leaf category reached
+-- 16.1% of Delhi's places and matching only the mid-level `basic_category` reached 12.1%, where
+-- matching every level reaches 96.2%. A request for restaurants matches 4,276 places by leaf
+-- and 11,631 by hierarchy, because most of them are filed as `indian_restaurant` or
+-- `pizza_restaurant` *under* `restaurant`.
+--
+-- A row per (place, category) rather than a delimited column, because the alternative is a LIKE
+-- over every row in the city once the bounding box has stopped narrowing anything.
+create table if not exists place_categories (
+  place_id integer not null,
+  category text    not null,
+  primary key (place_id, category)
+) without rowid;
+create index if not exists place_categories_category on place_categories (category);
 
 create virtual table if not exists places_geo using rtree (
   id, min_lat, max_lat, min_lon, max_lon
@@ -145,7 +162,7 @@ class PlaceIndex:
         """
         where, params = _bbox_where(bbox)
         if categories:
-            where.append(f"p.category in ({', '.join('?' * len(categories))})")
+            where.append(_category_where(categories))
             params.extend(categories)
         if source:
             where.append("p.source = ?")
@@ -159,7 +176,10 @@ class PlaceIndex:
             params.append(f"%{_escape_like(name)}%")
         params.extend((limit, offset))
         sql = (
-            f"select {_prefixed(_COLUMNS, 'p')} from places_geo g "  # noqa: S608 -- see below
+            f"select {_prefixed(_COLUMNS, 'p')}, "  # noqa: S608 -- see below
+            "(select group_concat(pc.category, char(10)) from place_categories pc "
+            " where pc.place_id = p.id) as categories "
+            "from places_geo g "
             f"join places p on p.id = g.id "
             f"where {' and '.join(where)} "
             f"order by p.id limit ? offset ?"
@@ -186,7 +206,7 @@ class PlaceIndex:
         if contactable:
             where.append("(p.phone is not null or p.email is not null)")
         if categories:
-            where.append(f"p.category in ({', '.join('?' * len(categories))})")
+            where.append(_category_where(categories))
             params.extend(categories)
         sql = (
             "select count(*) as n from places_geo g join places p on p.id = g.id "  # noqa: S608
@@ -229,6 +249,10 @@ class IndexWriter:
         self._conn.execute("pragma journal_mode = off")
         self._conn.execute("pragma synchronous = off")
         self._conn.executescript(SCHEMA)
+        # Continue after whatever is already there, so adding a second dataset to an existing
+        # index does not collide with the ids the first one used.
+        row = self._conn.execute("select coalesce(max(id), 0) from places").fetchone()
+        self._next_id = int(row[0]) + 1
 
     def add(self, places: Iterable[Place]) -> int:
         """Writes places in batches. Returns how many rows were written."""
@@ -245,11 +269,20 @@ class IndexWriter:
     def _flush(self, batch: Sequence[Place]) -> int:
         if not batch:
             return 0
+        # Ids are assigned here rather than left to SQLite, so each place's categories can be
+        # written in the same batch. The alternative is reading every row back by (source,
+        # external_id) to learn the id SQLite chose, which is a second pass over millions of rows
+        # to recover something we already knew.
+        first_id = self._next_id
+        self._next_id += len(batch)
+        ids = range(first_id, self._next_id)
+
         self._conn.executemany(
-            f"insert or ignore into places ({_COLUMNS}) "  # noqa: S608
-            f"values ({', '.join('?' * _COLUMN_COUNT)})",
+            f"insert or ignore into places (id, {_COLUMNS}) "  # noqa: S608
+            f"values ({', '.join('?' * (_COLUMN_COUNT + 1))})",
             [
                 (
+                    place_id,
                     p.source,
                     p.external_id,
                     p.name,
@@ -271,7 +304,18 @@ class IndexWriter:
                     p.operating_status,
                     p.updated_at.isoformat() if p.updated_at else None,
                 )
-                for p in batch
+                for place_id, p in zip(ids, batch, strict=True)
+            ],
+        )
+        self._conn.executemany(
+            "insert or ignore into place_categories (place_id, category) values (?, ?)",
+            [
+                (place_id, category)
+                # `or (p.category,)` so a source that publishes no hierarchy -- OSM, and any
+                # future one -- is still searchable by its single category. Without it those
+                # places would be in the index and findable by nothing.
+                for place_id, p in zip(ids, batch, strict=True)
+                for category in (p.categories or (p.category,))
             ],
         )
         self._conn.commit()
@@ -312,6 +356,20 @@ class IndexWriter:
         self.close()
 
 
+def _category_where(categories: Sequence[str]) -> str:
+    """Matches a place by any category it belongs to, not only its most specific one.
+
+    An `exists` against `place_categories` rather than a join, because a place belongs to several
+    categories and a join would return it once per match -- the classic way a result set quietly
+    grows and `limit` starts truncating real results.
+    """
+    placeholders = ", ".join("?" * len(categories))
+    return (
+        "exists (select 1 from place_categories pc "  # noqa: S608
+        f"where pc.place_id = p.id and pc.category in ({placeholders}))"
+    )
+
+
 def _bbox_where(bbox: tuple[float, float, float, float]) -> tuple[list[str], list[object]]:
     """The R*Tree clause for "overlaps this box", shared so `search` and `count` cannot disagree.
 
@@ -343,11 +401,13 @@ def _escape_like(term: str) -> str:
 
 def _to_place(row: sqlite3.Row) -> Place:
     socials = row["socials"]
+    categories = row["categories"]
     return Place(
         source=row["source"],
         external_id=row["external_id"],
         name=row["name"],
         category=row["category"],
+        categories=tuple(categories.split(SOCIALS_SEPARATOR)) if categories else (),
         lat=float(row["lat"]),
         lon=float(row["lon"]),
         source_url=row["source_url"] or "",

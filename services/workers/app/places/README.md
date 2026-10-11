@@ -118,7 +118,7 @@ incomplete, wrong sends someone to a dead end and looks like our mistake.
 ```python
 index = PlaceIndex(Path("/data/places/overture.sqlite"))
 gyms = index.search(
-    bbox=(28.40, 76.83, 28.89, 77.35),   # (min_lat, min_lng, max_lat, max_lng)
+    bbox=(28.40, 76.83, 28.89, 77.35),  # (min_lat, min_lng, max_lat, max_lng)
     categories=["gym"],
     source="overture",
     contactable=True,

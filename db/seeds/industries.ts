@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 /**
  * Industry taxonomy seed (Phase 2 task 2.1): sectors -> categories, India-first.
  *
@@ -16,6 +19,15 @@ export interface IndustrySeed {
   parent?: string;
   synonyms: string[];
   googleTypes: string[];
+  /**
+   * Overture Places categories this industry means (ADR-0017), matched against every level of a
+   * place's category hierarchy.
+   *
+   * Kept in `data/overture-category-map.json` rather than inline above, because it is 339 rows
+   * of a different vocabulary with its own provenance and its own test, and threading it through
+   * the tuples here would make both harder to read and to review.
+   */
+  overtureCategories: string[];
 }
 
 /** Types too broad to use as a search filter; never mapped (tested). */
@@ -1156,13 +1168,26 @@ const SECTORS: { slug: string; name: string; categories: Category[] }[] = [
   },
 ];
 
+const OVERTURE_CATEGORIES: Record<string, string[]> = (
+  JSON.parse(
+    readFileSync(resolve(import.meta.dirname, 'data', 'overture-category-map.json'), 'utf8'),
+  ) as { map: Record<string, string[]> }
+).map;
+
 export const INDUSTRY_SEEDS: IndustrySeed[] = SECTORS.flatMap((sector) => [
-  { slug: sector.slug, name: sector.name, synonyms: [], googleTypes: [] },
+  {
+    slug: sector.slug,
+    name: sector.name,
+    synonyms: [],
+    googleTypes: [],
+    overtureCategories: OVERTURE_CATEGORIES[sector.slug] ?? [],
+  },
   ...sector.categories.map(([slug, name, googleTypes, synonyms = []]): IndustrySeed => ({
     slug,
     name,
     parent: sector.slug,
     synonyms,
     googleTypes,
+    overtureCategories: OVERTURE_CATEGORIES[slug] ?? [],
   })),
 ]);

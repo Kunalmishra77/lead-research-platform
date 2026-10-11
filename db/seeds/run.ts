@@ -54,10 +54,13 @@ try {
     // Industries: upsert by slug, then link parents by slug (parents are listed before children).
     for (const i of INDUSTRY_SEEDS) {
       await tx`
-        insert into app.industries (id, slug, name, synonyms, google_types)
-        values (${uuidv7()}, ${i.slug}, ${i.name}, ${i.synonyms}, ${i.googleTypes})
+        insert into app.industries (id, slug, name, synonyms, google_types, overture_categories)
+        values (${uuidv7()}, ${i.slug}, ${i.name}, ${i.synonyms}, ${i.googleTypes},
+                ${i.overtureCategories})
         on conflict (slug) do update
-          set name = excluded.name, synonyms = excluded.synonyms, google_types = excluded.google_types`;
+          set name = excluded.name, synonyms = excluded.synonyms,
+              google_types = excluded.google_types,
+              overture_categories = excluded.overture_categories`;
     }
     for (const i of INDUSTRY_SEEDS) {
       const linked = i.parent

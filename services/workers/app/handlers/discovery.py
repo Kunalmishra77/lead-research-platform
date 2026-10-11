@@ -87,7 +87,13 @@ class DiscoveryQueryPayload(BaseModel):
     text: str = Field(min_length=1, max_length=400)
     bbox: tuple[float, float, float, float] | None = None
     country: str | None = Field(default=None, max_length=2)
+    #: One category, for a source that takes one. Places accepts a single `includedType` per
+    #: request, so this is the first of `categories`.
     category: str | None = None
+    #: Every category the request means, for a source that can match a list in one query. The
+    #: place index can, and an industry meaning three Overture categories would lose two thirds
+    #: of its market if only the first were used (ADR-0017).
+    categories: list[str] = Field(default_factory=list, max_length=64)
     language: str = "en"
     #: Matches the contract's own ceiling (`research-spec.schema.json`, Limits.max_results). It
     #: was 200 here while the schema allowed 10,000, so a spec the API accepted could be refused
@@ -123,7 +129,11 @@ def register_discovery_handlers(
             str(envelope.org_id), str(envelope.job_id), error_class.value, cost_micros=0
         )
 
-    for task_type in TASK_TYPE_BY_SOURCE.values():
+    # Deduplicated, because two sources can share one task type: `overture` and `osm` are
+    # different datasets with different provenance and different coverage, but both are read
+    # out of the same place index by the same handler (ADR-0017). Registering per source would
+    # register that handler twice and the registry refuses it.
+    for task_type in dict.fromkeys(TASK_TYPE_BY_SOURCE.values()):
 
         @registry.register(task_type, stage="discovery", on_failure=on_failure)
         async def run_discovery(ctx: JobContext) -> None:
@@ -350,6 +360,9 @@ async def _search(
         country=payload.query.country,
         language=payload.query.language,
         max_results=payload.query.max_results,
+        # Per-connector extras. Dropped here once, which meant the place index only ever saw
+        # the first of the categories the planner had worked out for it.
+        options={"categories": payload.query.categories} if payload.query.categories else {},
     )
     return await connector.search(query, CallContext.from_job(ctx))
 

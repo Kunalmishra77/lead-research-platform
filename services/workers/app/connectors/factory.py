@@ -11,13 +11,13 @@ from redis.asyncio import Redis
 from app.config import Settings
 from app.connectors.google_places import GooglePlacesConnector, PlaceSearchCache
 from app.connectors.http_client import ConnectorHttpClient
+from app.connectors.places import OsmConnector, OvertureConnector
 from app.connectors.registry import ConnectorRegistry
 from app.connectors.serp import SerpConnector
+from app.connectors.user_agent import USER_AGENT
 from app.metering.free_tier import FreeTierGuard, FreeTierLimit, NullFreeTierGuard
 from app.metering.usage import UsageRecorder
-
-#: Honest, with a contact URL, as docs/08 requires of every request we make.
-USER_AGENT = "LeadForgeBot/1.0 (+https://leadforge.example/bot)"
+from app.places.index import PlaceIndex
 
 
 def build_connectors(
@@ -31,6 +31,11 @@ def build_connectors(
     logger = log or structlog.get_logger("leadforge.connectors")
     registry = ConnectorRegistry()
     clients: list[ConnectorHttpClient] = []
+
+    # The place index first, because it is the discovery source now (ADR-0017) and the only one
+    # with no quota. It takes no HTTP client: it reads a file.
+    for connector in _place_connectors(settings, logger):
+        registry.register(connector)
 
     if settings.GOOGLE_PLACES_API_KEY and settings.GOOGLE_PLACES_ENABLED:
         client = ConnectorHttpClient(
@@ -80,6 +85,39 @@ def build_connectors(
 async def close_clients(clients: list[ConnectorHttpClient]) -> None:
     for client in clients:
         await client.aclose()
+
+
+def _place_connectors(
+    settings: Settings, log: structlog.stdlib.BoundLogger
+) -> list[OvertureConnector | OsmConnector]:
+    """The connectors backed by the on-disk place index, if one has been built.
+
+    An unset or missing path leaves them unregistered rather than registered and failing at call
+    time, exactly as a missing API key does for the others: the planner asks the registry what
+    can fill a field, and a source that cannot run must not be part of that answer.
+
+    Both datasets live in one index, so one path registers both and each filters to its own
+    rows. Overture discovers; OSM is there for Phase 4 to compare against.
+    """
+    path = settings.PLACES_INDEX_PATH
+    if path is None:
+        log.warning(
+            "PLACES_INDEX_PATH is not set; discovery from the place index is not available. "
+            "Build one with `uv run python -m app.places build-overture` (ADR-0016)"
+        )
+        return []
+    index = PlaceIndex(path)
+    if not index.exists():
+        log.error("place index is missing", path=str(path))
+        return []
+    stats = index.stats()
+    log.info(
+        "place index available",
+        path=str(path),
+        places=stats.places,
+        extract_date=stats.extract_date.date().isoformat() if stats.extract_date else None,
+    )
+    return [OvertureConnector(index), OsmConnector(index)]
 
 
 def _places_allowance(

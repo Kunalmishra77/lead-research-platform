@@ -15,6 +15,26 @@ export interface SourceSeed {
 
 export const SOURCE_SEEDS: SourceSeed[] = [
   {
+    key: 'overture',
+    name: 'Overture Maps Places',
+    // `provider`, not `api`: a monthly GeoParquet release read off local disk, with no request
+    // to make and nobody to be rate-limited by (ADR-0016, ADR-0017).
+    type: 'provider',
+    tosClass: 'green',
+    // Overture releases monthly, so a snapshot is a month old at worst before the next lands.
+    defaultTtlDays: 35,
+    // No deletion obligation. CDLA-Permissive-2.0 permits keeping and redistributing the data;
+    // what it asks is that the agreement text travels with anything we share (docs/licenses).
+  },
+  {
+    key: 'osm',
+    name: 'OpenStreetMap',
+    type: 'provider',
+    tosClass: 'green',
+    defaultTtlDays: 35,
+    // ODbL 1.0: 'data (c) OpenStreetMap contributors' wherever its values are shown.
+  },
+  {
     key: 'google_places',
     name: 'Google Places API (New)',
     type: 'api',

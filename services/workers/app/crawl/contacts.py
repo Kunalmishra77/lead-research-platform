@@ -287,24 +287,34 @@ def _whatsapp_number(href: str) -> str | None:
     return digits or None
 
 
+def social_from_url(href: str) -> Social | None:
+    """The profile a single URL points at, or None if it is not one we store.
+
+    Separate from `socials_from` because social links do not only arrive as anchors on a page:
+    the bulk place datasets publish them as a list of URLs (ADR-0017), and a second copy of the
+    host patterns and handle rules is a second place for them to drift out of agreement.
+    """
+    href = (href or "").strip()
+    if not href.lower().startswith(("http://", "https://")):
+        return None
+    parts = urlsplit(href)
+    host = parts.netloc.lower().split(":")[0]
+    for platform, pattern in _SOCIAL_HOSTS:
+        if not pattern.search(host):
+            continue
+        handle = _handle(platform, parts.path, parts.query)
+        return Social(platform, href, handle) if handle is not None else None
+    return None
+
+
 def socials_from(html_text: str | bytes, *, selector: Selector | None = None) -> list[Social]:
     """Social profile URLs found on the page. docs/08 row 50: stored, never crawled."""
     page = selector or _parse(html_text)
     found: dict[tuple[SocialPlatform, str], Social] = {}
     for anchor in page.css("a"):
-        href = (anchor.attrib.get("href") or "").strip()
-        if not href.lower().startswith(("http://", "https://")):
-            continue
-        parts = urlsplit(href)
-        host = parts.netloc.lower().split(":")[0]
-        for platform, pattern in _SOCIAL_HOSTS:
-            if not pattern.search(host):
-                continue
-            handle = _handle(platform, parts.path, parts.query)
-            if handle is None:
-                break
-            found.setdefault((platform, handle), Social(platform, href, handle))
-            break
+        social = social_from_url(anchor.attrib.get("href") or "")
+        if social is not None:
+            found.setdefault((social.platform, social.handle), social)
     return list(found.values())
 
 

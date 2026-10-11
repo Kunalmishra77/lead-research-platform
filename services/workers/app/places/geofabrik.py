@@ -23,7 +23,7 @@ from typing import Final
 import httpx
 import structlog
 
-from app.connectors.factory import USER_AGENT
+from app.connectors.user_agent import USER_AGENT
 
 log = structlog.get_logger(__name__)
 

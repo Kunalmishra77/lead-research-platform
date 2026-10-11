@@ -67,10 +67,15 @@ class Industry:
     name: str
     #: Places API (New) types. Empty is normal and means the search runs on its text alone.
     google_types: tuple[str, ...]
+    #: Overture Places categories this industry means (ADR-0017). Matched against every level of
+    #: a place's category hierarchy, so a request for restaurants reaches the Indian and pizza
+    #: ones filed beneath it. Empty where Overture has no equivalent, which is an answer and not
+    #: a gap: discovery falls back to searching names inside the area.
+    overture_categories: tuple[str, ...]
     synonyms: tuple[str, ...]
 
 
-_EMPTY_INDUSTRY = Industry(slug="", name="", google_types=(), synonyms=())
+_EMPTY_INDUSTRY = Industry(slug="", name="", google_types=(), overture_categories=(), synonyms=())
 
 
 class ReferenceData:
@@ -148,11 +153,25 @@ class ReferenceData:
 
     async def google_types_for(self, taxonomy_ids: list[str]) -> tuple[str, ...]:
         """Places types for the spec's industries, in order and without duplicates."""
+        return await self._source_categories(taxonomy_ids, "google_types")
+
+    async def overture_categories_for(self, taxonomy_ids: list[str]) -> tuple[str, ...]:
+        """Overture categories for the spec's industries, in order and without duplicates.
+
+        Unlike `google_types_for`, all of them are returned rather than the first: Places takes
+        one `includedType` per request, while the place index matches a list in one query, and
+        an industry that means three Overture categories loses two thirds of its market if only
+        the first is used.
+        """
+        return await self._source_categories(taxonomy_ids, "overture_categories")
+
+    async def _source_categories(self, taxonomy_ids: list[str], attribute: str) -> tuple[str, ...]:
         known = await self.industries()
         seen: dict[str, None] = {}
         for slug in taxonomy_ids:
-            for google_type in known.get(slug, _EMPTY_INDUSTRY).google_types:
-                seen.setdefault(google_type, None)
+            industry = known.get(slug, _EMPTY_INDUSTRY)
+            for value in getattr(industry, attribute):
+                seen.setdefault(value, None)
         return tuple(seen)
 
     async def _load_areas(self) -> tuple[GeoArea, ...]:
@@ -200,7 +219,7 @@ class ReferenceData:
         }
 
     async def _load_industries(self) -> dict[str, Industry]:
-        sql = "select slug, name, google_types, synonyms from app.industries"
+        sql = "select slug, name, google_types, overture_categories, synonyms from app.industries"
         async with self._engine.connect() as conn:
             rows = (await conn.execute(text(sql))).mappings().all()
         return {
@@ -208,6 +227,7 @@ class ReferenceData:
                 slug=row["slug"],
                 name=row["name"],
                 google_types=tuple(row["google_types"]),
+                overture_categories=tuple(row["overture_categories"]),
                 synonyms=tuple(row["synonyms"]),
             )
             for row in rows

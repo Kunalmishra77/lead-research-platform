@@ -30,7 +30,6 @@ from urllib.parse import urljoin, urlsplit
 import httpx
 import structlog
 
-from app.connectors.factory import USER_AGENT
 from app.connectors.http_client import (
     DEFAULT_MAX_BYTES,
     DEFAULT_TIMEOUT_S,
@@ -38,6 +37,7 @@ from app.connectors.http_client import (
     ConnectorHttpClient,
 )
 from app.connectors.types import RateLimit
+from app.connectors.user_agent import USER_AGENT
 from app.crawl.robots import Decision, RobotsPolicy
 from app.crawl.safety import MAX_REDIRECTS, SafeResolver
 from app.jobs.errors import AccessRestrictedError

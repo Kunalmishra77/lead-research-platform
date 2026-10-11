@@ -69,6 +69,7 @@ class FakeReference:
                 slug="dental-clinics",
                 name="Dental clinics",
                 google_types=("dentist", "dental_clinic"),
+                overture_categories=("dental_clinic",),
                 synonyms=("dentist",),
             )
         }

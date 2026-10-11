@@ -28,7 +28,7 @@ import structlog
 from protego import Protego
 from redis.asyncio import Redis
 
-from app.connectors.factory import USER_AGENT
+from app.connectors.user_agent import USER_AGENT
 
 log = structlog.get_logger(__name__)
 

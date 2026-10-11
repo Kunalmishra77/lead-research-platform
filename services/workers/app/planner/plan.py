@@ -34,6 +34,8 @@ from app.planner.templates import PlanTemplate
 #: type). A source with no entry here cannot be planned for, which is reported rather than
 #: silently skipped: it means the registry grew and the planner did not.
 TASK_TYPE_BY_SOURCE: Final[dict[str, str]] = {
+    "overture": "discovery.place_index_search",
+    "osm": "discovery.place_index_search",
     "google_places": "discovery.places_text_search",
 }
 
@@ -146,9 +148,9 @@ async def build_plan(
             notes=("no searchable place in this request",),
         )
 
-    google_types = await _google_types(spec, reference)
+    categories = await _categories(spec, reference, source=source)
     searches, dropped = _searches(
-        spec, template=template, expansion=expansion, areas=areas, google_types=google_types
+        spec, template=template, expansion=expansion, areas=areas, categories=categories
     )
     floor = _min_task_credits(capabilities, source, micros_per_credit)
     searches, unfunded = _affordable(searches, credits=credits, template=template, floor=floor)
@@ -273,11 +275,22 @@ def _area_key(area: GeoArea) -> str:
     return f"{area.country}:{area.kind}:{area.slug}"
 
 
-async def _google_types(spec: ResearchSpec, reference: ReferenceData) -> tuple[str, ...]:
+async def _categories(
+    spec: ResearchSpec, reference: ReferenceData, *, source: str
+) -> tuple[str, ...]:
+    """The source's own category names for the spec's industries.
+
+    Every source names things differently -- Overture has no `car_repair`, no `university` and
+    no `bicycle_store` -- so the translation belongs with the taxonomy (ADR-0017) and is looked
+    up per source here rather than guessed at by whichever connector receives the task.
+    """
     industry = spec.filters.industry
     if industry is None or not industry.taxonomy_ids:
         return ()
-    return await reference.google_types_for([text_of(t) for t in industry.taxonomy_ids])
+    ids = [text_of(t) for t in industry.taxonomy_ids]
+    if source in {"overture", "osm"}:
+        return await reference.overture_categories_for(ids)
+    return await reference.google_types_for(ids)
 
 
 def _searches(
@@ -286,7 +299,7 @@ def _searches(
     template: PlanTemplate,
     expansion: Expansion,
     areas: list[GeoArea],
-    google_types: tuple[str, ...],
+    categories: tuple[str, ...],
 ) -> tuple[list[dict[str, Any]], int]:
     """One search per (place, phrase), tiled by sub-locality where the template says to.
 
@@ -295,11 +308,10 @@ def _searches(
     Returns the searches that fit and how many were cut, so the job can say what it left out
     rather than quietly returning a fraction of the market.
     """
-    category = google_types[0] if google_types else None
     searches: list[dict[str, Any]] = []
     for area in areas:
         for query in expansion.queries:
-            searches.append(_search(query, area=area, category=category))
+            searches.append(_search(query, area=area, categories=categories))
     if template.tile_sub_localities and expansion.sub_localities:
         # Only cities get tiled by name: a sub-locality of a state is just a city, and the
         # Places connector already tiles a large box geometrically.
@@ -312,7 +324,12 @@ def _searches(
         for area in (a for a in areas if a.is_city):
             for locality in expansion.sub_localities:
                 searches.append(
-                    _search(f"{head} {locality}", area=area, category=category, locality=locality)
+                    _search(
+                        f"{head} {locality}",
+                        area=area,
+                        categories=categories,
+                        locality=locality,
+                    )
                 )
     dropped = max(0, len(searches) - template.max_discovery_tasks)
     return searches[: template.max_discovery_tasks], dropped
@@ -322,7 +339,7 @@ def _search(
     query: str,
     *,
     area: GeoArea,
-    category: str | None,
+    categories: tuple[str, ...],
     locality: str | None = None,
 ) -> dict[str, Any]:
     """The `input` of one discovery task, minus the limits the budget decides.
@@ -338,8 +355,13 @@ def _search(
         },
         "area_slug": area.slug,
     }
-    if category:
-        payload["query"]["category"] = category
+    if categories:
+        # Both shapes, because the two kinds of source take different ones and neither should
+        # have to know about the other's. Places accepts a single `includedType` per request;
+        # the place index matches a whole list in one query, and an industry meaning three
+        # Overture categories would lose two thirds of its market if only the first were sent.
+        payload["query"]["category"] = categories[0]
+        payload["query"]["categories"] = list(categories)
     if locality:
         payload["locality"] = locality
     return payload

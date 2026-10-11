@@ -134,8 +134,12 @@ async def test_a_place_with_no_recorded_population_still_matches() -> None:
 async def test_industry_types_are_ordered_and_deduplicated() -> None:
     reference = ref(
         industries={
-            "dental": Industry("dental", "Dental", ("dentist", "dental_clinic"), ()),
-            "medical": Industry("medical", "Medical", ("doctor", "dentist"), ()),
+            "dental": Industry(
+                "dental", "Dental", ("dentist", "dental_clinic"), ("dental_clinic",), ()
+            ),
+            "medical": Industry(
+                "medical", "Medical", ("doctor", "dentist"), ("doctors_office",), ()
+            ),
         }
     )
 
@@ -154,12 +158,16 @@ async def test_industry_types_are_ordered_and_deduplicated() -> None:
 
 
 async def test_an_industry_the_seed_does_not_know_contributes_nothing() -> None:
-    reference = ref(industries={"dental": Industry("dental", "Dental", ("dentist",), ())})
+    reference = ref(
+        industries={"dental": Industry("dental", "Dental", ("dentist",), ("dental_clinic",), ())}
+    )
     # An empty tuple means "search on the text alone", which is a worse search but a correct
     # one. Guessing a Places type would filter the results to the wrong kind of business.
     assert await reference.google_types_for(["not-a-real-slug"]) == ()
     assert await reference.google_types_for([]) == ()
     assert await reference.google_types_for(["not-real", "dental"]) == ("dentist",)
+    assert await reference.overture_categories_for(["not-a-real-slug"]) == ()
+    assert await reference.overture_categories_for(["not-real", "dental"]) == ("dental_clinic",)
 
 
 @pytest.mark.parametrize(
@@ -171,3 +179,44 @@ def test_only_a_city_is_worth_tiling_by_name(kind: str, is_city: bool) -> None:
     # box geometrically, so naming localities inside one buys the same ground twice.
     area = GeoArea("s", "N", kind, "IN", (1.0, 2.0, 3.0, 4.0), None)
     assert area.is_city is is_city
+
+
+async def test_every_overture_category_is_used_not_just_the_first() -> None:
+    """Where Places takes one `includedType`, the place index matches a list in one query.
+
+    An industry that means three Overture categories would lose two thirds of its market if the
+    planner sent only the first, which is what `google_types_for` has to do and why these are
+    two methods rather than one with a flag.
+    """
+    reference = ref(
+        industries={
+            "clinic": Industry(
+                "clinic",
+                "Clinic",
+                ("medical_clinic",),
+                ("primary_care_or_general_clinic", "doctors_office"),
+                (),
+            ),
+            "dental": Industry("dental", "Dental", ("dentist",), ("dental_clinic",), ()),
+        }
+    )
+    assert await reference.overture_categories_for(["clinic"]) == (
+        "primary_care_or_general_clinic",
+        "doctors_office",
+    )
+    # Ordered by the industries asked for, and deduplicated across them.
+    assert await reference.overture_categories_for(["clinic", "dental"]) == (
+        "primary_care_or_general_clinic",
+        "doctors_office",
+        "dental_clinic",
+    )
+
+
+async def test_an_industry_overture_has_no_category_for_contributes_nothing() -> None:
+    """24 taxonomy entries are deliberately empty -- Overture has no EV dealer, for one.
+
+    Empty has to stay empty all the way through. A planner that substituted something broader
+    here would answer "EV dealers in Delhi" with every car showroom in it.
+    """
+    reference = ref(industries={"ev": Industry("ev-dealer", "EV Dealer", ("car_dealer",), (), ())})
+    assert await reference.overture_categories_for(["ev"]) == ()

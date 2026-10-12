@@ -32,6 +32,7 @@ function lead(values: LeadValue[]): LeadView {
     address: '12 Main Road',
     phone: '+911123456789',
     googlePlaceId: 'place-1',
+    exportedAt: null,
     values,
   };
 }

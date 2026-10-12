@@ -160,6 +160,13 @@ export interface LeadView {
   address: string | null;
   phone: string | null;
   googlePlaceId: string | null;
+  /**
+   * When this lead was last exported, or null if it never was (ADR-0016).
+   *
+   * The UI needs it because a lead's values are pruned a while after it is exported, and a row
+   * that has lost its email should say why rather than look like a lead we failed to enrich.
+   */
+  exportedAt: string | null;
   values: LeadValue[];
 }
 

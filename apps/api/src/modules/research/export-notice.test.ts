@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
@@ -8,17 +8,18 @@ import { CDLA_PERMISSIVE_2_0, noticeLines } from './export-notice';
 import type { LeadView } from './research.dto';
 
 /** The repository's copy, which the constant in the code has to match exactly. */
-const VENDORED = resolve(
-  import.meta.dirname,
-  '..',
-  '..',
-  '..',
-  '..',
-  '..',
-  'docs',
-  'licenses',
-  'CDLA-Permissive-2.0.md',
-);
+function vendoredLicense(): string {
+  // Walked up to rather than reached by a fixed number of `..`: this test can be run from the
+  // package or from the workspace root, and a path that is right from only one of those is a
+  // test that fails for a reason that has nothing to do with licences.
+  let dir = process.cwd();
+  while (!existsSync(resolve(dir, 'pnpm-workspace.yaml'))) {
+    const up = dirname(dir);
+    if (up === dir) throw new Error('no workspace root above ' + process.cwd());
+    dir = up;
+  }
+  return readFileSync(resolve(dir, 'docs', 'licenses', 'CDLA-Permissive-2.0.md'), 'utf8');
+}
 
 function lead(id: string, sources: string[]): LeadView {
   return {
@@ -43,7 +44,7 @@ describe('export licence notice', () => {
     // The constant exists so an export cannot fail on a path inside a container, and so the
     // licence cannot be left out of an image by a forgotten COPY. The cost of that is a second
     // copy, and the only thing keeping two copies honest is this.
-    const vendored = readFileSync(VENDORED, 'utf8');
+    const vendored = vendoredLicense();
     const stripped = vendored
       .replace(/^# /gm, '')
       .replace(/^## /gm, '')

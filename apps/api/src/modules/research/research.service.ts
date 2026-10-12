@@ -270,6 +270,40 @@ export class ResearchService {
     return all;
   }
 
+  /**
+   * Records that these leads have been handed to the customer (ADR-0016).
+   *
+   * What makes pruning safe: the sweeper only touches a company every one of whose leads was
+   * exported and has gone cold, so this stamp is the thing that decides when a lead's values
+   * may go. Written after the file is built rather than before, because a lead marked exported
+   * by a request that then failed would be pruned having never reached anybody.
+   *
+   * `app_api` may write this column and no other part of a lead's lifecycle; the sweeper runs
+   * as the owner. A failure here is logged and swallowed: the customer has their file, and
+   * refusing them a download because a bookkeeping write failed would be the wrong trade. The
+   * cost of missing it is that the lead is pruned later, which is the safe direction.
+   */
+  async recordExport(
+    user: AuthUser,
+    tenant: TenantInfo,
+    leadIds: readonly string[],
+  ): Promise<void> {
+    if (leadIds.length === 0) return;
+    try {
+      await withTenant(this.db, { orgId: tenant.orgId, userId: user.userId }, (tx) =>
+        tx
+          .update(leads)
+          .set({ exportedAt: new Date() })
+          .where(and(eq(leads.workspaceId, tenant.workspaceId), inArray(leads.id, [...leadIds]))),
+      );
+    } catch (error) {
+      this.logger.warn(
+        { err: error, leads: leadIds.length },
+        'could not record an export; these leads will be pruned later than they could be',
+      );
+    }
+  }
+
   /** History for the active workspace, newest first (docs/05 `GET /app/research`). */
   /**
    * The leads this job delivered to the active workspace, newest first.
@@ -311,6 +345,7 @@ export class ResearchService {
           address: companyLocations.address,
           phone: companyLocations.phoneE164,
           googlePlaceId: companyLocations.googlePlaceId,
+          exportedAt: leads.exportedAt,
         })
         .from(leads)
         .innerJoin(researchJobLeads, eq(researchJobLeads.leadId, leads.id))
@@ -350,6 +385,7 @@ export class ResearchService {
       address: row.address,
       phone: row.phone,
       googlePlaceId: row.googlePlaceId,
+      exportedAt: row.exportedAt?.toISOString() ?? null,
       values: byCompany.get(row.companyId) ?? [],
     }));
 

@@ -174,6 +174,13 @@ export class ResearchController {
       reply.raw.write(line);
     }
     reply.raw.end();
+    // After the file has gone, never before: a lead stamped by a request that then failed
+    // would be pruned having never reached anybody (ADR-0016).
+    await this.research.recordExport(
+      user,
+      tenant,
+      leads.map((lead) => lead.id),
+    );
   }
 
   /** SSE: `state`, then live `progress` events, then `done` (docs/05 SSE progress). */

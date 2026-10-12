@@ -142,6 +142,8 @@ export interface LeadView {
   address: string | null;
   phone: string | null;
   googlePlaceId: string | null;
+  /** When this lead was last exported, or null. Its values are pruned a while after (ADR-0016). */
+  exportedAt: string | null;
   values: LeadValue[];
 }
 

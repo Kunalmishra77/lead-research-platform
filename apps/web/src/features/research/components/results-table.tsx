@@ -14,6 +14,7 @@ import { valueOf } from '../types';
 import { SourceAttribution } from './attribution';
 import { LeadDetails } from './lead-details';
 import { ProvenanceLegend, ValueCell } from './provenance';
+import { PrunedNote } from './pruned-note';
 import { SocialsCell } from './socials-cell';
 
 /**
@@ -94,6 +95,7 @@ export function ResultsTable({
                       rather than in a row nobody can read. */}
                   <TableCell className="align-top">
                     <LeadDetails lead={lead} />
+                    <PrunedNote lead={lead} />
                   </TableCell>
                   <TableCell className="align-top">
                     <ValueCell value={valueOf(lead, 'city')} />

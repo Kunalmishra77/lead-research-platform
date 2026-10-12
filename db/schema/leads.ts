@@ -61,6 +61,14 @@ export const leads = app.table(
     overrides: jsonb('overrides').notNull().default({}),
     customFields: jsonb('custom_fields').notNull().default({}),
     contactedAt: timestamp('contacted_at', { withTimezone: true, mode: 'date' }),
+    /**
+     * When this lead was last included in an export, and the clock the prune sweeper runs on
+     * (ADR-0016, migration 0027).
+     *
+     * Null means the customer has not taken it yet, and nothing of it is pruned: the storage
+     * ceiling applies to work in progress, never to delivered work nobody has collected.
+     */
+    exportedAt: timestamp('exported_at', { withTimezone: true, mode: 'date' }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

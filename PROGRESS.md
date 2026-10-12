@@ -13,6 +13,16 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-12 — Phase 2 — two tasks finding one business at once
+
+- Done: fixed the last duplicate-company mechanism. `app/db/batch.py` now claims every place with a transaction-scoped advisory lock (`claim_places`, sorted ids so overlapping chunks cannot deadlock) *before* looking it up, and `upsert_locations` reads `company_id` back from the upsert instead of assuming the one just created. Two live-database regression tests in `tests/test_graph_batch.py`: one holds a place uncommitted and asserts a second transaction blocks, the other sets up the state the race leaves behind and asserts the writer adopts the incumbent.
+- Decisions (link ADRs): a lock, not a cleanup. Deleting the loser's company would mean granting `app_worker` DELETE on `app.companies`, and a role that can delete companies will eventually delete the wrong ones (0013 deliberately grants only SELECT/INSERT/UPDATE). Prevention keeps the worker's rights where they are.
+- Tests/checks status: `uv run ruff check .`, `uv run mypy` (105 files), `uv run pytest` — **917 passed** against the live Supabase project. The 10 tests in `test_graph_batch.py` include the two new ones.
+- Measured on the live graph: 1,403 companies, **250 with no location at all**, 20.2% duplicate by name+city+state. All 250 matched a keeper, none had a domain, and `leads moved to the keeper: 0` — every one of their leads was a duplicate the same workspace already held under the other id, so all 250 were billed twice. The fold is rehearsed in a rolled-back transaction: 1,403 → 1,153 companies, 1,421 → 1,171 leads, 250 → **0** orphans, 20.2% → **2.9%** duplicate. **Not yet applied — awaiting approval.**
+- Also measured: "hospitals in Delhi" (standard) completed in 8m53s, 495 leads, 75% phone, 28% email, **76% contactable**, 0 credits consumed. The zeros in the UI were a mid-job read. Credit ledger reconciles: 2,050 granted − 551 consumed = 1,499 balance, every reservation released.
+- Open issues / blockers: (1) the fold of the 250 orphans needs the owner's go-ahead — a mass delete. (2) 551 credits consumed includes ~250 for duplicate deliveries; a correcting grant has not been written. (3) Phase 2 criterion 2 ("≥ 200 unique candidates for Delhi") is worth re-measuring only after the fold, since "unique" is the part the bug broke. (4) `website` fill is 20% on hospitals — a property of what Overture holds for that category, not a defect.
+- Next step: apply the fold, redeploy, then measure Phase 2 criterion 2 with "restaurants in Delhi with a website".
+
 ### 2026-10-11/12 — Phase 2 — the discovery source is a file, and it is free
 
 - **The owner's objection was the right one: leads you cannot contact are not leads.** OSM, which

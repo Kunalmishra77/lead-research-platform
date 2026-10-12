@@ -1,6 +1,7 @@
 """Fixtures for the planner tests: a seeded geography and a registry, without a database."""
 
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Any
 
 import fakeredis
@@ -114,6 +115,20 @@ class FakeReference:
             return None
         return max(matches, key=lambda a: (a.is_city, a.population or 0))
 
+    async def overture_categories_for(self, taxonomy_ids: list[str]) -> tuple[str, ...]:
+        """The place index's own category names, which is the path discovery actually takes.
+
+        Absent from this fake until now, so every planner test resolved categories through
+        `google_types_for` -- the branch for a source that has not been the discovery source
+        since ADR-0017.
+        """
+        seen: dict[str, None] = {}
+        for slug in taxonomy_ids:
+            industry = self._industries.get(slug)
+            for category in industry.overture_categories if industry else ():
+                seen.setdefault(category, None)
+        return tuple(seen)
+
     async def google_types_for(self, taxonomy_ids: list[str]) -> tuple[str, ...]:
         seen: dict[str, None] = {}
         for slug in taxonomy_ids:
@@ -123,14 +138,23 @@ class FakeReference:
         return tuple(seen)
 
 
-def make_registry(*, places: bool = True, serp: bool = True) -> ConnectorRegistry:
-    """A registry with the Phase 2 connectors, built the way the worker builds it."""
+def make_registry(
+    *, places: bool = True, serp: bool = True, index_path: Path | None = None
+) -> ConnectorRegistry:
+    """A registry with the Phase 2 connectors, built the way the worker builds it.
+
+    `index_path` registers the place index connectors, which is how the real worker gets its
+    discovery source (ADR-0017). Without it the registry has only the API-backed sources, and a
+    plan built from it chooses one of those -- which is why this argument exists: the end-to-end
+    test has to reach the connector discovery actually uses.
+    """
     redis = fakeredis.FakeAsyncRedis()
     registry, _ = build_connectors(
         settings=settings(
             GOOGLE_PLACES_API_KEY="places-test-key" if places else None,
             GOOGLE_PLACES_ENABLED=places,
             SERPER_API_KEY="serper-test-key" if serp else None,
+            PLACES_INDEX_PATH=index_path,
         ),
         redis=redis,
     )
@@ -149,6 +173,7 @@ def make_spec(
     max_results: int = 500,
     max_credits: int = 1000,
     has_website: bool | None = None,
+    contact_any_of: list[str] | None = None,
 ) -> ResearchSpec:
     """A valid ResearchSpec, so the tests exercise the contract rather than a convenient dict."""
     filters: dict[str, Any] = {
@@ -160,6 +185,8 @@ def make_spec(
         filters["industry"] = {"include": ["dental clinics"]}
     if has_website is not None:
         filters["has_website"] = has_website
+    if contact_any_of:
+        filters["contact"] = {"any_of": contact_any_of}
     return ResearchSpec.model_validate(
         {
             "spec_version": 1,

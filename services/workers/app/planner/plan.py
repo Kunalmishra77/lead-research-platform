@@ -157,6 +157,7 @@ async def build_plan(
         categories=categories,
         name_hint=_name_hint(spec),
         has_website=spec.filters.has_website,
+        contact_any_of=_contact_channels(spec),
     )
     floor = _min_task_credits(capabilities, source, micros_per_credit)
     searches, unfunded = _affordable(searches, credits=credits, template=template, floor=floor)
@@ -281,6 +282,18 @@ def _area_key(area: GeoArea) -> str:
     return f"{area.country}:{area.kind}:{area.slug}"
 
 
+def _contact_channels(spec: ResearchSpec) -> tuple[str, ...]:
+    """The channels `filters.contact.any_of` named, in a stable order.
+
+    Sorted because this goes into the task input, which is hashed into the task's identity: two
+    runs of the same plan must produce the same hash, and a set's order is not a promise.
+    """
+    contact = spec.filters.contact
+    if contact is None or not contact.any_of:
+        return ()
+    return tuple(sorted({str(c) for c in contact.any_of}))
+
+
 def _name_hint(spec: ResearchSpec) -> str | None:
     """The trade the user named, apart from the place they named it in.
 
@@ -333,6 +346,7 @@ def _searches(
     categories: tuple[str, ...],
     name_hint: str | None = None,
     has_website: bool | None = None,
+    contact_any_of: tuple[str, ...] = (),
 ) -> tuple[list[dict[str, Any]], int]:
     """One search per (place, phrase), tiled by sub-locality where the template says to.
 
@@ -351,6 +365,7 @@ def _searches(
                     categories=categories,
                     name_hint=name_hint,
                     has_website=has_website,
+                    contact_any_of=contact_any_of,
                 )
             )
     if template.tile_sub_localities and expansion.sub_localities:
@@ -371,6 +386,7 @@ def _searches(
                         categories=categories,
                         name_hint=name_hint,
                         has_website=has_website,
+                        contact_any_of=contact_any_of,
                         locality=locality,
                     )
                 )
@@ -385,6 +401,7 @@ def _search(
     categories: tuple[str, ...],
     name_hint: str | None = None,
     has_website: bool | None = None,
+    contact_any_of: tuple[str, ...] = (),
     locality: str | None = None,
 ) -> dict[str, Any]:
     """The `input` of one discovery task, minus the limits the budget decides.
@@ -413,6 +430,8 @@ def _search(
         # `is not None`, not truthiness: False is a filter of its own ("without a website"),
         # and dropping it would turn that search into one with no filter at all.
         payload["query"]["has_website"] = has_website
+    if contact_any_of:
+        payload["query"]["contact_any_of"] = list(contact_any_of)
     if locality:
         payload["locality"] = locality
     return payload

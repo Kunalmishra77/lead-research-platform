@@ -15,8 +15,9 @@ worth being careful about, which is why the write is a single transaction and wh
 charged from what the write actually returned rather than from what the search returned.
 """
 
+from collections.abc import Sequence
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Final
 
 from leadforge_contracts.job_envelope import JobEnvelope
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -108,6 +109,10 @@ class DiscoveryQueryPayload(BaseModel):
     #: does, and so the delivery filter below can hold every source to it. Three states: True
     #: requires a website, False requires none, None does not care.
     has_website: bool | None = None
+    #: `ResearchSpec.filters.contact.any_of` -- the channels the user will actually reach people
+    #: on. A source filters on the ones it holds; `_honour_contact_filter` holds every source to
+    #: them at delivery.
+    contact_any_of: list[str] = Field(default_factory=list, max_length=8)
     language: str = "en"
     #: Matches the contract's own ceiling (`research-spec.schema.json`, Limits.max_results). It
     #: was 200 here while the schema allowed 10,000, so a spec the API accepted could be refused
@@ -194,6 +199,7 @@ def register_discovery_handlers(
                     org_id=org_id,
                 )
                 found = _honour_website_filter(found, payload.query.has_website)
+                found = _honour_contact_filter(found, payload.query.contact_any_of)
                 stored = await graph.store(
                     org_id,
                     found,
@@ -376,6 +382,11 @@ async def _search(
     return await connector.search(query, CallContext.from_job(ctx))
 
 
+#: Contact channels a candidate can be judged on at delivery. `whatsapp` and `contact_form` are
+#: in the spec and not in a discovery result, so they are deliberately absent.
+_CHECKABLE_CONTACT: Final[frozenset[str]] = frozenset({"phone", "email"})
+
+
 def _honour_website_filter(found: list[Any], has_website: bool | None) -> list[Any]:
     """Holds every source to `has_website`, including the ones that cannot filter on it.
 
@@ -393,6 +404,42 @@ def _honour_website_filter(found: list[Any], has_website: bool | None) -> list[A
     return [c for c in found if bool(getattr(c, "url", None)) is has_website]
 
 
+def _honour_contact_filter(found: list[Any], any_of: Sequence[str]) -> list[Any]:
+    """Keeps only results reachable on one of the channels the user named.
+
+    `filters.contact.any_of` is the closest thing the spec has to the product's actual promise:
+    a lead nobody can be reached at is not a lead. It was parsed, stored, and read by nothing --
+    the same gap as `has_website`, found by auditing every filter in the schema at once rather
+    than waiting for another live run to expose one.
+
+    Only `phone` and `email` can be judged here. `whatsapp` and `contact_form` are channels the
+    spec allows and discovery cannot see, so a request naming only those narrows nothing, and
+    `ai/feasibility.py` tells the user that instead of this quietly keeping everything or
+    quietly dropping everything.
+    """
+    channels = [c for c in any_of if c in _CHECKABLE_CONTACT]
+    if not channels:
+        return found
+    return [c for c in found if any(_has_channel(c, channel) for channel in channels)]
+
+
+def _has_channel(candidate: Any, channel: str) -> bool:
+    """Whether a candidate carries one contact channel.
+
+    Both places have to be looked in, and finding that out is what the test for this caught:
+    `Candidate` has a `phone` attribute and no `email` one -- an email arrives as a `FieldValue`
+    in `values`, like most of what a source reports. Reading attributes alone made the email
+    channel match nothing, which would have delivered an empty result for "restaurants with an
+    email" and looked like a thin market.
+    """
+    if getattr(candidate, channel, None):
+        return True
+    return any(
+        getattr(value, "field", None) == channel and getattr(value, "value", None)
+        for value in getattr(candidate, "values", ())
+    )
+
+
 def _options(payload: DiscoveryPayload) -> dict[str, Any]:
     """Per-connector extras. A source that does not understand one ignores it."""
     options: dict[str, Any] = {}
@@ -402,6 +449,8 @@ def _options(payload: DiscoveryPayload) -> dict[str, Any]:
         options["name_hint"] = payload.query.name_hint
     if payload.query.has_website is not None:
         options["has_website"] = payload.query.has_website
+    if payload.query.contact_any_of:
+        options["contact_any_of"] = payload.query.contact_any_of
     return options
 
 

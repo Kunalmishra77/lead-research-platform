@@ -150,6 +150,7 @@ class PlaceIndex:
         name: str | None = None,
         contactable: bool = False,
         has_website: bool | None = None,
+        requires_contact: Sequence[str] = (),
         limit: int = 100,
         offset: int = 0,
     ) -> list[Place]:
@@ -178,6 +179,13 @@ class PlaceIndex:
             # What it can honestly mean is "the release records one" -- a business whose site
             # the release does not know is indistinguishable here from one that has none.
             where.append("p.website is not null" if has_website else "p.website is null")
+        if requires_contact:
+            # `filters.contact.any_of`: the user named the channels they will actually reach
+            # people on. Narrower than `contactable`, which is the union -- someone who asked
+            # for a phone number should not be handed a business with only an email.
+            clause = _contact_where(requires_contact)
+            if clause is not None:
+                where.append(clause)
         if name:
             where.append("p.name like ? escape '\\'")
             params.append(f"%{_escape_like(name)}%")
@@ -205,6 +213,7 @@ class PlaceIndex:
         source: str | None = None,
         contactable: bool = False,
         has_website: bool | None = None,
+        requires_contact: Sequence[str] = (),
     ) -> int:
         """How many businesses an area holds, for planning a sweep before running one.
 
@@ -220,6 +229,13 @@ class PlaceIndex:
             where.append("(p.phone is not null or p.email is not null)")
         if has_website is not None:
             where.append("p.website is not null" if has_website else "p.website is null")
+        if requires_contact:
+            # `filters.contact.any_of`: the user named the channels they will actually reach
+            # people on. Narrower than `contactable`, which is the union -- someone who asked
+            # for a phone number should not be handed a business with only an email.
+            clause = _contact_where(requires_contact)
+            if clause is not None:
+                where.append(clause)
         if categories:
             where.append(_category_where(categories))
             params.extend(categories)
@@ -383,6 +399,20 @@ def _category_where(categories: Sequence[str]) -> str:
         "exists (select 1 from place_categories pc "  # noqa: S608
         f"where pc.place_id = p.id and pc.category in ({placeholders}))"
     )
+
+
+#: The contact channels a place index row can be asked about. `whatsapp` and `contact_form` are
+#: channels the spec allows and the releases do not carry, so a search for only those cannot be
+#: narrowed here -- `feasibility.py` says so rather than this pretending otherwise.
+CHECKABLE_CONTACT: Final[tuple[str, ...]] = ("phone", "email")
+
+
+def _contact_where(channels: Sequence[str]) -> str | None:
+    """`any_of` over the channels this index can see, or None when it can see none of them."""
+    columns = [c for c in CHECKABLE_CONTACT if c in channels]
+    if not columns:
+        return None
+    return "(" + " or ".join(f"p.{c} is not null" for c in columns) + ")"
 
 
 def _bbox_where(bbox: tuple[float, float, float, float]) -> tuple[list[str], list[object]]:

@@ -208,3 +208,55 @@ def test_counting_applies_the_same_website_filter_as_searching(mixed: PlaceIndex
     assert mixed.count(bbox=DELHI, has_website=True) == len(
         mixed.search(bbox=DELHI, has_website=True)
     )
+
+
+def test_a_contact_channel_can_be_required(mixed: PlaceIndex, tmp_path: Path) -> None:
+    """`filters.contact.any_of` names the channels the user will actually reach people on.
+
+    Narrower than `contactable`, which is their union: someone who asked for a phone number
+    should not be handed a business that has only an email.
+    """
+    path = tmp_path / "channels.sqlite"
+    with IndexWriter(path) as writer:
+        writer.add(
+            [
+                _place(21, "Phone Only", "amenity=restaurant", 28.50, 77.10,
+                       phone="+911141000001"),
+                _place(22, "Email Only", "amenity=restaurant", 28.52, 77.11,
+                       email="hi@example.in"),
+                _place(23, "Both", "amenity=restaurant", 28.54, 77.12,
+                       phone="+911141000002", email="both@example.in"),
+                _place(24, "Neither", "amenity=restaurant", 28.56, 77.13),
+            ]
+        )
+        writer.finish()
+    index = PlaceIndex(path)
+
+    assert {p.name for p in index.search(bbox=DELHI, requires_contact=["phone"])} == {
+        "Phone Only",
+        "Both",
+    }
+    assert {p.name for p in index.search(bbox=DELHI, requires_contact=["email"])} == {
+        "Email Only",
+        "Both",
+    }
+    # any_of, so either will do.
+    assert {p.name for p in index.search(bbox=DELHI, requires_contact=["phone", "email"])} == {
+        "Phone Only",
+        "Email Only",
+        "Both",
+    }
+    assert index.count(bbox=DELHI, requires_contact=["phone"]) == 2
+
+
+def test_a_channel_the_index_cannot_see_narrows_nothing(mixed: PlaceIndex) -> None:
+    """`whatsapp` and `contact_form` are in the spec and not in a bulk place release.
+
+    Returning nothing would be worse than returning everything -- the user would read an empty
+    result as "no such businesses" rather than "we cannot check that". `ai/feasibility.py` is
+    what tells them, so this must not quietly filter on a column it does not have.
+    """
+    assert len(mixed.search(bbox=DELHI, requires_contact=["whatsapp"])) == 4
+    assert len(mixed.search(bbox=DELHI, requires_contact=["contact_form"])) == 4
+    # Mixed with one it can see, the checkable one still applies.
+    assert len(mixed.search(bbox=DELHI, requires_contact=["whatsapp", "phone"])) == 0

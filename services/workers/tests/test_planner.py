@@ -182,6 +182,38 @@ async def test_a_spec_that_says_nothing_about_websites_carries_no_filter() -> No
     assert all("has_website" not in t.input["query"] for t in plan.tasks)
 
 
+async def test_the_contact_channels_reach_the_task_in_a_stable_order() -> None:
+    """Sorted, because the task input is hashed into the task's identity.
+
+    A set's iteration order is not a promise, so an unsorted list would give two runs of the
+    same plan two different task hashes -- and the hash is what makes a retry idempotent.
+    """
+    plan = await build_plan(
+        make_spec(cities=["Pune"], contact_any_of=["email", "phone", "phone"]),
+        capabilities=capabilities_for(["name"]),
+        template=template_for("prospecting"),
+        reference=FakeReference(),
+        expansion=Expansion(queries=("dental clinics in Pune",)),
+        credits=500,
+    )
+
+    assert plan.tasks
+    for task in plan.tasks:
+        assert task.input["query"]["contact_any_of"] == ["email", "phone"]
+
+
+async def test_a_spec_with_no_contact_filter_carries_none() -> None:
+    plan = await build_plan(
+        make_spec(cities=["Pune"]),
+        capabilities=capabilities_for(["name"]),
+        template=template_for("prospecting"),
+        reference=FakeReference(),
+        expansion=Expansion(queries=("dental clinics in Pune",)),
+        credits=500,
+    )
+    assert all("contact_any_of" not in t.input["query"] for t in plan.tasks)
+
+
 # ---------------------------------------------------------------- budgets
 
 

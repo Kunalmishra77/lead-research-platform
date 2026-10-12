@@ -18,6 +18,7 @@ from app.connectors.types import Candidate, FieldValue
 from app.db.graph import Stored
 from app.db.research_tasks import SavedTask
 from app.handlers.discovery import (
+    _honour_contact_filter,
     _honour_website_filter,
     _lead_rate,
     register_discovery_handlers,
@@ -956,3 +957,56 @@ def test_the_website_filter_is_honoured_for_a_source_that_cannot_filter() -> Non
     # Not asking is not asking for none: `None` has to leave the list alone, or every search
     # without the filter would quietly become "and with no website".
     assert _honour_website_filter(found, None) == found
+
+
+def test_the_contact_filter_is_honoured_for_a_source_that_cannot_filter() -> None:
+    """The product's promise, in the one place that can hold every source to it.
+
+    `filters.contact.any_of` is the closest the spec comes to "a lead someone can be reached
+    at", and it was parsed and read by nothing -- found by auditing every filter in the schema
+    at once rather than waiting for another live run to expose one.
+    """
+
+    def candidate(name: str, *, phone: str | None = None, email: str | None = None) -> Candidate:
+        return Candidate(
+            source_key="google_places",
+            external_id=name,
+            name=name,
+            phone=phone,
+            source_url="https://example.test/p",
+            observed_at=datetime(2026, 9, 23, tzinfo=UTC),
+            values=(
+                (
+                    FieldValue(
+                        entity_type="company",
+                        field="email",
+                        value=email,
+                        source_key="google_places",
+                        source_url="https://example.test/p",
+                        observed_at=datetime(2026, 9, 23, tzinfo=UTC),
+                        method="api",
+                        derivation="found",
+                        confidence=0.9,
+                    ),
+                )
+                if email
+                else ()
+            ),
+        )
+
+    found = [
+        candidate("Phone Only", phone="+911141000001"),
+        candidate("Email Only", email="hi@example.in"),
+        candidate("Neither"),
+    ]
+
+    assert [c.name for c in _honour_contact_filter(found, ["phone"])] == ["Phone Only"]
+    assert [c.name for c in _honour_contact_filter(found, ["email"])] == ["Email Only"]
+    assert [c.name for c in _honour_contact_filter(found, ["phone", "email"])] == [
+        "Phone Only",
+        "Email Only",
+    ]
+    # Asking for nothing, and asking only for a channel discovery cannot see, both leave the
+    # list alone. An empty result would read as "no such businesses" rather than "not checkable".
+    assert _honour_contact_filter(found, []) == found
+    assert _honour_contact_filter(found, ["whatsapp", "contact_form"]) == found

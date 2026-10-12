@@ -29,30 +29,131 @@ class FeasibilityRow(TypedDict):
 
 
 #: filter path -> (mode, note). The note is shown to the user, so it explains the cost.
+#:
+#: Every filter the schema allows has a row here, and `test_feasibility.py` reads
+#: `research-spec.schema.json` and fails if one is missing. That test exists because the table
+#: is a promise and nothing used to check it: `filters.has_website` sat here as a `post_filter`
+#: saying "results without one are discarded" while nothing in the pipeline read the filter at
+#: all, and seven other filters had no row whatsoever -- neither applied nor declared
+#: unsupported, so a user asking for them was told nothing and given everything.
 FILTER_MODES: Final[dict[str, tuple[Mode, str]]] = {
     "filters.industry": ("directly_searchable", "Searched as a category on the map sources."),
-    "filters.location": ("directly_searchable", "Searched by covering the area you named."),
+    "filters.location": (
+        "directly_searchable",
+        "Searched by covering the cities and states you named, from the geography seed.",
+    ),
+    # Sub-fields of a filter that is itself applied. Calling `filters.location`
+    # directly_searchable is a promise about all of it, and these two are not kept: the geo seed
+    # holds cities and states with their own boxes, so there is nothing to grow a radius from or
+    # to expand a metro area with.
+    "filters.location.radius_km": (
+        "unsupported",
+        "A radius needs a point to grow from; the geography seed holds named areas and their "
+        "own bounding boxes.",
+    ),
+    "filters.location.include_metro_area": (
+        "unsupported",
+        "Metro areas are not in the geography seed, so a city is searched as the seed defines "
+        "it.",
+    ),
     "filters.has_website": (
         "post_filter",
-        "Checked after each business is found, so results without one are discarded.",
+        "Asked of the place index directly; for sources that cannot filter on it, results "
+        "without a website are discarded after being found.",
+    ),
+    "filters.contact": (
+        "post_filter",
+        "Phone and email are checked on every result. WhatsApp and contact forms cannot be "
+        "checked during discovery, so asking only for those filters nothing.",
+    ),
+    "filters.min_confidence": (
+        "unsupported",
+        "Per-field confidence is computed in the verification stage, which runs after "
+        "discovery.",
     ),
     "filters.employee_count": (
         "unsupported",
         "Company size is not available from the Phase 2 sources.",
     ),
-    "keywords.must": ("post_filter", "Matched against the text we collect for each business."),
-    "keywords.not": ("post_filter", "Matched against the text we collect, to exclude."),
-    "keywords.should": ("post_filter", "Used to rank rather than to exclude."),
+    "filters.rating": (
+        "unsupported",
+        "Ratings come from Google Places, which is not the discovery source; the bulk place "
+        "releases do not carry them.",
+    ),
+    "filters.social": (
+        "unsupported",
+        "Social profiles are collected where a source lists them, but whether one is active "
+        "needs the enrichment stage.",
+    ),
+    "filters.technologies": (
+        "unsupported",
+        "What a site is built with is read by the enrichment stage, after discovery.",
+    ),
+    "filters.funding": (
+        "unsupported",
+        "Funding history needs a provider none of the discovery sources is.",
+    ),
+    "filters.hiring": (
+        "unsupported",
+        "Open roles are read by the enrichment stage, after discovery.",
+    ),
+    # These read "post_filter" for months and nothing matched a keyword against anything.
+    # Discovery sees a name and a category; the text a keyword is really about is on the
+    # business's own site, which the enrichment stage reads. Half-applying it would be worse
+    # than saying so: "vegan restaurants" matched against names alone misses most of them and
+    # looks like a complete answer.
+    "keywords.must": (
+        "unsupported",
+        "Keywords are matched against the text collected from each site, which the enrichment "
+        "stage reads after discovery.",
+    ),
+    "keywords.not": (
+        "unsupported",
+        "Excluding by keyword needs the site text that the enrichment stage collects.",
+    ),
+    "keywords.should": (
+        "unsupported",
+        "Ranking by keyword needs the site text that the enrichment stage collects.",
+    ),
     "exclude.existing_leads": (
         "post_filter",
         "Checked against your workspace as each result is delivered, so you are not charged "
         "again for one you already have.",
+    ),
+    "exclude.lists": (
+        "unsupported",
+        "Excluding by list needs the lists feature, which arrives with the lead database.",
+    ),
+    "custom_columns": (
+        "unsupported",
+        "Columns answered by AI research arrive in a later stage.",
     ),
     "seed_company": (
         "unsupported",
         "Finding businesses similar to a named one needs the company graph, which arrives "
         "after discovery.",
     ),
+}
+
+#: filter path -> where the pipeline applies it. A filter whose mode says it runs must appear
+#: here, and one declared `unsupported` must not: `test_feasibility.py` asserts both, so the
+#: table cannot promise work that no code does.
+#:
+#: The value is read by a human, not by code. Its job is to make the claim checkable -- someone
+#: doubting a row can open the named place and see the filter, which is the whole reason
+#: `filters.has_website` stayed false for as long as it did.
+APPLIED_BY: Final[dict[str, str]] = {
+    "filters.industry": "planner/plan.py: _categories() puts them on the discovery task",
+    "filters.location": "planner/plan.py: _resolve_places() then one _search() per area",
+    "filters.has_website": (
+        "places/index.py: a predicate in search() and count();"
+        " handlers/discovery.py: _honour_website_filter() before anything is stored"
+    ),
+    "filters.contact": (
+        "places/index.py: _contact_where() in search() and count();"
+        " handlers/discovery.py: _honour_contact_filter() before anything is stored"
+    ),
+    "exclude.existing_leads": "db/batch.py: deliver() -- a lead the workspace holds is not new",
 }
 
 #: A spec asking for these fields is asking for work the discovery phase cannot do yet.
@@ -75,6 +176,23 @@ UNSUPPORTED_FIELDS: Final[frozenset[str]] = frozenset(
 )
 
 
+#: The order filter rows appear in, which is the order `research-spec.schema.json` declares
+#: them: a user reading the table should find it in the same shape as the thing they asked for.
+_FILTER_ORDER: Final[tuple[str, ...]] = (
+    "industry",
+    "location",
+    "has_website",
+    "contact",
+    "min_confidence",
+    "employee_count",
+    "rating",
+    "social",
+    "technologies",
+    "funding",
+    "hiring",
+)
+
+
 def assess(
     spec: dict[str, Any], unsupported_notes: list[str] | None = None
 ) -> list[FeasibilityRow]:
@@ -82,16 +200,25 @@ def assess(
     rows: list[FeasibilityRow] = []
     filters = spec.get("filters", {})
 
-    for key in ("industry", "location", "has_website", "employee_count"):
-        if key in filters:
+    # Every filter present, in the schema's order -- not a hand-written list of four. The old
+    # list named industry, location, has_website and employee_count, so a spec asking about
+    # ratings, socials, technologies, funding, hiring, contact channels or confidence produced
+    # no row at all: the user was told nothing and given everything.
+    for key in _FILTER_ORDER:
+        if filters.get(key) not in (None, {}, [], ()):
             rows.append(_row(f"filters.{key}"))
     if spec.get("seed_company"):
         rows.append(_row("seed_company"))
+    if spec.get("custom_columns"):
+        rows.append(_row("custom_columns"))
     for key in ("must", "not", "should"):
         if spec.get("keywords", {}).get(key):
             rows.append(_row(f"keywords.{key}"))
-    if spec.get("exclude", {}).get("existing_leads"):
+    exclude = spec.get("exclude", {})
+    if exclude.get("existing_leads"):
         rows.append(_row("exclude.existing_leads"))
+    if exclude.get("lists"):
+        rows.append(_row("exclude.lists"))
 
     wanted = UNSUPPORTED_FIELDS.intersection(spec.get("fields", []))
     if wanted:

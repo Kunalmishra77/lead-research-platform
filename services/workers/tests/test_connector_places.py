@@ -215,6 +215,31 @@ async def test_not_asking_about_a_website_is_not_asking_for_none(
     assert {c.name for c in found} == {"Anytime Fitness", "Unreachable Gym"}
 
 
+async def test_a_contact_channel_can_be_required_of_the_source(
+    index: PlaceIndex, ctx: CallContext
+) -> None:
+    """Anytime Fitness has both; Bikanervala has a phone only; Unreachable Gym has neither."""
+    phones = await OvertureConnector(index).search(
+        DiscoveryQuery(text="x", bbox=DELHI, options={"contact_any_of": ["phone"]}), ctx
+    )
+    assert {c.name for c in phones} == {"Anytime Fitness", "Bikanervala"}
+
+    emails = await OvertureConnector(index).search(
+        DiscoveryQuery(text="x", bbox=DELHI, options={"contact_any_of": ["email"]}), ctx
+    )
+    assert {c.name for c in emails} == {"Anytime Fitness"}
+
+
+async def test_a_channel_the_source_cannot_see_does_not_empty_the_result(
+    index: PlaceIndex, ctx: CallContext
+) -> None:
+    """An empty result reads as "no such businesses". `feasibility.py` says "not checkable"."""
+    found = await OvertureConnector(index).search(
+        DiscoveryQuery(text="x", bbox=DELHI, options={"contact_any_of": ["whatsapp"]}), ctx
+    )
+    assert {c.name for c in found} == {"Anytime Fitness", "Bikanervala", "Unreachable Gym"}
+
+
 async def test_a_search_without_a_box_is_refused(index: PlaceIndex, ctx: CallContext) -> None:
     """Every other source can fall back to the text. This one would mean "all of India"."""
     with pytest.raises(InvalidInputError, match="bounding box"):

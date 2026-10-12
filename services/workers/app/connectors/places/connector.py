@@ -118,6 +118,7 @@ class PlaceIndexConnector:
             name=name,
             contactable=bool(query.options.get("contactable")),
             has_website=_tristate(query.options.get("has_website")),
+            requires_contact=_strings(query.options.get("contact_any_of")),
             limit=query.max_results,
         )
         released_at = await self._released_at()

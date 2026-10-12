@@ -36,7 +36,7 @@ from app.jobs.envelope import stream_for
 from app.jobs.errors import RETRYABLE, ErrorClass, InvalidInputError, classify
 from app.jobs.publisher import publish
 from app.jobs.redact import redact
-from app.jobs.registry import HandlerRegistry
+from app.jobs.registry import FailureHook, HandlerRegistry
 from app.metering.context import CallContext
 from app.metering.usage import UsageRecorder
 from app.normalize.domains import is_platform_host
@@ -125,19 +125,7 @@ def register_discovery_handlers(
     usage: UsageRecorder,
     crawl_pool: str = DEFAULT_CRAWL_POOL,
 ) -> None:
-    async def on_failure(
-        envelope: Any, error_class: ErrorClass, error: str, attempts: int | None
-    ) -> None:
-        """Records the outcome the consumer decided, once it has stopped retrying.
-
-        Without this a dead-lettered or paused task stays `running` for ever, and the job it
-        belongs to can never finish because `finish_if_done` waits on it.
-        """
-        if envelope.org_id is None:
-            return
-        await tasks.mark_failed(
-            str(envelope.org_id), str(envelope.job_id), error_class.value, cost_micros=0
-        )
+    on_failure = _failure_hook(tasks, jobs)
 
     # Deduplicated, because two sources can share one task type: `overture` and `osm` are
     # different datasets with different provenance and different coverage, but both are read
@@ -231,6 +219,11 @@ def register_discovery_handlers(
                 error_class = classify(exc)
                 if error_class not in RETRYABLE:
                     await tasks.mark_failed(org_id, task_id, error_class.value, cost_micros=0)
+                    # And ask whether that was the last of them. `finish_if_done` otherwise
+                    # only runs at the end of a task that succeeded, so a job whose final task
+                    # fails stays `running` for ever with its credits reserved -- the
+                    # customer's credits, for leads they never received.
+                    await jobs.finish_if_done(org_id, research_job_id)
                 raise
 
             # Enqueued before this task reports itself finished, and that order is the whole
@@ -439,6 +432,35 @@ async def _lead_rate(reference: ReferenceData, *, source: str, depth: str) -> tu
         return by_source, rate
     by_depth = CREDIT_METER_BY_DEPTH.get(depth, CREDIT_METER_BY_DEPTH[DEFAULT_DEPTH])
     return by_depth, await reference.credits_per_unit(by_depth)
+
+
+def _failure_hook(tasks: ResearchTasksRepo, jobs: ResearchJobsRepo) -> FailureHook:
+    """What to do once the consumer has stopped retrying a discovery task."""
+
+    async def on_failure(
+        envelope: Any, error_class: ErrorClass, error: str, attempts: int | None
+    ) -> None:
+        """Records the outcome the consumer decided, once it has stopped retrying.
+
+        Without this a dead-lettered or paused task stays `running` for ever, and the job it
+        belongs to can never finish because `finish_if_done` waits on it.
+
+        And then something has to ask. Marking the task was only half of it: `finish_if_done`
+        runs at the end of a *successful* task, so a job whose last task failed stayed `running`
+        with its credits reserved and nothing left to trigger the check. Two such jobs sat on
+        this database for two hours holding 500 credits between them, one of them with every
+        single task failed.
+        """
+        if envelope.org_id is None:
+            return
+        org_id = str(envelope.org_id)
+        await tasks.mark_failed(org_id, str(envelope.job_id), error_class.value, cost_micros=0)
+        if envelope.research_job_id is not None:
+            # Settlement releases what the job did not spend (ADR-0014), so a job that ends in
+            # failure has to end rather than linger: the credits are the customer's.
+            await jobs.finish_if_done(org_id, str(envelope.research_job_id))
+
+    return on_failure
 
 
 def _research_job_id(ctx: JobContext) -> str:

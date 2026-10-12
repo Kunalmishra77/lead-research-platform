@@ -833,6 +833,10 @@ async def test_a_failure_that_will_never_succeed_is_recorded_at_once(
 
     assert tasks.failed == ["invalid_input"]
     assert tasks.status == "failed"
+    # And the job is asked whether it is over. Marking the task was only half of it: a job
+    # whose last task fails has nothing left to trigger the check, so it sat `running` with
+    # its credits reserved. Two real jobs did exactly that for two hours.
+    assert jobs.finished >= 1
 
 
 async def test_a_lead_is_billed_by_the_source_that_found_it() -> None:
@@ -888,3 +892,30 @@ class _Rates:
 
     async def credits_per_unit(self, meter: str) -> int:
         return self._rates.get(meter, 0)
+
+
+async def test_a_job_whose_every_task_failed_still_finishes(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """Settlement releases what a job did not spend, so a job that fails has to end.
+
+    `finish_if_done` runs at the end of a successful task. When the last task of a job fails
+    there is no successful task to run it, and the job stays `running` for ever holding its
+    reservation -- the customer's credits, for leads they never got. Two jobs on the live
+    database were doing precisely that, one with all seventeen of its tasks failed.
+    """
+    tasks = FakeTasks()
+    jobs = FakeJobs()
+    jobs.workspace = None  # nowhere to deliver, so the task cannot succeed
+
+    with pytest.raises(InvalidInputError):
+        await run(
+            redis,
+            make_envelope,
+            connectors=FakeConnectors([candidate("p1", "Alpha Dental")]),
+            tasks=tasks,
+            jobs=jobs,
+        )
+
+    assert tasks.status == "failed"
+    assert jobs.finished >= 1, "a failed task must still ask whether the job is over"

@@ -10,11 +10,39 @@ export interface CreditRateSeed {
 }
 
 export const CREDIT_RATE_SEEDS: CreditRateSeed[] = [
+  // Per delivered lead, by the source that discovered it. Charging for discovery follows what
+  // discovery costs us, and since ADR-0017 that varies by two orders of magnitude: a lead from
+  // the bulk place index costs nothing, where a Google Places lead cost about Rs 2.21 measured
+  // over a real sweep (345 calls at $0.035 for 528 leads).
+  //
+  // A source with no rate of its own falls back to the depth meter, so a source added later
+  // charges something until somebody prices it. Free has to be a decision, never a default.
+  {
+    meter: 'lead_overture',
+    creditsPerUnit: 0,
+    unit: 'delivered new lead',
+    description: 'Overture Maps Places: a monthly bulk release read off local disk, no API cost',
+  },
+  {
+    meter: 'lead_osm',
+    creditsPerUnit: 0,
+    unit: 'delivered new lead',
+    description: 'OpenStreetMap: a bulk extract read off local disk, no API cost',
+  },
+  {
+    meter: 'lead_google_places',
+    creditsPerUnit: 2,
+    unit: 'delivered new lead',
+    // One credit is 20,000 micros (~Rs 1.68), so two covers the Rs 2.21 a Places lead cost on
+    // the gyms sweep and leaves a margin. One would have been sold at a loss.
+    description: 'Google Places API (New): billed per call, about Rs 2.21 per delivered lead',
+  },
   {
     meter: 'research_quick',
     creditsPerUnit: 1,
     unit: 'delivered new lead',
-    description: 'Quick depth: discovery fields only',
+    description:
+      'Quick depth fallback: used when the discovering source has no per-lead rate of its own',
   },
   {
     meter: 'research_standard',

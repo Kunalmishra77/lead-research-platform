@@ -7,7 +7,7 @@ the same search twice, and a cancelled job buys nothing at all.
 
 import json
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, ClassVar
 
 import pytest
 import structlog
@@ -17,7 +17,7 @@ from uuid6 import uuid7
 from app.connectors.types import Candidate, FieldValue
 from app.db.graph import Stored
 from app.db.research_tasks import SavedTask
-from app.handlers.discovery import register_discovery_handlers
+from app.handlers.discovery import _lead_rate, register_discovery_handlers
 from app.jobs.cancellation import CANCEL_KEY
 from app.jobs.context import JobContext
 from app.jobs.envelope import ENVELOPE_FIELD, stream_for
@@ -90,11 +90,26 @@ class FakeConnectors:
 
 
 class FakeReference:
+    #: Mirrors db/seeds/billing.ts: per-source rates where they exist, depth rates as the
+    #: fallback. `unpriced_source` is deliberately absent, so these tests keep exercising the
+    #: fallback that stops a new connector giving its work away.
+    RATES: ClassVar[dict[str, int]] = {
+        "lead_overture": 0,
+        "lead_osm": 0,
+        "lead_google_places": 2,
+        "research_quick": 1,
+        "research_standard": 3,
+        "research_deep": 8,
+    }
+
     async def source_id(self, key: str) -> str:
         return "018f4a9a-0000-7000-8000-0000000000ff"
 
+    async def credit_rate(self, meter: str) -> int | None:
+        return self.RATES.get(meter)
+
     async def credits_per_unit(self, meter: str) -> int:
-        return {"research_quick": 1, "research_standard": 3, "research_deep": 8}.get(meter, 0)
+        return self.RATES.get(meter, 0)
 
 
 class FakeGraph:
@@ -322,9 +337,11 @@ async def test_a_job_pays_for_businesses_it_did_not_already_have(
     # A job that rediscovers the same shop through five phrasings has found one lead and pays
     # for one. Charging per candidate would bill five times for the same business.
     assert usage.calls[0]["units"] == 2
-    assert usage.calls[0]["credits"] == 6  # 2 leads x 3 credits at standard depth
-    assert usage.calls[0]["meter"] == "research_standard"
-    assert tasks.completed[0]["credits"] == 6
+    # Billed by the source, not the depth (ADR-0017): a Places lead cost about Rs 2.21 on the
+    # gyms sweep, and two credits is 40,000 micros, which covers it with a margin.
+    assert usage.calls[0]["credits"] == 4  # 2 leads x 2 credits for google_places
+    assert usage.calls[0]["meter"] == "lead_google_places"
+    assert tasks.completed[0]["credits"] == 4
 
 
 @pytest.mark.parametrize(
@@ -338,19 +355,44 @@ async def test_a_job_pays_for_businesses_it_did_not_already_have(
 async def test_the_price_of_a_lead_follows_the_depth_the_user_chose(
     redis: Redis, make_envelope: Any, depth: str, meter: str, credits: int
 ) -> None:
+    """Depth still sets the price for a source nobody has priced.
+
+    The rule changed with ADR-0017: a lead is billed by the source that found it, because a
+    Places lead cost about Rs 2.21 and one out of the local place index costs nothing. Depth
+    remains the fallback, and this is the path that keeps an unpriced source from giving its
+    work away -- so the payload here names a source with no rate of its own.
+    """
     connectors = FakeConnectors([candidate("p1", "A"), candidate("p2", "B")])
 
     _, _, _, usage = await run(
         redis,
         make_envelope,
         connectors=connectors,
-        payload={**PAYLOAD, "depth": depth},
+        payload={**PAYLOAD, "source": "unpriced_source", "depth": depth},
     )
 
     # The rate comes from app.credit_rates, not from a constant here: the price of a lead is a
     # commercial decision that changes without a deploy.
     assert usage.calls[0]["meter"] == meter
     assert usage.calls[0]["credits"] == credits
+
+
+async def test_a_lead_from_a_free_source_costs_nothing(redis: Redis, make_envelope: Any) -> None:
+    """The point of the change. Discovery from the place index is free, so the job is free.
+
+    The reservation is unaffected and released at settlement (ADR-0014): it is a ceiling on what
+    a job may spend, not a price, and it is set before any source has been chosen.
+    """
+    connectors = FakeConnectors([candidate("p1", "A"), candidate("p2", "B")])
+
+    _, _, _, usage = await run(
+        redis,
+        make_envelope,
+        connectors=connectors,
+        payload={**PAYLOAD, "source": "overture", "depth": "deep"},
+    )
+
+    assert usage.calls == []
 
 
 async def test_leads_are_delivered_to_the_workspace_that_asked_for_them(
@@ -791,3 +833,58 @@ async def test_a_failure_that_will_never_succeed_is_recorded_at_once(
 
     assert tasks.failed == ["invalid_input"]
     assert tasks.status == "failed"
+
+
+async def test_a_lead_is_billed_by_the_source_that_found_it() -> None:
+    """Discovery costs what discovery cost us, and since ADR-0017 that varies 100-fold.
+
+    A Places lead cost about Rs 2.21 on the gyms sweep -- 345 calls at $0.035 for 528 leads --
+    where a lead out of the local place index costs nothing at all. Billing both at the depth
+    rate would have sold one at a loss and given the other away by accident rather than on
+    purpose.
+    """
+    reference = _Rates({"lead_overture": 0, "lead_google_places": 2, "research_quick": 1})
+
+    assert await _lead_rate(reference, source="overture", depth="quick") == ("lead_overture", 0)
+    assert await _lead_rate(reference, source="google_places", depth="quick") == (
+        "lead_google_places",
+        2,
+    )
+
+
+async def test_an_unpriced_source_falls_back_to_the_depth_rate() -> None:
+    """Free has to be a decision, never a default.
+
+    A source added later and not yet priced charges the depth rate until somebody prices it.
+    Defaulting to zero would mean the next connector gives its work away silently.
+    """
+    reference = _Rates({"research_quick": 1, "research_deep": 8})
+
+    assert await _lead_rate(reference, source="brand_new_source", depth="quick") == (
+        "research_quick",
+        1,
+    )
+    assert await _lead_rate(reference, source="brand_new_source", depth="deep") == (
+        "research_deep",
+        8,
+    )
+
+
+async def test_a_source_priced_at_zero_is_not_an_unpriced_source() -> None:
+    """The distinction the rate lookup exists for: 0 and absent are different answers."""
+    reference = _Rates({"lead_overture": 0, "research_deep": 8})
+    # Deep work on a free source is still free to discover, and does not silently become 8.
+    assert await _lead_rate(reference, source="overture", depth="deep") == ("lead_overture", 0)
+
+
+class _Rates:
+    """Just the rate lookup `_lead_rate` uses, so the test needs no database."""
+
+    def __init__(self, rates: dict[str, int]) -> None:
+        self._rates = rates
+
+    async def credit_rate(self, meter: str) -> int | None:
+        return self._rates.get(meter)
+
+    async def credits_per_unit(self, meter: str) -> int:
+        return self._rates.get(meter, 0)

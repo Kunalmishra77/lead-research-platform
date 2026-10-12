@@ -110,9 +110,18 @@ class ReferenceData:
         decision that changes without a deploy. A meter with no rate charges nothing: billing for
         something at a price nobody set is worse than not billing for it.
         """
+        return await self.credit_rate(meter) or 0
+
+    async def credit_rate(self, meter: str) -> int | None:
+        """The rate, or None when nobody has set one for this meter.
+
+        Separate from `credits_per_unit` because zero and unpriced are different answers and the
+        caller that charges a lead has to tell them apart: a source priced at zero is free on
+        purpose, and a source with no rate is one nobody has thought about yet.
+        """
         if self._rates is None:
             self._rates = await self._load_rates()
-        return self._rates.get(meter, 0)
+        return self._rates.get(meter)
 
     async def source_id(self, key: str) -> str:
         """The uuid to store against a value from this connector.

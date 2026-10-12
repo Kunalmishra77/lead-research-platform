@@ -44,6 +44,13 @@ from app.planner.plan import TASK_TYPE_BY_SOURCE, PlannedTask
 
 #: Credits per delivered lead, by the depth the user chose (`db/seeds/billing.ts`). Charged once
 #: per business we did not already have: a job pays for what it found, not for what it looked at.
+#: A delivered lead is billed by the source that found it, because that is what it cost us.
+#: Since ADR-0017 the spread is two orders of magnitude: a lead out of the bulk place index
+#: costs nothing, where a Google Places lead cost about Rs 2.21 measured over a real sweep.
+CREDIT_METER_BY_SOURCE: str = "lead_{source}"
+
+#: What a lead costs when its source has no rate of its own, by depth. A source added later
+#: charges this until somebody prices it: free has to be a decision, never a default.
 CREDIT_METER_BY_DEPTH: dict[str, str] = {
     "quick": "research_quick",
     "standard": "research_standard",
@@ -253,6 +260,7 @@ def register_discovery_handlers(
                 org_id=org_id,
                 research_job_id=research_job_id,
                 depth=payload.depth or DEFAULT_DEPTH,
+                source=payload.source,
                 new_leads=new_leads,
                 reference=reference,
             )
@@ -374,6 +382,7 @@ async def _charge(
     org_id: str,
     research_job_id: str,
     depth: str,
+    source: str,
     new_leads: int,
     reference: ReferenceData,
 ) -> int:
@@ -386,9 +395,11 @@ async def _charge(
     """
     if new_leads <= 0:
         return 0
-    meter = CREDIT_METER_BY_DEPTH.get(depth, CREDIT_METER_BY_DEPTH[DEFAULT_DEPTH])
-    credits = new_leads * await reference.credits_per_unit(meter)
+    meter, rate = await _lead_rate(reference, source=source, depth=depth)
+    credits = new_leads * rate
     if credits <= 0:
+        # A free source. Nothing to record, and the job's reservation is released at settlement
+        # (ADR-0014), so the user is charged for what the leads cost rather than what was held.
         return 0
     recorded = await usage.record(
         org_id=org_id,
@@ -400,6 +411,21 @@ async def _charge(
         credits=credits,
     )
     return credits if recorded else 0
+
+
+async def _lead_rate(reference: ReferenceData, *, source: str, depth: str) -> tuple[str, int]:
+    """What one delivered lead costs, and the meter it is billed under.
+
+    The source's own rate where it has one. A source with no rate falls back to the depth meter
+    rather than to zero: an unpriced source is one nobody has thought about yet, and a bug that
+    gives work away is still a bug.
+    """
+    by_source = CREDIT_METER_BY_SOURCE.format(source=source)
+    rate = await reference.credit_rate(by_source)
+    if rate is not None:
+        return by_source, rate
+    by_depth = CREDIT_METER_BY_DEPTH.get(depth, CREDIT_METER_BY_DEPTH[DEFAULT_DEPTH])
+    return by_depth, await reference.credits_per_unit(by_depth)
 
 
 def _research_job_id(ctx: JobContext) -> str:

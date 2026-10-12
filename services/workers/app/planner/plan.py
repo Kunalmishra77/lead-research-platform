@@ -156,6 +156,7 @@ async def build_plan(
         areas=areas,
         categories=categories,
         name_hint=_name_hint(spec),
+        has_website=spec.filters.has_website,
     )
     floor = _min_task_credits(capabilities, source, micros_per_credit)
     searches, unfunded = _affordable(searches, credits=credits, template=template, floor=floor)
@@ -331,6 +332,7 @@ def _searches(
     areas: list[GeoArea],
     categories: tuple[str, ...],
     name_hint: str | None = None,
+    has_website: bool | None = None,
 ) -> tuple[list[dict[str, Any]], int]:
     """One search per (place, phrase), tiled by sub-locality where the template says to.
 
@@ -343,7 +345,13 @@ def _searches(
     for area in areas:
         for query in expansion.queries:
             searches.append(
-                _search(query, area=area, categories=categories, name_hint=name_hint)
+                _search(
+                    query,
+                    area=area,
+                    categories=categories,
+                    name_hint=name_hint,
+                    has_website=has_website,
+                )
             )
     if template.tile_sub_localities and expansion.sub_localities:
         # Only cities get tiled by name: a sub-locality of a state is just a city, and the
@@ -362,6 +370,7 @@ def _searches(
                         area=area,
                         categories=categories,
                         name_hint=name_hint,
+                        has_website=has_website,
                         locality=locality,
                     )
                 )
@@ -375,6 +384,7 @@ def _search(
     area: GeoArea,
     categories: tuple[str, ...],
     name_hint: str | None = None,
+    has_website: bool | None = None,
     locality: str | None = None,
 ) -> dict[str, Any]:
     """The `input` of one discovery task, minus the limits the budget decides.
@@ -399,6 +409,10 @@ def _search(
         payload["query"]["categories"] = list(categories)
     if name_hint:
         payload["query"]["name_hint"] = name_hint
+    if has_website is not None:
+        # `is not None`, not truthiness: False is a filter of its own ("without a website"),
+        # and dropping it would turn that search into one with no filter at all.
+        payload["query"]["has_website"] = has_website
     if locality:
         payload["locality"] = locality
     return payload

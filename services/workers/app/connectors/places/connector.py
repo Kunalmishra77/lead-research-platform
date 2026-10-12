@@ -117,6 +117,7 @@ class PlaceIndexConnector:
             source=self.key,
             name=name,
             contactable=bool(query.options.get("contactable")),
+            has_website=_tristate(query.options.get("has_website")),
             limit=query.max_results,
         )
         released_at = await self._released_at()
@@ -315,6 +316,15 @@ def _require_number(data: dict[str, object], key: str) -> float:
 
 def _text(value: object) -> str | None:
     return value if isinstance(value, str) else None
+
+
+def _tristate(value: object) -> bool | None:
+    """A filter that means three things: require it, forbid it, or do not care.
+
+    `bool()` would collapse the middle one into "forbid", which is how "restaurants in Delhi"
+    would quietly become "restaurants in Delhi with no website".
+    """
+    return value if isinstance(value, bool) else None
 
 
 def _number(value: object) -> float | None:

@@ -17,7 +17,11 @@ from uuid6 import uuid7
 from app.connectors.types import Candidate, FieldValue
 from app.db.graph import Stored
 from app.db.research_tasks import SavedTask
-from app.handlers.discovery import _lead_rate, register_discovery_handlers
+from app.handlers.discovery import (
+    _honour_website_filter,
+    _lead_rate,
+    register_discovery_handlers,
+)
 from app.jobs.cancellation import CANCEL_KEY
 from app.jobs.context import JobContext
 from app.jobs.envelope import ENVELOPE_FIELD, stream_for
@@ -919,3 +923,36 @@ async def test_a_job_whose_every_task_failed_still_finishes(
 
     assert tasks.status == "failed"
     assert jobs.finished >= 1, "a failed task must still ask whether the job is over"
+
+
+def test_the_website_filter_is_honoured_for_a_source_that_cannot_filter() -> None:
+    """The guarantee, not the optimisation.
+
+    The place index filters in SQL. Google Places has no such parameter, and without this the
+    search runs unfiltered and delivers whatever it finds. It did: a live run of "restaurants in
+    Delhi with a website" parsed `has_website: true` correctly and nothing in the pipeline read
+    it, so 225 restaurants were delivered of which 50 had a website.
+    """
+
+    def candidate(name: str, url: str | None) -> Candidate:
+        return Candidate(
+            source_key="google_places",
+            external_id=name,
+            name=name,
+            url=url,
+            source_url="https://example.test/p",
+            observed_at=datetime(2026, 9, 23, tzinfo=UTC),
+            values=(),
+        )
+
+    found = [
+        candidate("Online Diner", "https://diner.example.in"),
+        candidate("Offline Dhaba", None),
+        candidate("Wired Dhaba", "https://dhaba.example.in"),
+    ]
+
+    assert [c.name for c in _honour_website_filter(found, True)] == ["Online Diner", "Wired Dhaba"]
+    assert [c.name for c in _honour_website_filter(found, False)] == ["Offline Dhaba"]
+    # Not asking is not asking for none: `None` has to leave the list alone, or every search
+    # without the filter would quietly become "and with no website".
+    assert _honour_website_filter(found, None) == found

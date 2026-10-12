@@ -91,7 +91,12 @@ export function chipGroups(spec: ResearchSpec): Group[] {
   const location = filters.location;
   const industry = filters.industry;
   const other: string[] = [];
+  // Both states, not just the true one. These chips are how someone checks what was
+  // understood before spending credits on it, and "restaurants without a website" showing no
+  // chip at all reads as a filter that was dropped -- which, until the planner carried it, it
+  // was.
   if (filters.has_website === true) other.push('has a website');
+  if (filters.has_website === false) other.push('has no website');
   if (filters.employee_count?.gte) other.push(`${filters.employee_count.gte}+ employees`);
   if (filters.rating?.gte) other.push(`rating ${filters.rating.gte}+`);
   if (filters.contact?.any_of?.length)

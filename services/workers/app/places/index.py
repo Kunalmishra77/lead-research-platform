@@ -149,6 +149,7 @@ class PlaceIndex:
         source: str | None = None,
         name: str | None = None,
         contactable: bool = False,
+        has_website: bool | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[Place]:
@@ -171,6 +172,12 @@ class PlaceIndex:
             # The product's unit is a business someone can be reached at, so this is a first
             # class filter rather than something every caller re-derives and gets subtly wrong.
             where.append("(p.phone is not null or p.email is not null)")
+        if has_website is not None:
+            # A hard filter, not a preference: "restaurants with a website" is a different
+            # market from "restaurants", and someone selling websites wants the other half.
+            # What it can honestly mean is "the release records one" -- a business whose site
+            # the release does not know is indistinguishable here from one that has none.
+            where.append("p.website is not null" if has_website else "p.website is null")
         if name:
             where.append("p.name like ? escape '\\'")
             params.append(f"%{_escape_like(name)}%")
@@ -197,14 +204,22 @@ class PlaceIndex:
         categories: Sequence[str] = (),
         source: str | None = None,
         contactable: bool = False,
+        has_website: bool | None = None,
     ) -> int:
-        """How many businesses an area holds, for planning a sweep before running one."""
+        """How many businesses an area holds, for planning a sweep before running one.
+
+        Takes the same filters as `search` so an estimate counts the market a run would
+        actually deliver. Counting every restaurant and then delivering only those with a
+        website is how a feasibility badge comes to promise four times what arrives.
+        """
         where, params = _bbox_where(bbox)
         if source:
             where.append("p.source = ?")
             params.append(source)
         if contactable:
             where.append("(p.phone is not null or p.email is not null)")
+        if has_website is not None:
+            where.append("p.website is not null" if has_website else "p.website is null")
         if categories:
             where.append(_category_where(categories))
             params.extend(categories)

@@ -148,6 +148,7 @@ def make_spec(
     depth: str = "standard",
     max_results: int = 500,
     max_credits: int = 1000,
+    has_website: bool | None = None,
 ) -> ResearchSpec:
     """A valid ResearchSpec, so the tests exercise the contract rather than a convenient dict."""
     filters: dict[str, Any] = {
@@ -157,6 +158,8 @@ def make_spec(
         filters["industry"] = {"include": ["dental clinics"], "taxonomy_ids": taxonomy_ids}
     else:
         filters["industry"] = {"include": ["dental clinics"]}
+    if has_website is not None:
+        filters["has_website"] = has_website
     return ResearchSpec.model_validate(
         {
             "spec_version": 1,

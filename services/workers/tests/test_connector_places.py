@@ -171,6 +171,50 @@ async def test_contactable_can_be_asked_for(index: PlaceIndex, ctx: CallContext)
     assert [c.name for c in found] == ["Anytime Fitness"]
 
 
+async def test_a_website_can_be_required_of_the_source(
+    index: PlaceIndex, ctx: CallContext
+) -> None:
+    """"Gyms in Delhi with a website" is a different market from "gyms in Delhi".
+
+    Filtered in the index rather than after delivery, so the job's result cap is spent on rows
+    the user asked for. The guarantee for sources that cannot filter lives in the handler.
+    """
+    found = await OvertureConnector(index).search(
+        DiscoveryQuery(
+            text="gyms", bbox=DELHI, options={"categories": ["gym"], "has_website": True}
+        ),
+        ctx,
+    )
+    assert [c.name for c in found] == ["Anytime Fitness"]
+
+
+async def test_a_website_can_be_ruled_out_by_the_source(
+    index: PlaceIndex, ctx: CallContext
+) -> None:
+    found = await OvertureConnector(index).search(
+        DiscoveryQuery(
+            text="gyms", bbox=DELHI, options={"categories": ["gym"], "has_website": False}
+        ),
+        ctx,
+    )
+    assert [c.name for c in found] == ["Unreachable Gym"]
+
+
+async def test_not_asking_about_a_website_is_not_asking_for_none(
+    index: PlaceIndex, ctx: CallContext
+) -> None:
+    """The option is three-state, and `bool()` on a missing one would mean `False`.
+
+    That would silently turn every ordinary search into "and with no website" -- the opposite
+    of what almost all of them want, and invisible in the result because the rows that came
+    back are real businesses.
+    """
+    found = await OvertureConnector(index).search(
+        DiscoveryQuery(text="gyms", bbox=DELHI, options={"categories": ["gym"]}), ctx
+    )
+    assert {c.name for c in found} == {"Anytime Fitness", "Unreachable Gym"}
+
+
 async def test_a_search_without_a_box_is_refused(index: PlaceIndex, ctx: CallContext) -> None:
     """Every other source can fall back to the text. This one would mean "all of India"."""
     with pytest.raises(InvalidInputError, match="bounding box"):

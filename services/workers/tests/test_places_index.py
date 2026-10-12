@@ -157,3 +157,54 @@ def test_the_same_element_is_not_stored_twice(tmp_path: Path) -> None:
 
 def test_a_missing_index_reports_itself_missing(tmp_path: Path) -> None:
     assert PlaceIndex(tmp_path / "nope.sqlite").exists() is False
+
+
+@pytest.fixture
+def mixed(tmp_path: Path) -> PlaceIndex:
+    """Four restaurants in Delhi, two of which record a website."""
+    path = tmp_path / "mixed.sqlite"
+    with IndexWriter(path) as writer:
+        writer.add(
+            [
+                _place(11, "Online Diner", "amenity=restaurant", 28.50, 77.10,
+                       website="https://diner.example.in"),
+                _place(12, "Wired Dhaba", "amenity=restaurant", 28.55, 77.12,
+                       website="https://dhaba.example.in"),
+                _place(13, "Offline Dhaba", "amenity=restaurant", 28.60, 77.14),
+                _place(14, "No Site Cafe", "amenity=restaurant", 28.65, 77.16),
+            ]
+        )
+        writer.finish(extract_date=datetime(2026, 10, 9, tzinfo=UTC))
+    return PlaceIndex(path)
+
+
+def test_a_website_can_be_required(mixed: PlaceIndex) -> None:
+    found = mixed.search(bbox=DELHI, has_website=True)
+    assert {p.name for p in found} == {"Online Diner", "Wired Dhaba"}
+
+
+def test_a_website_can_be_ruled_out(mixed: PlaceIndex) -> None:
+    """The other half of the filter, and a market of its own: who to sell a website to."""
+    found = mixed.search(bbox=DELHI, has_website=False)
+    assert {p.name for p in found} == {"Offline Dhaba", "No Site Cafe"}
+
+
+def test_not_asking_about_websites_returns_both_kinds(mixed: PlaceIndex) -> None:
+    """`None` is not `False`. Collapsing the two would make every unfiltered search mean
+    "without a website", which is the opposite of what most of them want."""
+    assert len(mixed.search(bbox=DELHI)) == 4
+    assert len(mixed.search(bbox=DELHI, has_website=None)) == 4
+
+
+def test_counting_applies_the_same_website_filter_as_searching(mixed: PlaceIndex) -> None:
+    """An estimate has to count the market a run would deliver, not a larger one.
+
+    `count` feeds the feasibility badge and the planner's sweep size. Counting every restaurant
+    and then delivering only those with a website is how a badge comes to promise double.
+    """
+    assert mixed.count(bbox=DELHI) == 4
+    assert mixed.count(bbox=DELHI, has_website=True) == 2
+    assert mixed.count(bbox=DELHI, has_website=False) == 2
+    assert mixed.count(bbox=DELHI, has_website=True) == len(
+        mixed.search(bbox=DELHI, has_website=True)
+    )

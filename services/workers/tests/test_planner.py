@@ -145,6 +145,43 @@ async def test_the_trade_travels_apart_from_the_phrase() -> None:
     assert query["name_hint"] == "dental clinics"
 
 
+async def test_the_website_filter_reaches_the_task_the_executor_runs() -> None:
+    """`filters.has_website` was parsed, stored on the spec, and read by nothing.
+
+    The planner builds the task input, so it is the only place the filter can enter the
+    pipeline. A live run of "restaurants in Delhi with a website" delivered 225 restaurants of
+    which 50 had one, because this line did not exist.
+    """
+    for wanted in (True, False):
+        plan = await build_plan(
+            make_spec(cities=["Pune"], has_website=wanted),
+            capabilities=capabilities_for(["name"]),
+            template=template_for("prospecting"),
+            reference=FakeReference(),
+            expansion=Expansion(queries=("dental clinics in Pune",)),
+            credits=500,
+        )
+        assert plan.tasks, "the plan has to have a task to carry the filter"
+        for task in plan.tasks:
+            assert task.input["query"]["has_website"] is wanted
+
+
+async def test_a_spec_that_says_nothing_about_websites_carries_no_filter() -> None:
+    """Absent, not False. A `has_website: false` on every ordinary search would mean "and with
+    no website", which would return real businesses and so look like a thin market rather than
+    a bug."""
+    plan = await build_plan(
+        make_spec(cities=["Pune"]),
+        capabilities=capabilities_for(["name"]),
+        template=template_for("prospecting"),
+        reference=FakeReference(),
+        expansion=Expansion(queries=("dental clinics in Pune",)),
+        credits=500,
+    )
+
+    assert all("has_website" not in t.input["query"] for t in plan.tasks)
+
+
 # ---------------------------------------------------------------- budgets
 
 

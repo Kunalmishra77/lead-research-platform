@@ -104,6 +104,10 @@ class DiscoveryQueryPayload(BaseModel):
     #: The trade the user named, without the place. What a literal matcher searches names for
     #: when no category is known; `text` is a phrase and matches nothing as a name.
     name_hint: str | None = Field(default=None, max_length=100)
+    #: `ResearchSpec.filters.has_website`, carried through so a source that can filter on it
+    #: does, and so the delivery filter below can hold every source to it. Three states: True
+    #: requires a website, False requires none, None does not care.
+    has_website: bool | None = None
     language: str = "en"
     #: Matches the contract's own ceiling (`research-spec.schema.json`, Limits.max_results). It
     #: was 200 here while the schema allowed 10,000, so a spec the API accepted could be refused
@@ -189,6 +193,7 @@ def register_discovery_handlers(
                     connectors=connectors,
                     org_id=org_id,
                 )
+                found = _honour_website_filter(found, payload.query.has_website)
                 stored = await graph.store(
                     org_id,
                     found,
@@ -371,6 +376,23 @@ async def _search(
     return await connector.search(query, CallContext.from_job(ctx))
 
 
+def _honour_website_filter(found: list[Any], has_website: bool | None) -> list[Any]:
+    """Holds every source to `has_website`, including the ones that cannot filter on it.
+
+    The place index filters in SQL, which is what keeps the job's result cap from being spent
+    on rows that will be thrown away. Google Places has no such parameter, so without this a
+    search for "restaurants in Delhi with a website" delivers whatever it finds.
+
+    It did. The spec parsed the filter correctly and nothing in the pipeline read it: a live run
+    delivered 225 restaurants of which 50 had a website -- the user asked for one thing and was
+    charged for another. The filter is cheap and the guarantee belongs at the last point before
+    storage, where it covers sources added later too.
+    """
+    if has_website is None:
+        return found
+    return [c for c in found if bool(getattr(c, "url", None)) is has_website]
+
+
 def _options(payload: DiscoveryPayload) -> dict[str, Any]:
     """Per-connector extras. A source that does not understand one ignores it."""
     options: dict[str, Any] = {}
@@ -378,6 +400,8 @@ def _options(payload: DiscoveryPayload) -> dict[str, Any]:
         options["categories"] = payload.query.categories
     if payload.query.name_hint:
         options["name_hint"] = payload.query.name_hint
+    if payload.query.has_website is not None:
+        options["has_website"] = payload.query.has_website
     return options
 
 

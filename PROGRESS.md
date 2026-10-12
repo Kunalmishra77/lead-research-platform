@@ -13,6 +13,48 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-11/12 — Phase 2 — the discovery source is a file, and it is free
+
+- **The owner's objection was the right one: leads you cannot contact are not leads.** OSM, which
+  the previous entry had just built a pipeline for, is 9.7% phone and 2.7% email. Researching
+  properly -- which should have come before writing any ingest code -- turned up **Overture Maps
+  Places** (CDLA-Permissive-2.0) and **Foursquare OS Places** (Apache 2.0), free bulk datasets
+  built from commercial sources. Measured on the same Delhi box: **269,309 businesses, 70.6% with
+  their own phone, 40.0% with their own email, 86.1% contactable** -- the contact quality of our
+  paid Google pipeline (87%) with no quota and no cost (ADR-0017).
+- **End to end, for real.** `python -m app.places build-overture` pulls the GeoParquet straight
+  from public object storage with DuckDB and writes a 182 MB index in 210 seconds. A request for
+  gyms in Gurgaon returns 500 candidates, 454 contactable, with 5,314 provenance-carrying values
+  -- real local numbers and branch-level emails like `gurugram1@sk27gym.com`.
+- **Category mapping was the whole job, and it was nearly missed.** Passing our `google_types` to
+  Overture reached 12.1% of Delhi; its own leaf category 16.1%. Two fixes: the index now holds
+  every level of a place's hierarchy (`place_categories`), and 319 categories plus 20 sectors
+  carry `overture_categories`, checked in as a seed and validated against a snapshot of the
+  vocabulary. **12.1% -> 19.4% -> 67.8% -> 96.2%.** The sectors did the last 28 points: 5,731
+  Delhi places carry only `professional_service` with no leaf beneath them.
+- **A lead is now billed by the source that found it** -- `lead_overture` 0, `lead_google_places`
+  2 -- because depth-based pricing was set when every lead cost about Rs 2.21 at Google. An
+  unpriced source falls back to depth, never to zero.
+- Three things the data stopped me doing, each of which looked obviously right:
+  **(1)** scaling value confidence by Overture's own `confidence` -- it does not predict contact
+  quality at all (the 0.2 band is 82% phone, 64% email; the 1.0 band is 95% and 39%);
+  **(2)** widening `clothing-store` to `fashion_and_apparel_store` -- that parent also holds
+  jewellers, shoe shops and opticians, and of 172 "the parent is bigger" candidates almost all
+  were wrong; **(3)** believing my own 0.6% corruption figure, which the real build disproved at
+  13 rows in 226,918.
+- Two silent gaps closed: `_search` built its query without `options`, so the planner's category
+  list never reached a connector and only the first was used; and `app.sources` had no row for
+  either dataset, so the first real task would have failed on `source_id()`.
+- Decisions: ADR-0016 (volume comes from a file, not a quota) stands and is validated;
+  **ADR-0017** chooses Overture and demotes OSM to the second opinion Phase 4 verifies against.
+- Tests/checks: workers **881** (741 at the start of this work), db 20, ruff + mypy + typecheck
+  clean. Migration 0026 applied, 13 sources and 11 credit rates seeded.
+- Open issues: nothing is deployed. The VPS needs the image rebuilt, the `places-data` volume
+  mounted and the index built into it once. The credit *estimate* still reads as a price in the
+  UI when it is a ceiling released at settlement. Overture's accuracy is unmeasured -- coverage
+  is counted, but whether a number still rings cannot be known without dialling it.
+- Next step: deploy, build the index on the VPS, and run a real job through the live site.
+
 ### 2026-10-10 (later) — Phase 2 — volume is a storage problem, and the source was the wrong one
 
 - **The question was "lakhs of leads a month, free, not dependent on one source". Measuring first

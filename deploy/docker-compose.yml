@@ -99,6 +99,13 @@ services:
       # search queued behind it.
       WORKER_POOLS: system,interactive,discovery,crawl
       DATABASE_URL_WORKERS: ${DATABASE_URL_WORKERS}
+      # The bulk place index: discovery reads this file instead of calling an API, which is
+      # what makes volume free (ADR-0016, ADR-0017). Unset leaves the place connectors
+      # unregistered and discovery falls back to Google Places and its 1,000-call allowance.
+      #
+      # Build it into the volume below, once, and again when a release is worth picking up:
+      #   docker compose exec workers uv run python -m app.places       #     --data-dir /data/places build-overture
+      PLACES_INDEX_PATH: ${PLACES_INDEX_PATH:-/data/places/overture.sqlite}
       REDIS_URL: redis://redis:6379
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY}
@@ -114,6 +121,12 @@ services:
       S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+    volumes:
+      # Persistent on purpose. The index is gigabytes read from object storage and minutes to
+      # build, and it is derived data that no deploy should rebuild: without this volume every
+      # redeploy starts with no index at all, and discovery silently falls back to the paid
+      # source until somebody notices.
+      - places-data:/data/places
     depends_on:
       redis:
         condition: service_healthy
@@ -151,3 +164,4 @@ services:
 
 volumes:
   redis-data:
+  places-data:

@@ -371,3 +371,72 @@ async def test_two_tasks_cannot_claim_one_place_at_once() -> None:
             await second.close()
     finally:
         await engine.dispose()
+
+
+async def test_a_national_phone_number_reaches_the_column(tenant: Tenant) -> None:
+    """The bug this rescued 473 numbers from, against the real column and its CHECK.
+
+    Storage used to require a leading `+` and drop everything else, on the reasoning that a
+    national number cannot be normalised without knowing the country. The country was on the
+    candidate the whole time. 481 numbers were being dropped -- 43% of the companies that had a
+    phone had no dialable one -- and every one of them was a business someone could have rung.
+    """
+    conn = tenant[0]
+    place = str(uuid7())
+    pending = batch.prepare(
+        [
+            Candidate(
+                source_key="overture",
+                external_id=place,
+                name="National Format Clinic",
+                phone="085277 87137",
+                country="IN",
+                source_url="https://example.test/p",
+                observed_at=OBSERVED,
+                values=(value("name", "National Format Clinic"),),
+            )
+        ]
+    )
+    await batch.insert_companies(conn, pending)
+    await batch.upsert_locations(conn, pending)
+
+    stored = (
+        await conn.execute(
+            text("select phone_e164 from app.company_locations where google_place_id = :p"),
+            {"p": place},
+        )
+    ).scalar()
+    assert stored == "+918527787137"
+
+
+async def test_a_phone_without_a_country_is_still_refused(tenant: Tenant) -> None:
+    """The old rule's reasoning was right about this half: without a country there is nothing
+    to strip the trunk prefix by, and inventing one would put a real call through to the wrong
+    country. Such a number keeps its `phone` field value and its provenance; it is simply not
+    claimed to be E.164."""
+    conn = tenant[0]
+    place = str(uuid7())
+    pending = batch.prepare(
+        [
+            Candidate(
+                source_key="overture",
+                external_id=place,
+                name="No Country Clinic",
+                phone="085277 87137",
+                country=None,
+                source_url="https://example.test/p",
+                observed_at=OBSERVED,
+                values=(value("name", "No Country Clinic"),),
+            )
+        ]
+    )
+    await batch.insert_companies(conn, pending)
+    await batch.upsert_locations(conn, pending)
+
+    stored = (
+        await conn.execute(
+            text("select phone_e164 from app.company_locations where google_place_id = :p"),
+            {"p": place},
+        )
+    ).scalar()
+    assert stored is None

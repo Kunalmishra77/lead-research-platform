@@ -44,6 +44,7 @@ from uuid6 import uuid7
 
 from app.connectors.types import Candidate, FieldValue
 from app.normalize.domains import is_platform_host, registrable_domain
+from app.normalize.phones import to_e164
 
 
 @dataclass(slots=True)
@@ -268,7 +269,10 @@ async def upsert_locations(conn: AsyncConnection, pending: Sequence[Prepared]) -
             "lat": p.candidate.lat,
             "lng": p.candidate.lng,
             "place": p.place_id,
-            "phone": to_e164(p.candidate.phone),
+            # The country, not just the digits: `085277 87137` is a real Indian mobile and
+            # nothing at all without knowing it is India. 481 numbers were being dropped here
+            # for want of a `+` (see app/normalize/phones.py for the measurement).
+            "phone": to_e164(p.candidate.phone, _country(p.candidate.country)),
         }
         for p in first_for_place.values()
     ]
@@ -530,31 +534,6 @@ def _company_params(p: Prepared, domain: str | None) -> dict[str, Any]:
         "city": p.candidate.city,
         "state": None,
     }
-
-
-#: `company_locations.phone_e164` is CHECKed against this shape -- no spaces, no punctuation.
-_E164_MIN_DIGITS = 7
-_E164_MAX_DIGITS = 15
-
-
-def to_e164(phone: str | None) -> str | None:
-    """A phone number in the one shape the column accepts, or None.
-
-    Only a number that already states its country code can be normalised by stripping
-    separators. A national number ("020 1234 5678") needs country-specific rules to know which
-    digits are a trunk prefix, and inventing a country code would put a real call through to the
-    wrong country. Those numbers are still stored as a `phone` field value with their provenance
-    -- they are simply not claimed to be E.164 here.
-    """
-    if not phone:
-        return None
-    text_ = phone.strip()
-    if not text_.startswith("+"):
-        return None
-    digits = "".join(c for c in text_[1:] if c.isdigit())
-    if not _E164_MIN_DIGITS <= len(digits) <= _E164_MAX_DIGITS or digits.startswith("0"):
-        return None
-    return f"+{digits}"
 
 
 def normalized_name(name: str) -> str:

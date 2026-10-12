@@ -21,7 +21,7 @@ from app.handlers import crawl as crawl_handler
 from app.handlers.crawl import JOB_TYPE, register_crawl_handlers
 from app.jobs.cancellation import CANCEL_KEY
 from app.jobs.context import JobContext
-from app.jobs.errors import InvalidInputError
+from app.jobs.errors import ErrorClass, InvalidInputError
 from app.jobs.progress import ProgressPublisher
 from app.jobs.registry import HandlerRegistry
 from tests.test_crawl_robots import FakeFetcher, FakeRedis
@@ -322,3 +322,56 @@ async def test_progress_failing_does_not_undo_a_finished_crawl(
 
 def test_the_handler_registers_under_the_documented_job_type() -> None:
     assert crawl_handler.JOB_TYPE == "crawl.company_site"
+
+
+@pytest.mark.asyncio
+async def test_a_job_whose_last_crawl_failed_still_finishes(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """A dead site must not strand the job that was reading it.
+
+    `finish_if_done` runs at the end of a *successful* task. When the last task of a job is one
+    the consumer gave up on, there is no successful task to run it, and the job stays `running`
+    holding its reservation -- the customer's credits, for leads they never got.
+
+    The discovery handler was fixed for exactly this on 2026-10-12 and the crawl handler, which
+    has the same shape, was not. It showed up the same day on a live "hotels in Delhi" run: 154
+    crawl tasks completed, `ninaniyagroup.com` went unanswered through all five attempts, and
+    the job sat `running` with nothing left to run.
+
+    A crawl is where this is most likely rather than least: every lead's own website is its own
+    task, so one dead domain in two hundred is normal.
+    """
+    registry, _graph, tasks, jobs, http = build(redis)
+    try:
+        hook = registry.failure_hook(JOB_TYPE)
+        assert hook is not None, "a crawl task the consumer gives up on must be recorded"
+
+        envelope = make_envelope(JOB_TYPE, job_id=TASK, org_id=ORG, research_job_id=JOB,
+                                 payload=PAYLOAD)
+        await hook(envelope, ErrorClass.TRANSIENT, "the site never answered", 5)
+
+        assert tasks.status == "failed"
+        assert jobs.finished >= 1, "a dead-lettered crawl must still ask whether the job is over"
+    finally:
+        await http.aclose()
+
+
+@pytest.mark.asyncio
+async def test_a_dead_letter_without_a_job_is_recorded_and_asks_nothing(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """A crawl can be run outside a research job (a re-crawl, a backfill). There is no job to
+    finish then, and asking about `research_job_id=None` would be a lookup for nothing."""
+    registry, _graph, tasks, jobs, http = build(redis)
+    try:
+        hook = registry.failure_hook(JOB_TYPE)
+        assert hook is not None
+        envelope = make_envelope(JOB_TYPE, job_id=TASK, org_id=ORG, payload=PAYLOAD)
+
+        await hook(envelope, ErrorClass.TRANSIENT, "the site never answered", 5)
+
+        assert tasks.status == "failed"
+        assert jobs.finished == 0
+    finally:
+        await http.aclose()

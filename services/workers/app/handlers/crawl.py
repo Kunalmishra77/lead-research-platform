@@ -94,13 +94,28 @@ def register_crawl_handlers(
     ) -> None:
         """Records the outcome once the consumer has stopped retrying.
 
-        Without it a dead-lettered task stays `running` and the job waiting on it never finishes.
+        Without it a dead-lettered task stays `running` and the job waiting on it never
+        finishes.
+
+        And then something has to ask, which this did not. `finish_if_done` runs at the end of a
+        *successful* task, so a job whose last task failed stayed `running` with its credits
+        reserved and nothing left to trigger the check. The discovery handler was fixed for this
+        on 2026-10-12; the crawl handler has the same shape and was not, and it showed up the
+        same day on a live "hotels in Delhi" run: 154 crawl tasks completed, one site
+        (`ninaniyagroup.com`) went unanswered through all five attempts, and the job sat
+        `running` with nothing left to run, holding 500 credits.
+
+        A crawl is where this is most likely, not least: every lead's own website is a task, so
+        one dead domain in two hundred is normal and must not strand the job.
         """
         if envelope.org_id is None:
             return
-        await tasks.mark_failed(
-            str(envelope.org_id), str(envelope.job_id), error_class.value, cost_micros=0
-        )
+        org_id = str(envelope.org_id)
+        await tasks.mark_failed(org_id, str(envelope.job_id), error_class.value, cost_micros=0)
+        if envelope.research_job_id is not None:
+            # Settlement releases what the job did not spend (ADR-0014), so a job that ends on a
+            # failed task has to end rather than linger: the credits are the customer's.
+            await jobs.finish_if_done(org_id, str(envelope.research_job_id))
 
     @registry.register(JOB_TYPE, stage="crawling", on_failure=on_failure)
     async def crawl_company_site(ctx: JobContext) -> None:

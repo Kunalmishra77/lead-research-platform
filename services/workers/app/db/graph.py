@@ -35,12 +35,9 @@ from uuid6 import uuid7
 
 from app.connectors.types import Candidate, FieldValue
 from app.db import batch
-from app.db.batch import normalized_name, to_e164
+from app.db.batch import normalized_name
 from app.db.tenant import tenant_transaction
-
-#: `company_locations.phone_e164` is CHECKed against this shape — no spaces, no punctuation.
-_E164_MIN_DIGITS = 7
-_E164_MAX_DIGITS = 15
+from app.normalize.phones import to_e164
 
 
 @dataclass(frozen=True, slots=True)
@@ -202,7 +199,9 @@ class SqlGraphRepo:
             return await batch.write_values(conn, rows, source_id=source_id)
 
 
-# `to_e164`, `normalized_name` and `_country` moved to `app/db/batch.py`, beside the statements
-# that use them. Re-exported because they have always lived here as far as every caller and test
-# is concerned, and a move is not a reason to make them look like new API.
+# `normalized_name` and `_country` live in `app/db/batch.py`, beside the statements that use
+# them; `to_e164` now lives in `app/normalize/phones.py`, because the crawl needs the same rule
+# and no crawler is going to import a storage module to get it. Re-exported because both have
+# always been reachable from here as far as every caller and test is concerned, and a move is
+# not a reason to make them look like new API.
 __all__ = ["GraphRepo", "SqlGraphRepo", "Stored", "normalized_name", "to_e164"]

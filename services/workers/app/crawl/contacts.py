@@ -31,6 +31,8 @@ from email_validator import EmailNotValidError, validate_email
 from scrapling import Selector
 
 from app.normalize.domains import has_real_tld
+from app.normalize.phones import line_type
+from app.normalize.phones import parse as parse_phone
 
 #: Role accounts. Kept, but flagged: `info@` is a lead, `priya@` is a person, and docs/10 treats
 #: the second as personal data with different handling.
@@ -242,33 +244,13 @@ def phones_from(
 def _record_phone(
     found: dict[str, Phone], raw: str, region: str | None, *, from_link: bool
 ) -> None:
-    parsed = _parse_phone(raw, region)
+    parsed = parse_phone(raw, region)
     if parsed is None:
         return
     value = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
     existing = found.get(value)
     if existing is None or (from_link and not existing.from_link):
-        found[value] = Phone(value, from_link, _line_type(parsed))
-
-
-def _parse_phone(raw: str, region: str | None) -> phonenumbers.PhoneNumber | None:
-    try:
-        parsed = phonenumbers.parse(raw, region)
-    except phonenumbers.NumberParseException:
-        return None
-    # `is_valid_number`, not `is_possible_number`: possible accepts any string of the right length,
-    # which is how PIN codes and years get in.
-    return parsed if phonenumbers.is_valid_number(parsed) else None
-
-
-def _line_type(parsed: phonenumbers.PhoneNumber) -> str:
-    return {
-        phonenumbers.PhoneNumberType.MOBILE: "mobile",
-        phonenumbers.PhoneNumberType.FIXED_LINE: "fixed_line",
-        phonenumbers.PhoneNumberType.FIXED_LINE_OR_MOBILE: "fixed_line_or_mobile",
-        phonenumbers.PhoneNumberType.TOLL_FREE: "toll_free",
-        phonenumbers.PhoneNumberType.VOIP: "voip",
-    }.get(phonenumbers.number_type(parsed), "unknown")
+        found[value] = Phone(value, from_link, line_type(parsed))
 
 
 def _whatsapp_number(href: str) -> str | None:

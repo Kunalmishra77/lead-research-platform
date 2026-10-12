@@ -46,7 +46,7 @@ def test_an_unusable_website_is_nothing_rather_than_a_guess(url: str | None) -> 
 @pytest.mark.parametrize(
     ("phone", "expected"),
     [
-        ("+91 20 1234 5678", "+912012345678"),
+        ("+91 20 2567 1234", "+912025671234"),
         ("+1 (415) 555-0123", "+14155550123"),
         ("  +44 20 7946 0958 ", "+442079460958"),
     ],
@@ -54,6 +54,31 @@ def test_an_unusable_website_is_nothing_rather_than_a_guess(url: str | None) -> 
 def test_an_international_number_keeps_only_its_digits(phone: str, expected: str) -> None:
     # company_locations.phone_e164 CHECKs ^[+][1-9][0-9]{6,14}$ — no spaces, no punctuation.
     assert to_e164(phone) == expected
+
+
+def test_a_number_of_the_right_shape_that_nobody_owns_is_refused() -> None:
+    """Stricter than this file used to be, deliberately (task 3.12).
+
+    This case was `+91 20 1234 5678 -> +912012345678`: the old rule stripped separators and
+    asked nothing else, so a well-formed string became a stored phone number. `1234 5678` is not
+    an allocated Pune range and nobody answers it. The normalizer now validates against
+    `phonenumbers`, and that was checked against the data before it changed: of the 744 numbers
+    already stored as E.164 on the live graph, it calls none invalid. So this refuses inventions
+    and nothing real.
+    """
+    assert to_e164("+91 20 1234 5678") is None
+
+
+def test_a_national_number_is_normalised_once_the_country_is_known() -> None:
+    """The other half of 3.12, and the reason it was worth doing.
+
+    The case below asserts that `020 1234 5678` is refused *without* a country, which stays
+    true. With one, `phonenumbers` knows which leading digits are a trunk prefix -- and 481
+    numbers on the live graph were being dropped for want of that, 43% of the companies that
+    had a phone at all.
+    """
+    assert to_e164("085277 87137", "IN") == "+918527787137"
+    assert to_e164("085277 87137") is None
 
 
 @pytest.mark.parametrize(

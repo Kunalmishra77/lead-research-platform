@@ -24,6 +24,13 @@ RUN uv sync --frozen --no-dev --no-install-project
 
 # ---- runtime -----------------------------------------------------------------------------------
 FROM base AS runtime
+
+# osmium's wheel links against libexpat, which python:3.12-slim does not carry. Only the monthly
+# OSM ingest imports it -- the workers themselves never do -- but `python -m app.places build-osm`
+# runs inside this image, so the library has to be here or that command fails with
+# `ImportError: libexpat.so.1` at the one moment somebody is relying on it.
+RUN apt-get update     && apt-get install -y --no-install-recommends libexpat1     && rm -rf /var/lib/apt/lists/*
+
 COPY --from=deps /app/services/workers/.venv /app/services/workers/.venv
 COPY packages/contracts/generated /app/packages/contracts/generated
 COPY packages/contracts/pyproject.toml /app/packages/contracts/

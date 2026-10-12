@@ -18,9 +18,20 @@ Measured on the same Delhi box, which is why Overture leads:
 Licences travel with the data. Overture is CDLA-Permissive-2.0 (Apache 2.0 for Foursquare-derived
 rows, CC0 for AllThePlaces) and an export built from it must carry the agreement text. OSM is
 ODbL 1.0 and requires attribution wherever its values are shown.
+
+Only the read side is re-exported here, and that is load-bearing. Importing anything from this
+package runs this file, so a convenience re-export of the ingest modules made every worker import
+`osmium` and `duckdb` -- and `osmium` needs `libexpat`, which the slim runtime image does not
+carry. Every worker crash-looped on `ImportError: libexpat.so.1` while the ingest they were
+loading it for runs once a month from an operator's shell.
+
+The build modules are imported directly by the thing that builds (`__main__`), where the cost
+belongs:
+
+    from app.places.osm import build_index        # needs osmium
+    from app.places.overture import build_index   # needs duckdb
 """
 
-from app.places.geofabrik import Extract, fetch_extract, region_url
 from app.places.index import IndexStats, IndexWriter, PlaceIndex
 from app.places.model import (
     OSM,
@@ -32,28 +43,17 @@ from app.places.model import (
     looks_like_url,
     osm_place,
 )
-from app.places.osm import IngestReport
-from app.places.osm import build_index as build_osm_index
-from app.places.overture import OvertureReport
-from app.places.overture import build_index as build_overture_index
 
 __all__ = [
     "OSM",
     "OVERTURE",
-    "Extract",
     "IndexStats",
     "IndexWriter",
-    "IngestReport",
-    "OvertureReport",
     "Place",
     "PlaceIndex",
-    "build_osm_index",
-    "build_overture_index",
-    "fetch_extract",
     "is_business",
     "looks_like_email",
     "looks_like_phone",
     "looks_like_url",
     "osm_place",
-    "region_url",
 ]

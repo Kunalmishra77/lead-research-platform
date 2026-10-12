@@ -114,6 +114,38 @@ def prepare(candidates: Sequence[Candidate]) -> list[Prepared]:
     return prepared
 
 
+async def claim_places(conn: AsyncConnection, place_ids: Sequence[str]) -> None:
+    """Takes a transaction-scoped lock on each place this chunk is about to write.
+
+    Without it, two tasks searching overlapping areas find the same business at the same moment
+    and both get as far as creating a company for it before either writes a location. One then
+    wins the conflict on `google_place_id` and the other's company is left with no location and
+    no way to ever get one -- a duplicate of a real business, with a lead pointing at it. A
+    single live run produced 217 of them.
+
+    A lock rather than a cleanup, because the cleanup would mean granting the worker DELETE on
+    the shared company graph, and a role that can delete companies will one day delete the wrong
+    ones. Nothing is created that has to be undone instead: whoever asks second waits, and by
+    the time it looks the place up the company is there to be reused.
+
+    Only tasks that overlap on an actual place wait for each other; disjoint searches never
+    touch the same lock. The ids are sorted so every transaction takes them in the same order,
+    which is what makes a deadlock between two overlapping chunks impossible. `hashtextextended`
+    narrows a place id to the bigint a lock is keyed on; a collision costs two unrelated places
+    a needless wait and nothing else.
+    """
+    ids = sorted({p for p in place_ids if p})
+    if not ids:
+        return
+    await conn.execute(
+        text(
+            "select pg_advisory_xact_lock(hashtextextended(place, 0))"
+            " from unnest(cast(:ids as text[])) as place"
+        ),
+        {"ids": ids},
+    )
+
+
 async def known_companies(conn: AsyncConnection, place_ids: Sequence[str]) -> dict[str, str]:
     """Which of these places we have already seen, and the company each belongs to."""
     ids = [p for p in dict.fromkeys(place_ids) if p]
@@ -257,14 +289,22 @@ async def upsert_locations(conn: AsyncConnection, pending: Sequence[Prepared]) -
                 "       lng = coalesce(excluded.lng, app.company_locations.lng),"
                 "       phone_e164 = coalesce(excluded.phone_e164,"
                 "                             app.company_locations.phone_e164)"
-                " returning id, google_place_id"
+                " returning id, google_place_id, company_id"
             ),
             params,
         )
     ).all()
-    by_place = {str(r[1]): str(r[0]) for r in returned}
+    # `company_id` is read back, not assumed. Two tasks searching overlapping areas find the
+    # same business at the same moment: both look it up and find nothing, both create a
+    # company, and then one of them wins the conflict on `google_place_id`. The loser's company
+    # has no location and never will -- 217 of them appeared in a single live run before this
+    # line existed. The place says who owns it; whoever asked second adopts that answer.
+    by_place = {str(r[1]): (str(r[0]), str(r[2])) for r in returned}
     for p in pending:
-        p.location_id = by_place.get(p.place_id)
+        won = by_place.get(p.place_id)
+        if won is None:
+            continue
+        p.location_id, p.company_id = won[0], won[1]
 
 
 async def record_domains(conn: AsyncConnection, pending: Sequence[Prepared]) -> None:

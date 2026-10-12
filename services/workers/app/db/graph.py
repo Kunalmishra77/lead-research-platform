@@ -141,6 +141,10 @@ class SqlGraphRepo:
     ) -> list[Stored]:
         pending = batch.prepare(candidates)
 
+        # Claimed before it is looked up, so that a task searching the same area cannot be
+        # between the two: the lookup has to be the last word on who owns a place.
+        await batch.claim_places(conn, [p.place_id for p in pending])
+
         # A place we have seen before belongs to the company it belonged to then, whatever its
         # website says now. One query answers that for the whole chunk.
         known = await batch.known_companies(conn, [p.place_id for p in pending])

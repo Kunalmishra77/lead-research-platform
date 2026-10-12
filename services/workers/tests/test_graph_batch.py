@@ -10,6 +10,7 @@ What is worth testing here is only what batching can break. The per-candidate ve
 right by running once per candidate; doing a hundred at a time has to arrive at the same place.
 """
 
+import asyncio
 import os
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
@@ -292,3 +293,81 @@ async def test_every_company_a_batch_creates_gets_a_location(tenant: Tenant) -> 
         )
     ).all()
     assert rows == [], "a company a batch created must have the location it was created for"
+
+
+async def test_a_place_already_owned_hands_its_owner_back(tenant: Tenant) -> None:
+    """The second half of the concurrency fix: the location upsert says who really owns a place.
+
+    Set up the state the race leaves behind -- a place that already belongs to a company the
+    lookup did not return -- and the writer has to adopt that company rather than keep the one
+    it just created. Without this, the company it created is left with no location at all.
+    """
+    conn, _org, _workspace, _job = tenant
+    place = str(uuid7())
+    incumbent = str(uuid7())
+    await conn.execute(
+        text(
+            "insert into app.companies (id, canonical_name, normalized_name)"
+            " values (:id, 'Incumbent Gym', 'incumbent gym')"
+        ),
+        {"id": incumbent},
+    )
+    await conn.execute(
+        text(
+            "insert into app.company_locations (id, company_id, google_place_id)"
+            " values (:id, :company, :place)"
+        ),
+        {"id": str(uuid7()), "company": incumbent, "place": place},
+    )
+
+    # Deliberately skipping `known_companies`, which is exactly what a racing task effectively
+    # does: it ran its lookup before the location above existed.
+    pending = batch.prepare([candidate(place, "Latecomer Gym")])
+    await batch.insert_companies(conn, pending)
+    newborn = pending[0].company_id
+    await batch.upsert_locations(conn, pending)
+
+    assert pending[0].company_id == incumbent, "the place says who owns it"
+    assert newborn != incumbent, "the test is only meaningful if a second company was created"
+    orphaned = (
+        await conn.execute(
+            text(
+                "select count(*) from app.companies c where c.id = :id"
+                " and not exists (select 1 from app.company_locations l"
+                "                  where l.company_id = c.id)"
+            ),
+            {"id": incumbent},
+        )
+    ).scalar()
+    assert orphaned == 0
+
+
+async def test_two_tasks_cannot_claim_one_place_at_once() -> None:
+    """The first half: a place is claimed before it is looked up, so the lookup is the last word.
+
+    This is the only test in the suite that needs two live transactions, because the defect only
+    exists between them. Neither writes anything: an advisory lock is transaction-scoped, so a
+    rollback releases it and there is nothing to clean up.
+    """
+    place = str(uuid7())
+    engine = create_engine(Settings())
+    try:
+        first = await engine.connect()
+        second = await engine.connect()
+        try:
+            t1 = await first.begin()
+            await batch.claim_places(first, [place])
+
+            t2 = await second.begin()
+            blocked = asyncio.create_task(batch.claim_places(second, [place]))
+            done, _ = await asyncio.wait({blocked}, timeout=2.0)
+            assert not done, "the second task claimed a place the first was holding"
+
+            await t1.rollback()
+            await asyncio.wait_for(blocked, timeout=10.0)
+            await t2.rollback()
+        finally:
+            await first.close()
+            await second.close()
+    finally:
+        await engine.dispose()

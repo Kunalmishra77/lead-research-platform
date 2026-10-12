@@ -102,6 +102,49 @@ async def test_the_industry_taxonomy_becomes_a_places_type() -> None:
     assert plan.tasks[0].input["query"]["category"] == "dentist"
 
 
+async def test_an_industry_the_parser_left_as_words_is_still_resolved() -> None:
+    """The bug that made the first live run deliver nothing.
+
+    The parser fills `filters.industry.include` with what the user said and leaves
+    `taxonomy_ids` empty -- it would have to know 319 slugs by heart otherwise. The planner
+    required the slugs, so every real request planned a search with no category at all.
+
+    Google hid it for months by reading "gym in Gurgaon" as a phrase. The place index matches
+    literally, so the first live run searched 553 gyms for a business of that name and returned
+    none of them.
+    """
+    plan = await build_plan(
+        make_spec(cities=["Pune"]),  # include=["dental clinics"], no taxonomy_ids
+        capabilities=capabilities_for(["name"]),
+        template=template_for("prospecting"),
+        reference=FakeReference(),
+        expansion=Expansion(queries=("dental clinics in Pune",)),
+        credits=500,
+    )
+
+    assert plan.tasks[0].input["query"]["category"] == "dentist"
+
+
+async def test_the_trade_travels_apart_from_the_phrase() -> None:
+    """A source that matches text literally cannot be handed "dental clinics in Pune".
+
+    Only the planner can separate them: the trade is in `filters.industry`, the place is in
+    `filters.location`. A connector receiving the phrase would search names for all of it.
+    """
+    plan = await build_plan(
+        make_spec(cities=["Pune"]),
+        capabilities=capabilities_for(["name"]),
+        template=template_for("prospecting"),
+        reference=FakeReference(),
+        expansion=Expansion(queries=("dental clinics in Pune",)),
+        credits=500,
+    )
+
+    query = plan.tasks[0].input["query"]
+    assert query["text"] == "dental clinics in Pune"
+    assert query["name_hint"] == "dental clinics"
+
+
 # ---------------------------------------------------------------- budgets
 
 

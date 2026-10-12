@@ -101,6 +101,9 @@ class DiscoveryQueryPayload(BaseModel):
     #: place index can, and an industry meaning three Overture categories would lose two thirds
     #: of its market if only the first were used (ADR-0017).
     categories: list[str] = Field(default_factory=list, max_length=64)
+    #: The trade the user named, without the place. What a literal matcher searches names for
+    #: when no category is known; `text` is a phrase and matches nothing as a name.
+    name_hint: str | None = Field(default=None, max_length=100)
     language: str = "en"
     #: Matches the contract's own ceiling (`research-spec.schema.json`, Limits.max_results). It
     #: was 200 here while the schema allowed 10,000, so a spec the API accepted could be refused
@@ -370,9 +373,19 @@ async def _search(
         max_results=payload.query.max_results,
         # Per-connector extras. Dropped here once, which meant the place index only ever saw
         # the first of the categories the planner had worked out for it.
-        options={"categories": payload.query.categories} if payload.query.categories else {},
+        options=_options(payload),
     )
     return await connector.search(query, CallContext.from_job(ctx))
+
+
+def _options(payload: DiscoveryPayload) -> dict[str, Any]:
+    """Per-connector extras. A source that does not understand one ignores it."""
+    options: dict[str, Any] = {}
+    if payload.query.categories:
+        options["categories"] = payload.query.categories
+    if payload.query.name_hint:
+        options["name_hint"] = payload.query.name_hint
+    return options
 
 
 async def _charge(

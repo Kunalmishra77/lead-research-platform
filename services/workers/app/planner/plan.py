@@ -150,7 +150,12 @@ async def build_plan(
 
     categories = await _categories(spec, reference, source=source)
     searches, dropped = _searches(
-        spec, template=template, expansion=expansion, areas=areas, categories=categories
+        spec,
+        template=template,
+        expansion=expansion,
+        areas=areas,
+        categories=categories,
+        name_hint=_name_hint(spec),
     )
     floor = _min_task_credits(capabilities, source, micros_per_credit)
     searches, unfunded = _affordable(searches, credits=credits, template=template, floor=floor)
@@ -275,6 +280,23 @@ def _area_key(area: GeoArea) -> str:
     return f"{area.country}:{area.kind}:{area.slug}"
 
 
+def _name_hint(spec: ResearchSpec) -> str | None:
+    """The trade the user named, apart from the place they named it in.
+
+    A source that matches text literally cannot be handed the whole phrase. "gym in Gurgaon" is
+    a search, not a name, and no business is called that -- the first live run against the place
+    index searched for exactly that string and found none of the 553 gyms inside its own
+    bounding box.
+
+    Only the planner can separate the two, because it is the only thing that sees the parsed
+    spec: the trade is in `filters.industry.include` and the place is in `filters.location`.
+    """
+    industry = spec.filters.industry
+    if industry is None or not industry.include:
+        return None
+    return text_of(industry.include[0]) or None
+
+
 async def _categories(
     spec: ResearchSpec, reference: ReferenceData, *, source: str
 ) -> tuple[str, ...]:
@@ -285,9 +307,17 @@ async def _categories(
     up per source here rather than guessed at by whichever connector receives the task.
     """
     industry = spec.filters.industry
-    if industry is None or not industry.taxonomy_ids:
+    if industry is None:
         return ()
-    ids = [text_of(t) for t in industry.taxonomy_ids]
+    ids = [text_of(t) for t in industry.taxonomy_ids or ()]
+    if not ids:
+        # The parser fills `include` with the words the user used and leaves `taxonomy_ids`
+        # empty, so resolve the words. This was invisible while discovery was a maps API --
+        # Google reads "gym in Gurgaon" as a phrase -- and fatal the moment it became an index
+        # that matches literally: the first live run found none of the 553 gyms in its own box.
+        ids = list(await reference.find_industries([text_of(t) for t in industry.include or ()]))
+    if not ids:
+        return ()
     if source in {"overture", "osm"}:
         return await reference.overture_categories_for(ids)
     return await reference.google_types_for(ids)
@@ -300,6 +330,7 @@ def _searches(
     expansion: Expansion,
     areas: list[GeoArea],
     categories: tuple[str, ...],
+    name_hint: str | None = None,
 ) -> tuple[list[dict[str, Any]], int]:
     """One search per (place, phrase), tiled by sub-locality where the template says to.
 
@@ -311,7 +342,9 @@ def _searches(
     searches: list[dict[str, Any]] = []
     for area in areas:
         for query in expansion.queries:
-            searches.append(_search(query, area=area, categories=categories))
+            searches.append(
+                _search(query, area=area, categories=categories, name_hint=name_hint)
+            )
     if template.tile_sub_localities and expansion.sub_localities:
         # Only cities get tiled by name: a sub-locality of a state is just a city, and the
         # Places connector already tiles a large box geometrically.
@@ -328,6 +361,7 @@ def _searches(
                         f"{head} {locality}",
                         area=area,
                         categories=categories,
+                        name_hint=name_hint,
                         locality=locality,
                     )
                 )
@@ -340,6 +374,7 @@ def _search(
     *,
     area: GeoArea,
     categories: tuple[str, ...],
+    name_hint: str | None = None,
     locality: str | None = None,
 ) -> dict[str, Any]:
     """The `input` of one discovery task, minus the limits the budget decides.
@@ -362,6 +397,8 @@ def _search(
         # Overture categories would lose two thirds of its market if only the first were sent.
         payload["query"]["category"] = categories[0]
         payload["query"]["categories"] = list(categories)
+    if name_hint:
+        payload["query"]["name_hint"] = name_hint
     if locality:
         payload["locality"] = locality
     return payload

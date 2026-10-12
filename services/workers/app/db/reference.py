@@ -11,6 +11,7 @@ turns "dental clinics" into the `includedType` that stops a text search drifting
 whose page happens to mention teeth.
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from sqlalchemy import text
@@ -85,6 +86,8 @@ class ReferenceData:
         self._engine = engine
         self._areas: tuple[GeoArea, ...] | None = None
         self._industries: dict[str, Industry] | None = None
+        #: Name and synonym -> slug, built once from the industries above.
+        self._by_term: dict[str, str] | None = None
         self._sources: dict[str, Source] | None = None
         self._rates: dict[str, int] | None = None
 
@@ -138,6 +141,44 @@ class ReferenceData:
                 f"no app.sources row for {key!r}; run `pnpm db:seed` (known: {sorted(known)})"
             )
         return source.id
+
+    async def find_industries(self, terms: Sequence[str]) -> tuple[str, ...]:
+        """Taxonomy slugs for the words a user used, in order and without duplicates.
+
+        The spec carries `filters.industry.include` as free text -- "gyms", "dental clinic" --
+        because that is what a person types and what the parser hears. `taxonomy_ids` is the
+        machine answer, and nothing was filling it: the model would have to know 319 slugs by
+        heart to do it, and it does not.
+
+        So it is resolved here, deterministically, against the names and synonyms the seed
+        carries for exactly this purpose ("a synonym belongs to exactly one category, so query
+        expansion stays unambiguous", db/seeds/industries.ts).
+
+        This mattered less than it looks until discovery stopped being a maps API. Google reads
+        "gym in Gurgaon" as a phrase and answers sensibly; the place index matches categories and
+        names literally, so an unresolved industry meant a search for businesses called "gym in
+        Gurgaon", of which there are none. The first live run returned zero candidates from an
+        index holding 553 gyms in that very box.
+
+        A term nobody recognises is skipped rather than guessed at. The search still runs on its
+        text, which is a worse search but an honest one.
+        """
+        known = await self.industries()
+        if self._by_term is None:
+            self._by_term = {
+                term: industry.slug
+                for industry in known.values()
+                for term in {slugify(industry.name), *(slugify(s) for s in industry.synonyms)}
+                if term
+            }
+        found: dict[str, None] = {}
+        for term in terms:
+            slug = self._by_term.get(slugify(term)) or (
+                slugify(term) if slugify(term) in known else None
+            )
+            if slug:
+                found.setdefault(slug, None)
+        return tuple(found)
 
     async def find_area(self, name: str, *, country: str | None = None) -> GeoArea | None:
         """A place by the words the user used, or None when the seed has never heard of it.

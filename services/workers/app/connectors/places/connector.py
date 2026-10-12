@@ -104,10 +104,11 @@ class PlaceIndexConnector:
             raise InvalidInputError(f"{self.key} needs a bounding box to search in")
 
         categories = _categories(query)
-        # Ask by category where the taxonomy knows one, and fall back to the query's text. 24 of
-        # our 319 categories have no Overture equivalent (ADR-0017) and the fallback is what
-        # keeps those requests answerable, less precisely and honestly so.
-        name = None if categories else (query.text.strip() or None)
+        # Ask by category where the taxonomy knows one. 24 of our 319 categories have no Overture
+        # equivalent (ADR-0017), and for those the fallback is the trade the user named -- never
+        # `query.text`, which is a phrase like "gym in Gurgaon" that no business is called. That
+        # mistake returned zero candidates from an index holding 553 gyms in the same box.
+        name = None if categories else _text(query.options.get("name_hint"))
 
         places = await asyncio.to_thread(
             self._index.search,

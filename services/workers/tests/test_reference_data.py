@@ -220,3 +220,54 @@ async def test_an_industry_overture_has_no_category_for_contributes_nothing() ->
     """
     reference = ref(industries={"ev": Industry("ev-dealer", "EV Dealer", ("car_dealer",), (), ())})
     assert await reference.overture_categories_for(["ev"]) == ()
+
+
+@pytest.mark.parametrize(
+    ("term", "expected"),
+    [
+        ("gym", "gym"),  # the category's own name
+        ("Gym", "gym"),  # case is not a distinction
+        ("gyms", None),  # a plural nobody listed is not guessed at
+        ("fitness centre", "gym"),  # a synonym
+        ("dental clinic", "dental"),  # a multi-word name, slugified
+        ("not a real trade", None),
+    ],
+)
+async def test_free_text_resolves_to_a_taxonomy_slug(term: str, expected: str | None) -> None:
+    """The parser writes what the user said; this turns it into something a source can filter on.
+
+    Unresolved, a request reaches the place index as a phrase and matches nothing: the first
+    live run searched 553 gyms for a business named "gym in Gurgaon" and delivered zero.
+    """
+    reference = ref(
+        industries={
+            "gym": Industry("gym", "Gym", ("gym",), ("gym",), ("fitness centre", "health club")),
+            "dental": Industry("dental", "Dental Clinic", ("dentist",), ("dental_clinic",), ()),
+        }
+    )
+    found = await reference.find_industries([term])
+    assert found == ((expected,) if expected else ())
+
+
+async def test_resolution_keeps_order_and_drops_duplicates() -> None:
+    reference = ref(
+        industries={
+            "gym": Industry("gym", "Gym", (), ("gym",), ("fitness centre",)),
+            "dental": Industry("dental", "Dental Clinic", (), ("dental_clinic",), ()),
+        }
+    )
+    assert await reference.find_industries(["dental clinic", "gym", "fitness centre"]) == (
+        "dental",
+        "gym",
+    )
+
+
+async def test_a_term_nobody_recognises_is_skipped_not_guessed() -> None:
+    """A wrong slug would filter the whole search to the wrong trade.
+
+    Returning nothing leaves the search running on its text, which is worse but honest.
+    """
+    reference = ref(industries={"gym": Industry("gym", "Gym", (), ("gym",), ())})
+    assert await reference.find_industries(["artisanal yak grooming"]) == ()
+    assert await reference.find_industries([]) == ()
+    assert await reference.find_industries(["artisanal yak grooming", "gym"]) == ("gym",)

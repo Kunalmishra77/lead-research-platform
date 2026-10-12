@@ -1,5 +1,6 @@
 """Fixtures for the planner tests: a seeded geography and a registry, without a database."""
 
+from collections.abc import Sequence
 from typing import Any
 
 import fakeredis
@@ -79,6 +80,26 @@ class FakeReference:
 
     async def industries(self) -> dict[str, Industry]:
         return self._industries
+
+    async def find_industries(self, terms: Sequence[str]) -> tuple[str, ...]:
+        """Name and synonym -> slug, as the real one does.
+
+        Spelled out here rather than stubbed to `()`: the planner falls back to this whenever
+        the parser leaves `taxonomy_ids` empty, which is every real request, so a fake that
+        always answers nothing would test the path nobody takes.
+        """
+        by_term = {
+            term: industry.slug
+            for industry in self._industries.values()
+            for term in {slugify(industry.name), *(slugify(s) for s in industry.synonyms)}
+            if term
+        }
+        found: dict[str, None] = {}
+        for term in terms:
+            slug = by_term.get(slugify(term))
+            if slug:
+                found.setdefault(slug, None)
+        return tuple(found)
 
     async def find_area(self, name: str, *, country: str | None = None) -> GeoArea | None:
         # The real `slugify`, not a copy of it: a fake that reimplements the thing under test

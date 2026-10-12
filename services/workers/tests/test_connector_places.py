@@ -135,12 +135,12 @@ async def test_every_requested_category_is_used(index: PlaceIndex, ctx: CallCont
     assert {c.name for c in found} == {"Anytime Fitness", "Unreachable Gym", "Bikanervala"}
 
 
-async def test_a_request_with_no_category_falls_back_to_the_name(
+async def test_a_request_with_no_category_falls_back_to_the_trade(
     index: PlaceIndex, ctx: CallContext
 ) -> None:
     """24 taxonomy entries have no Overture category, and this is what keeps them answerable."""
     found = await OvertureConnector(index).search(
-        DiscoveryQuery(text="Bikanervala", bbox=DELHI), ctx
+        DiscoveryQuery(text="x", bbox=DELHI, options={"name_hint": "Bikanervala"}), ctx
     )
     assert [c.name for c in found] == ["Bikanervala"]
 
@@ -295,3 +295,46 @@ def test_the_datasets_declare_their_policy() -> None:
     # `providing()` would otherwise break the tie alphabetically and lead with the thinner one.
     assert OvertureConnector.discovers is True
     assert OsmConnector.discovers is False
+
+
+async def test_the_fallback_searches_the_trade_not_the_phrase(
+    index: PlaceIndex, ctx: CallContext
+) -> None:
+    """The bug that made the first live run deliver nothing.
+
+    With no category, the connector used to search names for `query.text` -- "gym in Gurgaon" --
+    and no business is called that. The index held 553 gyms inside that very box and returned
+    none of them. The planner now sends the trade on its own, because it is the only thing that
+    can tell the trade from the place.
+    """
+    with_hint = DiscoveryQuery(text="gyms in Gurgaon", bbox=DELHI, options={"name_hint": "Gym"})
+    assert {c.name for c in await OvertureConnector(index).search(with_hint, ctx)} == {
+        "Unreachable Gym"
+    }
+
+
+async def test_naming_no_trade_at_all_returns_the_area(index: PlaceIndex, ctx: CallContext) -> None:
+    """Deliberate, and the opposite of what the phrase-as-name version did.
+
+    No category and no hint means the planner found no trade in the request, which happens when
+    the user named none -- "businesses in Gurgaon". Returning the area answers that. The planner
+    sends a hint whenever `filters.industry.include` holds anything, so this is not the path a
+    request for dentists can fall down.
+    """
+    found = await OvertureConnector(index).search(
+        DiscoveryQuery(text="businesses in Gurgaon", bbox=DELHI), ctx
+    )
+    assert len(found) == 3
+
+
+async def test_a_category_beats_the_name_hint(index: PlaceIndex, ctx: CallContext) -> None:
+    """A category is the precise answer; the hint only covers the 24 entries that have none.
+
+    Worth pinning: matching both would quietly narrow every search to businesses with the trade
+    in their name, and most do not -- "Vanarshala" is a gym.
+    """
+    query = DiscoveryQuery(
+        text="gyms", bbox=DELHI, options={"categories": ["gym"], "name_hint": "Gym"}
+    )
+    found = await OvertureConnector(index).search(query, ctx)
+    assert {c.name for c in found} == {"Anytime Fitness", "Unreachable Gym"}

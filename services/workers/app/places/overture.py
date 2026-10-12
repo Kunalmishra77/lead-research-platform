@@ -86,8 +86,26 @@ class OvertureReport:
 
 
 def places_url(release: str = DEFAULT_RELEASE) -> str:
-    """The object path holding one release's places."""
+    """The object path holding one release's places, for DuckDB to read."""
     return f"{S3_BUCKET}/{release}/theme=places/type=place/*"
+
+
+def release_url(release: str = DEFAULT_RELEASE) -> str:
+    """Where a person can go to check a value, which is what provenance means (docs/06).
+
+    Overture publishes no page per record -- its own documentation says to look an id up by
+    querying the release's Parquet -- so this points at the release, and `external_id` holds the
+    GERS id that identifies the row inside it.
+
+    Over https, not the `s3://` URI DuckDB reads. `field_values.source_url` is checked against
+    `^https?://` by the database, and rightly: provenance nobody can open is not provenance. The
+    first live run stored nothing at all because every value carried the s3 form and every
+    insert was refused.
+    """
+    return (
+        f"https://overturemaps-us-west-2.s3.us-west-2.amazonaws.com"
+        f"/release/{release}/theme=places/type=place/"
+    )
 
 
 def category_counts(
@@ -179,7 +197,7 @@ def _places(
     """Streams the rows DuckDB returns, mapping each into a `Place` or counting why not."""
     con, source = _connect(release, connection)
     min_lat, min_lng, max_lat, max_lng = bbox
-    url = places_url(release)
+    url = release_url(release)
 
     # The bbox predicate is on the `bbox` struct, not the geometry, because DuckDB can push a
     # plain numeric comparison down into Parquet row-group statistics and skip whole files. A

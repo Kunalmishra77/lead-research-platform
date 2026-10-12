@@ -338,3 +338,42 @@ async def test_a_category_beats_the_name_hint(index: PlaceIndex, ctx: CallContex
     )
     found = await OvertureConnector(index).search(query, ctx)
     assert {c.name for c in found} == {"Anytime Fitness", "Unreachable Gym"}
+
+
+async def test_every_value_carries_a_url_the_database_will_accept(
+    index: PlaceIndex, ctx: CallContext
+) -> None:
+    """`field_values.source_url` is checked against `^https?://` by Postgres (migration 0013).
+
+    Nothing here caught that the Overture values carried an `s3://` URI, because the worker
+    tests store through a fake graph and the live-database suite skips without a DATABASE_URL.
+    The first real run found its leads and then failed every insert, so the job reported zero
+    and looked exactly like a search that had found nothing.
+
+    The rule is the database's, so this mirrors it rather than restating it loosely: a URL a
+    person cannot open is not provenance.
+    """
+    found = await OvertureConnector(index).search(
+        DiscoveryQuery(text="x", bbox=DELHI, options={"categories": ["gym", "restaurant"]}), ctx
+    )
+    assert found
+    for candidate in found:
+        assert candidate.source_url.startswith(("http://", "https://")), candidate.source_url
+        assert candidate.values
+        for value in candidate.values:
+            assert value.source_url.startswith(("http://", "https://")), value.source_url
+            assert len(value.source_url) <= 2048
+
+
+def test_the_overture_release_url_is_openable() -> None:
+    """Points at the release, because Overture publishes no page per record.
+
+    Its own documentation says to look an id up by querying the release's Parquet, and
+    `external_id` carries that id. Over https rather than the `s3://` form DuckDB reads.
+    """
+    from app.places.overture import DEFAULT_RELEASE, places_url, release_url  # noqa: PLC0415
+
+    assert release_url().startswith("https://")
+    assert DEFAULT_RELEASE in release_url()
+    # The reader still gets the s3 form; the two must not be confused for each other.
+    assert places_url().startswith("s3://")

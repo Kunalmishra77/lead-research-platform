@@ -1,0 +1,243 @@
+"""The batched writers, against a real Postgres.
+
+Skipped unless `DATABASE_URL_WORKERS` is set, like the rest of the live suite. That is also the
+hole these tests fill: storing candidates has always been exercised through a fake graph, so
+nothing checked what the statements actually do, and three separate defects reached production
+through that gap in one afternoon -- a `source_url` the database refuses, an insert that returns
+no rows, and two current values where there may only ever be one.
+
+What is worth testing here is only what batching can break. The per-candidate version got these
+right by running once per candidate; doing a hundred at a time has to arrive at the same place.
+"""
+
+import os
+from collections.abc import AsyncIterator
+from datetime import UTC, datetime
+
+import pytest
+import pytest_asyncio
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
+from uuid6 import uuid7
+
+from app.config import Settings
+from app.connectors.types import Candidate, FieldValue
+from app.db import batch
+from app.db.engine import create_engine
+
+pytestmark = pytest.mark.skipif(
+    not os.environ.get("DATABASE_URL_WORKERS"),
+    reason="needs a database; set DATABASE_URL_WORKERS to run",
+)
+
+OBSERVED = datetime(2026, 9, 23, tzinfo=UTC)
+
+#: What the fixture hands a test: a worker connection with the tenant already set, and the org,
+#: workspace and job to write into.
+Tenant = tuple[AsyncConnection, str, str, str]
+
+
+def value(field: str, text_value: str, *, url: str = "https://example.test/p") -> FieldValue:
+    return FieldValue(
+        entity_type="company",
+        field=field,
+        value=text_value,
+        source_key="overture",
+        source_url=url,
+        observed_at=OBSERVED,
+        method="provider",
+        derivation="found",
+        confidence=0.85,
+    )
+
+
+def candidate(
+    external_id: str, name: str, *, url: str | None = None, fields: tuple[FieldValue, ...] = ()
+) -> Candidate:
+    return Candidate(
+        source_key="overture",
+        external_id=external_id,
+        name=name,
+        url=url,
+        source_url="https://example.test/p",
+        observed_at=OBSERVED,
+        values=fields or (value("name", name),),
+    )
+
+
+@pytest_asyncio.fixture
+async def tenant() -> AsyncIterator[Tenant]:
+    """A worker connection with a tenant set, inside a transaction that is always rolled back.
+
+    The org, workspace and job are read with the migrations role, because the worker role cannot
+    discover them: `app.org_id` has to be set before RLS will show a workspace, and in
+    production the org arrives in the job envelope rather than being looked up. The writing
+    itself runs as `app_worker`, so the grants and policies under test are the real ones.
+    """
+    admin_url = os.environ.get("DATABASE_URL_MIGRATIONS")
+    if not admin_url:
+        pytest.skip("needs DATABASE_URL_MIGRATIONS to find a tenant to write into")
+    admin = create_async_engine(
+        admin_url.replace("postgresql://", "postgresql+asyncpg://"),
+        connect_args={"statement_cache_size": 0},
+    )
+    async with admin.connect() as c:
+        row = (
+            await c.execute(
+                text(
+                    "select w.org_id, w.id, j.id from app.workspaces w"
+                    " join app.research_jobs j on j.workspace_id = w.id limit 1"
+                )
+            )
+        ).first()
+    await admin.dispose()
+    if row is None:
+        pytest.skip("no workspace with a research job to write into")
+    org, workspace, job = str(row[0]), str(row[1]), str(row[2])
+
+    engine: AsyncEngine = create_engine(Settings())
+    async with engine.connect() as connection:
+        transaction = await connection.begin()
+        await connection.execute(text("select set_config('app.org_id', :org, true)"), {"org": org})
+        try:
+            yield connection, org, workspace, job
+        finally:
+            # Always rolled back: these tests must leave the database as they found it, and a
+            # transaction left open takes locks with it.
+            await transaction.rollback()
+    await engine.dispose()
+
+
+async def _source_id(conn: AsyncConnection) -> str:
+    row = (await conn.execute(text("select id from app.sources where key = 'overture'"))).first()
+    assert row is not None, "run `pnpm db:seed`"
+    return str(row[0])
+
+
+async def _store(tenant: Tenant, candidates: list[Candidate]) -> list[batch.Prepared]:
+    conn, org, workspace, job = tenant
+    source_id = await _source_id(conn)
+
+    pending = batch.prepare(candidates)
+    known = await batch.known_companies(conn, [p.place_id for p in pending])
+    for p in pending:
+        p.company_id = known.get(p.place_id, "")
+    await batch.insert_companies(conn, [p for p in pending if not p.company_id])
+    await batch.upsert_locations(conn, pending)
+    await batch.record_domains(conn, pending)
+    await batch.write_values(conn, batch.value_rows(pending), source_id=source_id)
+    await batch.deliver(conn, pending, org_id=org, workspace_id=workspace, research_job_id=job)
+    await batch.link(conn, pending, org_id=org, research_job_id=job)
+    return pending
+
+
+async def test_a_batch_returns_a_row_for_every_candidate(tenant: Tenant) -> None:
+    pending = await _store(
+        tenant,
+        [candidate(str(uuid7()), f"Gym {i}") for i in range(5)],
+    )
+    assert len(pending) == 5
+    assert all(p.company_id for p in pending)
+    assert all(p.lead_id for p in pending)
+
+
+async def test_two_candidates_on_one_domain_become_one_company(tenant: Tenant) -> None:
+    """Two branches of a chain with one website are one company with two locations.
+
+    `ON CONFLICT DO UPDATE` refuses to touch a row twice in one statement, so the batch has to
+    deduplicate by domain before it sends anything.
+    """
+    pending = await _store(
+        tenant,
+        [
+            candidate(str(uuid7()), "Chain Gym Sector 1", url="https://chaingym.in"),
+            candidate(str(uuid7()), "Chain Gym Sector 2", url="https://chaingym.in"),
+        ],
+    )
+    assert pending[0].company_id == pending[1].company_id
+    assert pending[0].location_id != pending[1].location_id
+
+
+async def test_only_the_last_value_of_a_pair_stays_current(tenant: Tenant) -> None:
+    """The bug this file was written for."""
+    pending = await _store(
+        tenant,
+        [
+            candidate(
+                str(uuid7()),
+                "Chain Gym Sector 1",
+                url="https://chain2.in",
+                fields=(value("phone", "+911111111111"),),
+            ),
+            candidate(
+                str(uuid7()),
+                "Chain Gym Sector 2",
+                url="https://chain2.in",
+                fields=(value("phone", "+912222222222"),),
+            ),
+        ],
+    )
+    company_id = pending[0].company_id
+    rows = (
+        await tenant[0].execute(
+            text(
+                "select value #>> '{}', is_current from app.field_values"
+                " where entity_type = 'company' and entity_id = :c and field = 'phone'"
+                " order by is_current desc"
+            ),
+            {"c": company_id},
+        )
+    ).all()
+    current = [r[0] for r in rows if r[1]]
+    assert len(current) == 1, f"expected one current phone, got {current}"
+    # The last one written wins, as it did when each candidate ran its own retirement.
+    assert current[0] == "+912222222222"
+
+
+async def test_the_same_place_twice_is_one_company_and_one_location(
+    tenant: Tenant,
+) -> None:
+    """What makes a task idempotent: a retry must not double anything."""
+    place = str(uuid7())
+    first = await _store(tenant, [candidate(place, "Iron Gym")])
+    second = await _store(tenant, [candidate(place, "Iron Gym")])
+    assert first[0].company_id == second[0].company_id
+    assert first[0].location_id == second[0].location_id
+    assert first[0].is_new is True
+    # Delivered once; the second run found the workspace already had it.
+    assert second[0].is_new is False
+
+
+async def test_a_lead_already_held_is_not_billed_again(tenant: Tenant) -> None:
+    """`is_new` is what the job is charged on, so it has to come from the insert itself."""
+    place = str(uuid7())
+    await _store(tenant, [candidate(place, "Paid Once")])
+    again = await _store(tenant, [candidate(place, "Paid Once")])
+    assert again[0].is_new is False
+    assert again[0].lead_id is not None
+
+
+async def test_every_candidate_gets_its_values(tenant: Tenant) -> None:
+    pending = await _store(
+        tenant,
+        [
+            candidate(
+                str(uuid7()),
+                f"Gym {i}",
+                fields=(value("name", f"Gym {i}"), value("phone", f"+9111111111{i:02d}")),
+            )
+            for i in range(10)
+        ],
+    )
+    assert all(p.values_written == 2 for p in pending)
+    company_ids = [p.company_id for p in pending]
+    rows = (
+        await tenant[0].execute(
+            text(
+                "select count(*) from app.field_values"
+                " where entity_type = 'company' and is_current and entity_id = any(:ids)"
+            ).bindparams(),
+            {"ids": company_ids},
+        )
+    ).scalar()
+    assert rows == 20

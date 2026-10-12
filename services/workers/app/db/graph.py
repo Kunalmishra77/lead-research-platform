@@ -26,18 +26,17 @@ Everything runs inside `tenant_transaction`, which the graph policies do not nee
 but `leads` does, and which keeps a task's rows committing or failing together.
 """
 
-import json
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Final, Protocol
 
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 from uuid6 import uuid7
 
 from app.connectors.types import Candidate, FieldValue
+from app.db import batch
+from app.db.batch import normalized_name, to_e164
 from app.db.tenant import tenant_transaction
-from app.normalize.domains import is_platform_host, registrable_domain
 
 #: `company_locations.phone_e164` is CHECKed against this shape — no spaces, no punctuation.
 _E164_MIN_DIGITS = 7
@@ -84,6 +83,13 @@ class SqlGraphRepo:
     def __init__(self, engine: AsyncEngine) -> None:
         self._engine = engine
 
+    #: Candidates per transaction. Large, because the statement count no longer grows with it:
+    #: a chunk costs about a dozen round trips whether it holds ten candidates or a hundred.
+    #: What bounds it is how much one `insert ... values` should carry and how long a
+    #: transaction should hold its locks, not how many questions the database is asked.
+    CHUNK: Final[int] = 100
+
+
     async def store(
         self,
         org_id: str,
@@ -93,18 +99,28 @@ class SqlGraphRepo:
         workspace_id: str,
         research_job_id: str,
     ) -> list[Stored]:
-        """Writes a batch of candidates, one transaction for the batch.
+        """Writes candidates a chunk at a time, in a handful of statements for the whole chunk.
 
-        One transaction so a task that dies halfway leaves nothing behind to reconcile: either
-        the search's results are in the graph and delivered, or neither.
+        One statement per kind of row, not per candidate (`app/db/batch.py`). Storing one
+        business used to cost about twenty-six round trips; at the 452 ms this deployment sees
+        to its database that is 11.7 seconds each, and forty-nine minutes for the two hundred
+        and fifty a single search now returns. The count no longer grows with the batch.
+
+        One transaction per chunk rather than one for everything. The all-or-nothing a single
+        transaction bought is not worth what it costs here: every write is an upsert keyed on
+        the source's own id, a retry re-runs them harmlessly, and the job link is keyed on
+        (job, lead) -- while a transaction left open by a worker that died takes its locks with
+        it, and one such orphan blocked every discovery task on this database for eleven
+        minutes.
         """
         stored: list[Stored] = []
-        async with tenant_transaction(self._engine, org_id) as conn:
-            for candidate in candidates:
-                stored.append(
-                    await self._store_one(
+        for start in range(0, len(candidates), self.CHUNK):
+            chunk = candidates[start : start + self.CHUNK]
+            async with tenant_transaction(self._engine, org_id) as conn:
+                stored.extend(
+                    await self._store_chunk(
                         conn,
-                        candidate,
+                        chunk,
                         source_id=source_id,
                         org_id=org_id,
                         workspace_id=workspace_id,
@@ -112,6 +128,48 @@ class SqlGraphRepo:
                     )
                 )
         return stored
+
+    async def _store_chunk(
+        self,
+        conn: AsyncConnection,
+        candidates: Sequence[Candidate],
+        *,
+        source_id: str,
+        org_id: str,
+        workspace_id: str,
+        research_job_id: str,
+    ) -> list[Stored]:
+        pending = batch.prepare(candidates)
+
+        # A place we have seen before belongs to the company it belonged to then, whatever its
+        # website says now. One query answers that for the whole chunk.
+        known = await batch.known_companies(conn, [p.place_id for p in pending])
+        for p in pending:
+            p.company_id = known.get(p.place_id, "")
+        await batch.insert_companies(conn, [p for p in pending if not p.company_id])
+
+        await batch.upsert_locations(conn, pending)
+        await batch.record_domains(conn, pending)
+        await batch.write_values(conn, batch.value_rows(pending), source_id=source_id)
+        await batch.deliver(
+            conn,
+            pending,
+            org_id=org_id,
+            workspace_id=workspace_id,
+            research_job_id=research_job_id,
+        )
+        await batch.link(conn, pending, org_id=org_id, research_job_id=research_job_id)
+
+        return [
+            Stored(
+                company_id=p.company_id,
+                location_id=p.location_id,
+                lead_id=p.lead_id,
+                is_new=p.is_new,
+                values_written=p.values_written,
+            )
+            for p in pending
+        ]
 
     async def add_company_values(
         self,
@@ -133,355 +191,14 @@ class SqlGraphRepo:
         """
         if not values:
             return 0
+        rows = [
+            batch.ValueRow(id=str(uuid7()), entity_id=company_id, value=value) for value in values
+        ]
         async with tenant_transaction(self._engine, org_id) as conn:
-            return await self._write_values(
-                conn, values, company_id=company_id, source_id=source_id
-            )
-
-    async def _store_one(
-        self,
-        conn: AsyncConnection,
-        candidate: Candidate,
-        *,
-        source_id: str,
-        org_id: str,
-        workspace_id: str,
-        research_job_id: str,
-    ) -> Stored:
-        place_id = candidate.external_id
-        existing = await self._location_company(conn, place_id)
-        host = registrable_domain(candidate.url)
-        # A platform host identifies the platform, not the business. `primary_domain` is UNIQUE,
-        # so storing one would merge every business that builds its site there into whichever
-        # arrived first -- two unrelated clinics becoming one company, unrecoverably.
-        on_platform = is_platform_host(candidate.url)
-        domain = None if on_platform else host
-
-        company_id = (
-            existing
-            if existing is not None
-            else await self._resolve_company(conn, candidate, domain=domain)
-        )
-
-        location_id = await self._upsert_location(
-            conn, candidate, company_id=company_id, place_id=place_id
-        )
-        if host:
-            await self._record_domain(conn, company_id, host, is_platform=on_platform)
-        written = await self._write_values(
-            conn, candidate.values, company_id=company_id, source_id=source_id
-        )
-        lead_id, is_new = await self._deliver(
-            conn,
-            company_id=company_id,
-            org_id=org_id,
-            workspace_id=workspace_id,
-            research_job_id=research_job_id,
-        )
-        if lead_id is not None:
-            await self._link(
-                conn,
-                lead_id=lead_id,
-                is_new=is_new,
-                org_id=org_id,
-                research_job_id=research_job_id,
-            )
-        return Stored(
-            company_id=company_id,
-            location_id=location_id,
-            lead_id=lead_id,
-            is_new=is_new,
-            values_written=written,
-        )
-
-    async def _link(
-        self,
-        conn: AsyncConnection,
-        *,
-        lead_id: str,
-        is_new: bool,
-        org_id: str,
-        research_job_id: str,
-    ) -> None:
-        """Records that this job surfaced this lead, new to the workspace or not (ADR-0015).
-
-        Without this row a job that re-finds leads it delivered last month reports that it found
-        nothing: `_deliver` correctly inserts no lead, so `leads.research_job_id` still names the
-        earlier job and the grid -- which filters on it -- comes back empty. The customer's search
-        worked and the screen said otherwise.
-
-        `is_new` is written here rather than computed later because it is a statement about this
-        moment. Billing counts it, and a later job finding the same lead must not change what an
-        earlier invoice said.
-
-        `DO NOTHING` so a retried task is harmless, and in the same transaction as the lead, so a
-        crash cannot leave a lead delivered but unlinked.
-        """
-        await conn.execute(
-            text(
-                "insert into app.research_job_leads"
-                " (org_id, research_job_id, lead_id, is_new)"
-                " values (:org, :job, :lead, :is_new)"
-                " on conflict do nothing"
-            ),
-            {"org": org_id, "job": research_job_id, "lead": lead_id, "is_new": is_new},
-        )
-
-    async def _deliver(
-        self,
-        conn: AsyncConnection,
-        *,
-        company_id: str,
-        org_id: str,
-        workspace_id: str,
-        research_job_id: str,
-    ) -> tuple[str | None, bool]:
-        """Hands this company to the workspace, and says whether that was new.
-
-        `DO NOTHING` rather than an update: a workspace that already holds this lead may have
-        changed its status, assigned it or corrected a value, and a search running again must not
-        undo any of that. It is also why `app_worker` has no UPDATE grant on the table at all.
-
-        The returned flag is what the job is charged on, so it has to mean "this customer did not
-        have this before" — not "nobody had it".
-        """
-        inserted = (
-            await conn.execute(
-                text(
-                    "insert into app.leads"
-                    " (id, org_id, workspace_id, company_id, research_job_id)"
-                    " values (:id, :org, :workspace, :company, :job)"
-                    " on conflict do nothing"
-                    " returning id"
-                ),
-                {
-                    "id": str(uuid7()),
-                    "org": org_id,
-                    "workspace": workspace_id,
-                    "company": company_id,
-                    "job": research_job_id,
-                },
-            )
-        ).first()
-        if inserted is not None:
-            return str(inserted[0]), True
-
-        existing = (
-            await conn.execute(
-                text(
-                    "select id from app.leads"
-                    " where workspace_id = :workspace and company_id = :company"
-                    "   and person_id is null"
-                ),
-                {"workspace": workspace_id, "company": company_id},
-            )
-        ).first()
-        return (str(existing[0]) if existing else None), False
-
-    async def _location_company(self, conn: AsyncConnection, place_id: str) -> str | None:
-        """The company this place already belongs to, if we have seen it before."""
-        if not place_id:
-            return None
-        row = (
-            await conn.execute(
-                text("select company_id from app.company_locations where google_place_id = :p"),
-                {"p": place_id},
-            )
-        ).first()
-        return str(row[0]) if row else None
-
-    async def _resolve_company(
-        self, conn: AsyncConnection, candidate: Candidate, *, domain: str | None
-    ) -> str:
-        """The company for a place we have not seen, creating one if nothing matches.
-
-        A domain is the only thing that can tie two places to one business here, so two branches
-        of a chain with one website become one company with two locations — which is right — and
-        two unrelated shops with no website stay separate, which is also right. Anything cleverer
-        is resolution's job (docs/06 §6), not discovery's.
-        """
-        if domain:
-            row = (
-                await conn.execute(
-                    text(
-                        "insert into app.companies"
-                        " (id, canonical_name, normalized_name, primary_domain, country,"
-                        "  city, state)"
-                        " values (:id, :name, :norm, :domain, :country, :city, :state)"
-                        " on conflict (primary_domain) do update"
-                        "   set canonical_name = app.companies.canonical_name"
-                        " returning id"
-                    ),
-                    self._company_params(candidate, domain),
-                )
-            ).one()
-            return str(row[0])
-
-        row = (
-            await conn.execute(
-                text(
-                    "insert into app.companies"
-                    " (id, canonical_name, normalized_name, country, city, state)"
-                    " values (:id, :name, :norm, :country, :city, :state)"
-                    " returning id"
-                ),
-                self._company_params(candidate, None),
-            )
-        ).one()
-        return str(row[0])
-
-    def _company_params(self, candidate: Candidate, domain: str | None) -> dict[str, Any]:
-        return {
-            "id": str(uuid7()),
-            "name": candidate.name,
-            "norm": normalized_name(candidate.name),
-            "domain": domain,
-            "country": _country(candidate.country),
-            "city": candidate.city,
-            "state": None,
-        }
-
-    async def _upsert_location(
-        self, conn: AsyncConnection, candidate: Candidate, *, company_id: str, place_id: str
-    ) -> str | None:
-        if not place_id:
-            return None
-        row = (
-            await conn.execute(
-                text(
-                    "insert into app.company_locations"
-                    " (id, company_id, address, city, country, lat, lng, google_place_id,"
-                    "  phone_e164)"
-                    " values (:id, :company, :address, :city, :country, :lat, :lng, :place,"
-                    "  :phone)"
-                    " on conflict (google_place_id) do update"
-                    "   set address = coalesce(excluded.address, app.company_locations.address),"
-                    "       city = coalesce(excluded.city, app.company_locations.city),"
-                    "       lat = coalesce(excluded.lat, app.company_locations.lat),"
-                    "       lng = coalesce(excluded.lng, app.company_locations.lng),"
-                    "       phone_e164 = coalesce(excluded.phone_e164,"
-                    "                             app.company_locations.phone_e164)"
-                    " returning id"
-                ),
-                {
-                    "id": str(uuid7()),
-                    "company": company_id,
-                    "address": candidate.address,
-                    "city": candidate.city,
-                    "country": _country(candidate.country),
-                    "lat": candidate.lat,
-                    "lng": candidate.lng,
-                    "place": place_id,
-                    "phone": to_e164(candidate.phone),
-                },
-            )
-        ).one()
-        return str(row[0])
-
-    async def _record_domain(
-        self, conn: AsyncConnection, company_id: str, domain: str, *, is_platform: bool
-    ) -> None:
-        """Every domain we saw, flagged with whether it can identify this business.
-
-        The unique index on `domain` is partial on `not is_platform`, so a hundred businesses may
-        each have their own `sites.google.com` row while a real domain still belongs to one.
-        """
-        await conn.execute(
-            text(
-                "insert into app.company_domains"
-                " (id, company_id, domain, is_primary, is_platform)"
-                " values (:id, :company, :domain, :primary, :platform)"
-                " on conflict (company_id, domain) do nothing"
-            ),
-            {
-                "id": str(uuid7()),
-                "company": company_id,
-                "domain": domain,
-                "primary": not is_platform,
-                "platform": is_platform,
-            },
-        )
-
-    async def _write_values(
-        self,
-        conn: AsyncConnection,
-        values: Sequence[FieldValue],
-        *,
-        company_id: str,
-        source_id: str,
-    ) -> int:
-        """Appends this observation and retires the one it replaces.
-
-        Never an update: the old row keeps its own `observed_at` and evidence, which is what lets
-        a value that was true last month still say so. `is_current` is the only column the worker
-        may change, and that is exactly the column this needs.
-        """
-        written = 0
-        for value in values:
-            value_id = str(uuid7())
-            await conn.execute(
-                text(
-                    "insert into app.field_values"
-                    " (id, entity_type, entity_id, field, value, source_id, source_url,"
-                    "  method, derivation, confidence, observed_at)"
-                    " values (:id, 'company', :entity, :field, cast(cast(:value as text) as jsonb),"
-                    "  :source, :url, cast(:method as app.value_method), :derivation,"
-                    "  :confidence, :observed)"
-                ),
-                {
-                    "id": value_id,
-                    "entity": company_id,
-                    "field": value.field,
-                    "value": json.dumps(value.value),
-                    "source": source_id,
-                    "url": value.source_url,
-                    "method": value.method,
-                    "derivation": value.derivation,
-                    "confidence": value.confidence,
-                    "observed": value.observed_at,
-                },
-            )
-            await conn.execute(
-                text(
-                    "update app.field_values set is_current = false"
-                    " where entity_type = 'company' and entity_id = :entity and field = :field"
-                    "   and id <> :id and is_current"
-                ),
-                {"entity": company_id, "field": value.field, "id": value_id},
-            )
-            written += 1
-        return written
+            return await batch.write_values(conn, rows, source_id=source_id)
 
 
-def to_e164(phone: str | None) -> str | None:
-    """A phone number in the one shape the column accepts, or None.
-
-    Only a number that already states its country code can be normalised by stripping
-    separators. A national number ("020 1234 5678") needs country-specific rules to know which
-    digits are a trunk prefix, and inventing a country code would put a real call through to the
-    wrong country. Those numbers are still stored as a `phone` field value with their provenance
-    — they are simply not claimed to be E.164 here. Proper normalisation arrives with
-    `app/normalize/phone.py` in Phase 3.
-    """
-    if not phone:
-        return None
-    text_ = phone.strip()
-    if not text_.startswith("+"):
-        return None
-    digits = "".join(c for c in text_[1:] if c.isdigit())
-    if not _E164_MIN_DIGITS <= len(digits) <= _E164_MAX_DIGITS or digits.startswith("0"):
-        return None
-    return f"+{digits}"
-
-
-def normalized_name(name: str) -> str:
-    """`companies.normalized_name` is NOT NULL and is what later resolution blocks on."""
-    folded = "".join(c if c.isalnum() else " " for c in name.casefold())
-    return " ".join(folded.split())
-
-
-def _country(code: str | None) -> str | None:
-    """ISO-3166 alpha-2 upper case, or nothing — the column CHECKs `^[A-Z]{2}$`."""
-    if not code or len(code) != 2 or not code.isalpha():
-        return None
-    return code.upper()
+# `to_e164`, `normalized_name` and `_country` moved to `app/db/batch.py`, beside the statements
+# that use them. Re-exported because they have always lived here as far as every caller and test
+# is concerned, and a move is not a reason to make them look like new API.
+__all__ = ["GraphRepo", "SqlGraphRepo", "Stored", "normalized_name", "to_e164"]

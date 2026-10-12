@@ -1,0 +1,502 @@
+"""Writing many candidates in a handful of statements instead of a handful each.
+
+Measured, and the reason this exists: storing one candidate cost about twenty-six round trips --
+a location lookup, a company, a location, a domain, two per field value, a lead and a link. The
+round trip from the VPS to its database is 452 ms. That is 11.7 seconds for one business, and
+forty-nine minutes for the two hundred and fifty a single search now returns.
+
+It was always like this. Google Places handed back twenty results at a time, so a task took two
+or three minutes and nobody looked; the place index returns the lot at once and the same code
+took the afternoon. The fix is not a faster database, it is not asking it twenty-six questions
+per business.
+
+Every statement here writes a whole batch, so the count stops depending on how many candidates
+there are -- about thirteen round trips for a chunk of a hundred.
+
+Two ways to send a batch, and the difference is not a preference:
+
+* A list of parameter dictionaries goes through asyncpg's `executemany`, which is **one** round
+  trip for any number of rows -- 78 ms for two hundred, the same as a single `select 1`. It
+  cannot return rows: asking it to raises `ResourceClosedError: This result object does not
+  return rows`.
+* A multi-row `values (...), (...)` statement can return rows, and costs one round trip too.
+
+So anything whose result is read back is written the second way, and everything else the first.
+
+Three rules the batching has to respect, each of which Postgres enforces by refusing:
+
+* `ON CONFLICT DO UPDATE` cannot touch the same row twice in one statement, so anything keyed on
+  a conflict target is deduplicated here first.
+* Ids are generated here rather than read back where that is possible, so a row's id is known
+  before the insert and the results can be reassembled without another query.
+* Retiring superseded values must not retire the ones just written, which in a batch means
+  excluding a list of ids rather than a single one.
+"""
+
+import json
+from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
+from typing import Any
+
+from sqlalchemy import bindparam, text
+from sqlalchemy.ext.asyncio import AsyncConnection
+from uuid6 import uuid7
+
+from app.connectors.types import Candidate, FieldValue
+from app.normalize.domains import is_platform_host, registrable_domain
+
+
+@dataclass(slots=True)
+class Prepared:
+    """One candidate's rows, worked out before anything is sent."""
+
+    candidate: Candidate
+    place_id: str
+    host: str | None
+    on_platform: bool
+    domain: str | None
+    #: Filled in as the batch progresses.
+    company_id: str = ""
+    location_id: str | None = None
+    lead_id: str | None = None
+    is_new: bool = False
+    values_written: int = 0
+
+
+@dataclass(slots=True)
+class ValueRow:
+    """A field value with the id it will be written under."""
+
+    id: str
+    entity_id: str
+    value: FieldValue
+
+
+def _values_clause(
+    rows: Sequence[dict[str, Any]], columns: Sequence[str]
+) -> tuple[str, dict[str, Any]]:
+    """A multi-row `values (...), (...)` clause and the parameters it binds.
+
+    Used wherever an id has to come back, because `executemany` cannot return rows. Parameters
+    are numbered per row and never interpolated: the only thing built from a string here is the
+    shape of the clause.
+    """
+    chunks: list[str] = []
+    params: dict[str, Any] = {}
+    for i, row in enumerate(rows):
+        names = []
+        for column in columns:
+            key = f"{column}_{i}"
+            params[key] = row[column]
+            names.append(f":{key}")
+        chunks.append(f"({', '.join(names)})")
+    return ", ".join(chunks), params
+
+
+def prepare(candidates: Sequence[Candidate]) -> list[Prepared]:
+    """Everything derivable from a candidate without touching the database."""
+    prepared: list[Prepared] = []
+    for candidate in candidates:
+        host = registrable_domain(candidate.url)
+        # A platform host identifies the platform, not the business. `primary_domain` is UNIQUE,
+        # so storing one would merge every business that builds its site there into whichever
+        # arrived first -- two unrelated clinics becoming one company, unrecoverably.
+        on_platform = is_platform_host(candidate.url)
+        prepared.append(
+            Prepared(
+                candidate=candidate,
+                place_id=candidate.external_id,
+                host=host,
+                on_platform=on_platform,
+                domain=None if on_platform else host,
+            )
+        )
+    return prepared
+
+
+async def known_companies(conn: AsyncConnection, place_ids: Sequence[str]) -> dict[str, str]:
+    """Which of these places we have already seen, and the company each belongs to."""
+    ids = [p for p in dict.fromkeys(place_ids) if p]
+    if not ids:
+        return {}
+    rows = (
+        await conn.execute(
+            text(
+                "select google_place_id, company_id from app.company_locations"
+                " where google_place_id in :ids"
+            ).bindparams(bindparam("ids", expanding=True)),
+            {"ids": ids},
+        )
+    ).all()
+    return {str(r[0]): str(r[1]) for r in rows}
+
+
+async def insert_companies(conn: AsyncConnection, pending: Sequence[Prepared]) -> None:
+    """Creates a company for each candidate that needs one, setting `company_id` on each.
+
+    The two cases behave differently under conflict. A company with a domain upserts on it, so
+    two branches of a chain with one website become one company with two locations -- which is
+    right -- and the id has to be read back, because the row that wins may be one that was
+    already there. A company without a domain cannot collide with anything, so its generated id
+    is final and the insert needs no result at all.
+    """
+    with_domain = [p for p in pending if p.domain]
+    without = [p for p in pending if not p.domain]
+
+    if without:
+        rows = [_company_params(p, None) for p in without]
+        await conn.execute(
+            text(
+                "insert into app.companies"
+                " (id, canonical_name, normalized_name, country, city, state)"
+                " values (:id, :name, :norm, :country, :city, :state)"
+            ),
+            rows,
+        )
+        for p, row in zip(without, rows, strict=True):
+            p.company_id = str(row["id"])
+
+    if not with_domain:
+        return
+
+    # One row per domain: `ON CONFLICT` refuses to touch a row twice in one statement, and two
+    # candidates sharing a domain are exactly that.
+    first_for_domain: dict[str, Prepared] = {}
+    for p in with_domain:
+        first_for_domain.setdefault(str(p.domain), p)
+
+    rows = [_company_params(p, str(p.domain)) for p in first_for_domain.values()]
+    clause, params = _values_clause(
+        rows, ("id", "name", "norm", "domain", "country", "city", "state")
+    )
+    returned = (
+        await conn.execute(
+            text(
+                "insert into app.companies"  # noqa: S608 -- numbered placeholders, see below
+                " (id, canonical_name, normalized_name, primary_domain, country, city, state)"
+                f" values {clause}"
+                " on conflict (primary_domain) do update"
+                "   set canonical_name = app.companies.canonical_name"
+                " returning id, primary_domain"
+            ),
+            params,
+        )
+    ).all()
+    # The id is read from the result rather than assumed: a domain already in the graph keeps
+    # the company it already had, and the no-op `do update` exists so that row comes back.
+    by_domain = {str(r[1]): str(r[0]) for r in returned}
+    for p in with_domain:
+        p.company_id = by_domain[str(p.domain)]
+
+
+async def upsert_locations(conn: AsyncConnection, pending: Sequence[Prepared]) -> None:
+    """One row per place, setting `location_id` on each candidate that has one."""
+    first_for_place: dict[str, Prepared] = {}
+    for p in pending:
+        if p.place_id:
+            first_for_place.setdefault(p.place_id, p)
+    if not first_for_place:
+        return
+
+    rows = [
+        {
+            "id": str(uuid7()),
+            "company": p.company_id,
+            "address": p.candidate.address,
+            "city": p.candidate.city,
+            "country": _country(p.candidate.country),
+            "lat": p.candidate.lat,
+            "lng": p.candidate.lng,
+            "place": p.place_id,
+            "phone": to_e164(p.candidate.phone),
+        }
+        for p in first_for_place.values()
+    ]
+    clause, params = _values_clause(
+        rows, ("id", "company", "address", "city", "country", "lat", "lng", "place", "phone")
+    )
+    returned = (
+        await conn.execute(
+            text(
+                "insert into app.company_locations"  # noqa: S608 -- numbered placeholders
+                " (id, company_id, address, city, country, lat, lng, google_place_id,"
+                "  phone_e164)"
+                f" values {clause}"
+                " on conflict (google_place_id) do update"
+                "   set address = coalesce(excluded.address, app.company_locations.address),"
+                "       city = coalesce(excluded.city, app.company_locations.city),"
+                "       lat = coalesce(excluded.lat, app.company_locations.lat),"
+                "       lng = coalesce(excluded.lng, app.company_locations.lng),"
+                "       phone_e164 = coalesce(excluded.phone_e164,"
+                "                             app.company_locations.phone_e164)"
+                " returning id, google_place_id"
+            ),
+            params,
+        )
+    ).all()
+    by_place = {str(r[1]): str(r[0]) for r in returned}
+    for p in pending:
+        p.location_id = by_place.get(p.place_id)
+
+
+async def record_domains(conn: AsyncConnection, pending: Sequence[Prepared]) -> None:
+    """Every domain seen, flagged with whether it can identify the business.
+
+    The unique index on `domain` is partial on `not is_platform`, so a hundred businesses may
+    each have their own `sites.google.com` row while a real domain still belongs to one.
+    """
+    seen: set[tuple[str, str]] = set()
+    rows: list[dict[str, Any]] = []
+    for p in pending:
+        if not p.host or (p.company_id, p.host) in seen:
+            continue
+        seen.add((p.company_id, p.host))
+        rows.append(
+            {
+                "id": str(uuid7()),
+                "company": p.company_id,
+                "domain": p.host,
+                "primary": not p.on_platform,
+                "platform": p.on_platform,
+            }
+        )
+    if not rows:
+        return
+    await conn.execute(
+        text(
+            "insert into app.company_domains"
+            " (id, company_id, domain, is_primary, is_platform)"
+            " values (:id, :company, :domain, :primary, :platform)"
+            " on conflict (company_id, domain) do nothing"
+        ),
+        rows,
+    )
+
+
+async def write_values(conn: AsyncConnection, rows: Sequence[ValueRow], *, source_id: str) -> int:
+    """Appends observations and retires the ones they replace, in two statements for the lot.
+
+    Never an update: the old row keeps its own `observed_at` and evidence, which is what lets a
+    value that was true last month still say so. `is_current` is the only column the worker may
+    change, and that is exactly the column this needs.
+    """
+    if not rows:
+        return 0
+
+    await conn.execute(
+        text(
+            "insert into app.field_values"
+            " (id, entity_type, entity_id, field, value, source_id, source_url,"
+            "  method, derivation, confidence, observed_at)"
+            " values (:id, 'company', :entity, :field, cast(cast(:value as text) as jsonb),"
+            "  :source, :url, cast(:method as app.value_method), :derivation,"
+            "  :confidence, :observed)"
+        ),
+        [
+            {
+                "id": r.id,
+                "entity": r.entity_id,
+                "field": r.value.field,
+                "value": json.dumps(r.value.value),
+                "source": source_id,
+                "url": r.value.source_url,
+                "method": r.value.method,
+                "derivation": r.value.derivation,
+                "confidence": r.value.confidence,
+                "observed": r.value.observed_at,
+            }
+            for r in rows
+        ],
+    )
+
+    # Retire what these replace -- including the ones this very batch superseded.
+    #
+    # A batch can hold several values for one (entity, field): two candidates sharing a domain
+    # resolve to one company, and a chain's branches do exactly that. Excluding every id just
+    # written left all of them current, which is the one thing `is_current` exists to prevent;
+    # a real run of 250 gyms produced five such pairs. So only the last value for each pair is
+    # spared, and the earlier ones are retired alongside whatever was there before -- which is
+    # what the per-candidate version did implicitly, by running once per candidate.
+    winners: dict[tuple[str, str], str] = {}
+    for r in rows:
+        winners[(r.entity_id, r.value.field)] = r.id
+    clause, params = _values_clause(
+        [{"entity": e, "field": f} for e, f in sorted(winners)], ("entity", "field")
+    )
+    params["written"] = list(winners.values())
+    await conn.execute(
+        text(
+            "update app.field_values fv set is_current = false"  # noqa: S608 -- placeholders
+            f" from (values {clause}) as t(entity_id, field)"
+            " where fv.entity_type = 'company' and fv.is_current"
+            "   and fv.entity_id = cast(t.entity_id as uuid) and fv.field = t.field"
+            "   and fv.id not in :written"
+        ).bindparams(bindparam("written", expanding=True)),
+        params,
+    )
+    return len(rows)
+
+
+async def deliver(
+    conn: AsyncConnection,
+    pending: Sequence[Prepared],
+    *,
+    org_id: str,
+    workspace_id: str,
+    research_job_id: str,
+) -> None:
+    """Hands these companies to the workspace and records which were new to it.
+
+    `DO NOTHING` rather than an update: a workspace that already holds a lead may have changed
+    its status, assigned it or corrected a value, and a search running again must not undo any
+    of that. It is also why `app_worker` has no UPDATE grant on the table.
+
+    `is_new` has to mean "this customer did not have this before", not "nobody had it": it is
+    what the job is charged on. It comes from what the insert actually inserted, not from a
+    count taken beforehand, so two workers racing on the same company cannot both bill for it.
+    """
+    first_for_company: dict[str, Prepared] = {}
+    for p in pending:
+        if p.company_id:
+            first_for_company.setdefault(p.company_id, p)
+    if not first_for_company:
+        return
+
+    rows = [
+        {
+            "id": str(uuid7()),
+            "org": org_id,
+            "workspace": workspace_id,
+            "company": company_id,
+            "job": research_job_id,
+        }
+        for company_id in first_for_company
+    ]
+    clause, params = _values_clause(rows, ("id", "org", "workspace", "company", "job"))
+    inserted = (
+        await conn.execute(
+            text(
+                "insert into app.leads"  # noqa: S608 -- numbered placeholders
+                " (id, org_id, workspace_id, company_id, research_job_id)"
+                f" values {clause}"
+                " on conflict do nothing"
+                " returning id, company_id"
+            ),
+            params,
+        )
+    ).all()
+    new_by_company = {str(r[1]): str(r[0]) for r in inserted}
+
+    # Whatever did not insert, this workspace already held. One query for all of them.
+    already = [c for c in first_for_company if c not in new_by_company]
+    held_by_company: dict[str, str] = {}
+    if already:
+        held = (
+            await conn.execute(
+                text(
+                    "select id, company_id from app.leads"
+                    " where workspace_id = :workspace and person_id is null"
+                    "   and company_id in :companies"
+                ).bindparams(bindparam("companies", expanding=True)),
+                {"workspace": workspace_id, "companies": already},
+            )
+        ).all()
+        held_by_company = {str(r[1]): str(r[0]) for r in held}
+
+    for p in pending:
+        if p.company_id in new_by_company:
+            p.lead_id, p.is_new = new_by_company[p.company_id], True
+        else:
+            p.lead_id, p.is_new = held_by_company.get(p.company_id), False
+
+
+async def link(
+    conn: AsyncConnection,
+    pending: Sequence[Prepared],
+    *,
+    org_id: str,
+    research_job_id: str,
+) -> None:
+    """Records that this job surfaced these leads, new to the workspace or not (ADR-0015).
+
+    Without these rows a job that re-finds leads it delivered last month reports that it found
+    nothing: `deliver` correctly inserts no lead, so `leads.research_job_id` still names the
+    earlier job and the grid -- which filters on it -- comes back empty.
+    """
+    rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for p in pending:
+        if p.lead_id is None or p.lead_id in seen:
+            continue
+        seen.add(p.lead_id)
+        rows.append({"org": org_id, "job": research_job_id, "lead": p.lead_id, "is_new": p.is_new})
+    if not rows:
+        return
+    await conn.execute(
+        text(
+            "insert into app.research_job_leads (org_id, research_job_id, lead_id, is_new)"
+            " values (:org, :job, :lead, :is_new)"
+            " on conflict do nothing"
+        ),
+        rows,
+    )
+
+
+def value_rows(pending: Iterable[Prepared]) -> list[ValueRow]:
+    """Every value the batch will write, each with the id it will be written under."""
+    rows: list[ValueRow] = []
+    for p in pending:
+        for value in p.candidate.values:
+            rows.append(ValueRow(id=str(uuid7()), entity_id=p.company_id, value=value))
+        p.values_written = len(p.candidate.values)
+    return rows
+
+
+def _company_params(p: Prepared, domain: str | None) -> dict[str, Any]:
+    return {
+        "id": str(uuid7()),
+        "name": p.candidate.name,
+        "norm": normalized_name(p.candidate.name),
+        "domain": domain,
+        "country": _country(p.candidate.country),
+        "city": p.candidate.city,
+        "state": None,
+    }
+
+
+#: `company_locations.phone_e164` is CHECKed against this shape -- no spaces, no punctuation.
+_E164_MIN_DIGITS = 7
+_E164_MAX_DIGITS = 15
+
+
+def to_e164(phone: str | None) -> str | None:
+    """A phone number in the one shape the column accepts, or None.
+
+    Only a number that already states its country code can be normalised by stripping
+    separators. A national number ("020 1234 5678") needs country-specific rules to know which
+    digits are a trunk prefix, and inventing a country code would put a real call through to the
+    wrong country. Those numbers are still stored as a `phone` field value with their provenance
+    -- they are simply not claimed to be E.164 here.
+    """
+    if not phone:
+        return None
+    text_ = phone.strip()
+    if not text_.startswith("+"):
+        return None
+    digits = "".join(c for c in text_[1:] if c.isdigit())
+    if not _E164_MIN_DIGITS <= len(digits) <= _E164_MAX_DIGITS or digits.startswith("0"):
+        return None
+    return f"+{digits}"
+
+
+def normalized_name(name: str) -> str:
+    """`companies.normalized_name` is NOT NULL and is what later resolution blocks on."""
+    folded = "".join(c if c.isalnum() else " " for c in name.casefold())
+    return " ".join(folded.split())
+
+
+def _country(code: str | None) -> str | None:
+    """ISO-3166 alpha-2 upper case, or nothing -- the column CHECKs `^[A-Z]{2}$`."""
+    if not code or len(code) != 2 or not code.isalpha():
+        return None
+    return code.upper()

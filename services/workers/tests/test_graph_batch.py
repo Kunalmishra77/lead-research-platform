@@ -241,3 +241,54 @@ async def test_every_candidate_gets_its_values(tenant: Tenant) -> None:
         )
     ).scalar()
     assert rows == 20
+
+
+async def test_the_same_place_twice_in_one_batch_is_one_company(tenant: Tenant) -> None:
+    """The regression batching introduced, and the reason this file exists.
+
+    The per-candidate version got this for free: the second candidate looked the place up,
+    found the location the first had just written, and reused its company. A batch does every
+    lookup before every write, so nothing stopped it creating a company per candidate and a
+    location per *place* -- leaving companies with no location at all, each a duplicate of a
+    real business with a lead pointing at it. 76 of them, 7.7% of the live graph.
+    """
+    place = str(uuid7())
+    pending = await _store(
+        tenant,
+        [candidate(place, "Twice Gym"), candidate(place, "Twice Gym")],
+    )
+
+    assert pending[0].company_id == pending[1].company_id
+    assert pending[0].location_id == pending[1].location_id
+    assert pending[0].lead_id == pending[1].lead_id
+
+
+async def test_every_company_a_batch_creates_gets_a_location(tenant: Tenant) -> None:
+    """A company with no location is the shape the bug left behind, so look for that shape.
+
+    Asserting the ids match says the dedupe worked; this says the graph is not carrying
+    orphans, which is the thing anyone would actually notice.
+    """
+    conn = tenant[0]
+    place = str(uuid7())
+    pending = await _store(
+        tenant,
+        [candidate(place, "Shared Place") for _ in range(4)]
+        + [candidate(str(uuid7()), f"Own Place {i}") for i in range(2)],
+    )
+
+    company_ids = sorted({p.company_id for p in pending})
+    assert len(company_ids) == 3, "one company per place, not one per candidate"
+
+    rows = (
+        await conn.execute(
+            text(
+                "select c.id from app.companies c"
+                " where c.id = any(:ids)"
+                "   and not exists (select 1 from app.company_locations l"
+                "                    where l.company_id = c.id)"
+            ),
+            {"ids": company_ids},
+        )
+    ).all()
+    assert rows == [], "a company a batch created must have the location it was created for"

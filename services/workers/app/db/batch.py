@@ -140,8 +140,27 @@ async def insert_companies(conn: AsyncConnection, pending: Sequence[Prepared]) -
     already there. A company without a domain cannot collide with anything, so its generated id
     is final and the insert needs no result at all.
     """
-    with_domain = [p for p in pending if p.domain]
-    without = [p for p in pending if not p.domain]
+    # One company per place, before anything else. Two candidates for the same place are the
+    # same business, and the per-candidate version got that for free: the second one looked the
+    # place up, found the location the first had just written, and reused its company. A batch
+    # has no such ordering -- every lookup happens before every write -- so it has to be said.
+    #
+    # Leaving it unsaid cost 76 companies with no location at all, 7.7% of the graph, each one
+    # a duplicate of a real business with a lead pointing at it.
+    first_for_place: dict[str, Prepared] = {}
+    followers: list[tuple[Prepared, Prepared]] = []
+    fresh: list[Prepared] = []
+    for p in pending:
+        leader = first_for_place.get(p.place_id) if p.place_id else None
+        if leader is None:
+            if p.place_id:
+                first_for_place[p.place_id] = p
+            fresh.append(p)
+        else:
+            followers.append((p, leader))
+
+    with_domain = [p for p in fresh if p.domain]
+    without = [p for p in fresh if not p.domain]
 
     if without:
         rows = [_company_params(p, None) for p in without]
@@ -157,6 +176,7 @@ async def insert_companies(conn: AsyncConnection, pending: Sequence[Prepared]) -
             p.company_id = str(row["id"])
 
     if not with_domain:
+        _copy_to_followers(followers)
         return
 
     # One row per domain: `ON CONFLICT` refuses to touch a row twice in one statement, and two
@@ -187,6 +207,14 @@ async def insert_companies(conn: AsyncConnection, pending: Sequence[Prepared]) -
     by_domain = {str(r[1]): str(r[0]) for r in returned}
     for p in with_domain:
         p.company_id = by_domain[str(p.domain)]
+
+    _copy_to_followers(followers)
+
+
+def _copy_to_followers(followers: Sequence[tuple[Prepared, Prepared]]) -> None:
+    """Gives every candidate sharing a place the company its first occurrence was given."""
+    for follower, leader in followers:
+        follower.company_id = leader.company_id
 
 
 async def upsert_locations(conn: AsyncConnection, pending: Sequence[Prepared]) -> None:

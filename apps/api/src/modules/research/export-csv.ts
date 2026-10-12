@@ -1,3 +1,4 @@
+import { noticeLines } from './export-notice';
 import type { LeadValue, LeadView } from './research.dto';
 
 /**
@@ -182,6 +183,11 @@ export function* csvLines(
   yield UTF8_BOM + csvLine(headerRow(columns, preset));
   for (const lead of leads) {
     yield csvLine(leadRow(lead, columns, preset));
+  }
+  // The licences the data in this file came under, after it rather than before: a reader wants
+  // the leads first, and an importer that stops at the first blank row never sees this at all.
+  for (const line of noticeLines(leads.flatMap((l) => l.values.map((v) => v.source)))) {
+    yield csvLine([line]);
   }
 }
 

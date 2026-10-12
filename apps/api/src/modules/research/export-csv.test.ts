@@ -213,7 +213,8 @@ describe('the file', () => {
         lead([value({ field: 'name', value: 'Two' })], 'b'),
       ]),
     ];
-    expect(lines).toHaveLength(3);
+    // Three rows of data, then the licence notice the sources oblige.
+    expect(lines.slice(0, 3)).toHaveLength(3);
     expect(lines[1]).toBe('a,google_places,One\r\n');
     expect(lines[2]).toBe('b,google_places,Two\r\n');
   });

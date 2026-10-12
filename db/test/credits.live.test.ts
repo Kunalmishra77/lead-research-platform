@@ -172,6 +172,75 @@ describe.skipIf(!live)('credit ledger operations', () => {
     expect(row).toMatchObject({ credits_used: 6, credits_reserved: 0 });
   });
 
+  it('a job cancelled part-way through is charged for what it delivered and no more', async () => {
+    // Phase 2 acceptance criterion 3 names this case: "cancel mid-run releases correctly
+    // (ledger test)". Settling was covered; settling a *cancelled* job was not, and cancel is
+    // the one path a user triggers by hand on a job that is still spending.
+    //
+    // The order `research.service.cancel()` uses is what makes it safe: raise the Redis cancel
+    // flag, mark the row cancelled, and only then settle. A worker mid-run stops at its next
+    // checkpoint (ADR-0008), so it cannot deliver and bill after the reservation has gone --
+    // and `usage recorded after a settle is booked once, never twice and never free` below
+    // covers what happens if one slips through anyway.
+    const job = await newJob();
+    // Topped up first: the tests in this file share one org's balance, and a reservation this
+    // size would otherwise depend on how much the tests above happened to leave behind.
+    await grant(40);
+    const before = await balance();
+    await withTenant(api, { orgId: org, userId: user }, (tx) =>
+      tx.execute(sql`select app.credit_reserve(${job}::uuid, 30, ${uuidv7()}::uuid)`),
+    );
+    // Two leads delivered before the user pressed stop.
+    await deliver(job, org, 3, 'before-cancel-1');
+    await deliver(job, org, 3, 'before-cancel-2');
+    await owner`update app.research_jobs
+                   set status = 'cancelled', finished_at = now()
+                 where id = ${job}`;
+
+    const settled = await withTenant(api, { orgId: org, userId: user }, (tx) =>
+      tx.execute<{ consumed: string; released: string }>(
+        sql`select * from app.credit_settle(${job}::uuid, ${uuidv7()}::uuid, ${uuidv7()}::uuid)`,
+      ),
+    );
+
+    // `released` is what the user got back net of the charge; the ledger row is the whole
+    // reservation coming off hold. reserve -30, release +30, consume -6 => the cancelled job
+    // cost exactly the two leads it had delivered.
+    expect(settled[0]).toMatchObject({ consumed: '6', released: '24' });
+    expect(await balance()).toBe(before - 6);
+    expect(await ledger(job)).toEqual([
+      { reason: 'reserve', delta: -30 },
+      { reason: 'consume', delta: -6 },
+      { reason: 'release', delta: 30 },
+    ]);
+    const [row] = await owner<{ credits_used: number; credits_reserved: number }[]>`
+      select credits_used, credits_reserved from app.research_jobs where id = ${job}`;
+    expect(row).toMatchObject({ credits_used: 6, credits_reserved: 0 });
+  });
+
+  it('cancelling twice returns the credits once', async () => {
+    // The endpoint is idempotent and a stop button is pressed twice, so the second settle has
+    // to be a no-op rather than a second release. A double release would mint credits.
+    const job = await newJob();
+    await grant(30);
+    const before = await balance();
+    await withTenant(api, { orgId: org, userId: user }, (tx) =>
+      tx.execute(sql`select app.credit_reserve(${job}::uuid, 20, ${uuidv7()}::uuid)`),
+    );
+    await owner`update app.research_jobs set status = 'cancelled', finished_at = now()
+                 where id = ${job}`;
+    const settle = () =>
+      withTenant(api, { orgId: org, userId: user }, (tx) =>
+        tx.execute<{ consumed: string; released: string }>(
+          sql`select * from app.credit_settle(${job}::uuid, ${uuidv7()}::uuid, ${uuidv7()}::uuid)`,
+        ),
+      );
+
+    expect((await settle())[0]).toMatchObject({ consumed: '0', released: '20' });
+    expect((await settle())[0]).toMatchObject({ consumed: '0', released: '0' });
+    expect(await balance()).toBe(before);
+  });
+
   it('settle never charges beyond the reservation and runs once', async () => {
     const job = await newJob();
     const before = await balance();

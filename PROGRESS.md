@@ -13,6 +13,16 @@ Append a new entry at the TOP after every working session. Keep entries short. C
 - Next step:
 ```
 
+### 2026-10-12 — Phase 2 — closed, on the criterion that was waiting for money
+
+- Done: verified all five Phase 2 acceptance criteria and marked the phase **done (2026-10-12)** in `phases/PHASES.md`. The evidence for each is written into `phases/phase-02-search.md` rather than asserted here.
+- The criterion the phase was held open on since 2026-10-08 was "≥ 200 unique candidates for Delhi", stuck at 175 and waiting on about a dollar of Google Places that was never funded. It did not need funding: ADR-0017 moved discovery to a monthly Overture release on local disk, and the run came in at **225 unique candidates, 13,663 values with no provenance gap, 75/75 tasks, 6m06s, 0 credits**. The note at the top of `PHASES.md` has been rewritten to say that, since it still claimed a dollar was needed.
+- Written for this review: two ledger tests in `db/test/credits.live.test.ts` — a job cancelled part-way through is charged for what it delivered and gets the rest back; cancelling twice returns the credits once. Criterion 3 names "cancel mid-run releases correctly (ledger test)" and settling a *cancelled* job had no test: 15 ledger tests covered reserve and settle, none set the status cancel sets. The ledger now has 17.
+- My own expectation was wrong first: I wrote `release: 24` for a 30-credit reservation with 6 consumed. The ledger posts the whole reservation coming off hold (+30) and the charge separately (−6); `released: 24` is only what the function reports net. The existing "settle books what was delivered" test already said so and I had not read it carefully.
+- Checked, not assumed, for the other criteria: `spec_parse` has six recorded live runs at 91.5–100% (mean 96.9%) and the recorded baseline replays 59/59, so no live run was bought to repeat it; restart survival is four `test_consumer.py` tests plus three real redeploys today that lost no job; fixtures cover success/empty/rate-limited/error for all three HTTP connectors, and the file-backed place index has missing-index and empty-index health tests as its equivalents.
+- Open issues / blockers: Phase 3 (crawling & extraction) is the only phase now `in progress`. Of 19 spec asks, 6 are applied and 13 declared `unsupported` with a reason — recorded in the phase file as state rather than debt, since each is a real data or phase limit.
+- Next step: `/start-phase 3` is not needed — Phase 3 is already in progress. Read `phases/phase-03-extraction.md` and pick up its next unchecked task.
+
 ### 2026-10-12 — Phase 2 — the owner should not be the test harness
 
 - Why: every filter bug this project has had was found by the owner running a search on the deployed site. The suite was green throughout and each piece was right; nothing tested the chain between them. That is the defect fixed here, not any one filter.

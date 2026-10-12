@@ -23,11 +23,24 @@ docs/00, 05 (research endpoints, SSE, credits), 06 sections 1-3, 07 (gateway, sp
 - [x] 2.13 Admin: jobs list with status and task DAG view; connector health counters
 
 ## Acceptance criteria
-- "Restaurants in Delhi with a website" parses to a correct spec in >= 90% of the 50 eval cases for that intent family.
-- Running it returns >= 200 unique candidates for Delhi with name, address, phone/website where Places provides them, each value with provenance.
-- Credits: reservation shown before run, consumed per delivered candidate, unused released; cancel mid-run releases correctly (ledger test).
-- Progress visible live; job survives worker restart.
-- No test hits live APIs; connectors have fixtures for success, empty, rate-limited, error.
+
+Verified 2026-10-12. Each line records the evidence, not an opinion.
+
+- [x] **"Restaurants in Delhi with a website" parses to a correct spec in >= 90% of the 50 eval cases for that intent family.** `spec_parse` v4 at medium reasoning: six live runs recorded in `app/ai/evals/RESULTS.md` at 100, 98.3, 98.3, 96.6, 96.6 and 91.5% (mean 96.9%), every one above the bar, and the replay of the recorded baseline scores 59/59 so the cases and the scorer are intact. `sp-036` ("not the big chains") is the one unstable case and is kept rather than tuned away. Not re-run live here: it costs money and the recorded evidence already answers the question.
+- [x] **Running it returns >= 200 unique candidates for Delhi with name, address, phone/website where the source provides them, each value with provenance.** Live, 2026-10-12: **225 leads, 225 distinct companies** (246 distinct places between them -- branches of chains sharing one website, which the graph keeps separate on purpose), name 100%, address 90%, phone 86%, email 36%. **13,663 field values, none missing `source_id`, `source_url`, `observed_at`, `method` or `confidence`.** 75/75 tasks, none failed, 6m06s, **0 credits**. This is the criterion the phase was held open on, and it was met at zero cost because ADR-0017 moved discovery to a bulk release on local disk.
+- [x] **Credits: reservation shown before run, consumed per delivered candidate, unused released; cancel mid-run releases correctly (ledger test).** `db/test/credits.live.test.ts`, 17 tests against the real database, including the two written for this review: a job cancelled part-way through is charged for the leads it had delivered and gets the rest back, and cancelling twice returns the credits once (a double release would mint credits). The live ledger reconciles exactly: 2,050 granted - 551 consumed = 1,499, with every reservation released.
+- [x] **Progress visible live; job survives worker restart.** `progress-stream.test.ts` (13) and `job-live.test.tsx` (5) for the stream; `test_consumer.py` for the restart -- a stale message of a dead consumer is reclaimed, a crash after claiming is taken over, a heartbeat keeps a long job from being reclaimed, and a crash-looping message is dead-lettered. Three real redeploys on 2026-10-12 restarted the workers mid-day and no job was lost (97/97 and 75/75 tasks completed).
+- [x] **No test hits live APIs; connectors have fixtures for success, empty, rate-limited, error.** `tests/fixtures/` carries all four for `google_places`, `serp` and `example_source`; every HTTP call in the suite goes through respx. The place-index connectors are file-backed rather than HTTP, so their equivalents are a built SQLite index per test plus `test_health_fails_loudly_when_the_index_is_missing` and `test_health_fails_on_an_empty_index`.
+
+### What is honest about this phase, and is not a criterion
+
+Of the 19 asks `research-spec.schema.json` allows, **6 are applied and 13 are declared
+`unsupported` with a reason** (`app/ai/feasibility.py`, held to the schema by
+`tests/test_feasibility.py`). That is the state, not a gap in the work: there is no rating in
+the place releases, keywords need the site text the crawl collects, and `min_confidence` would
+compare against a flat constant until Phase 4 computes confidence per field. What matters is
+that the user is told before they spend, and `tests/test_spec_to_leads.py` now runs spec to lead
+so a filter cannot claim to work without doing so.
 
 ## Out of scope
 Website crawling, dedup beyond place_id, verification, scoring, exports.

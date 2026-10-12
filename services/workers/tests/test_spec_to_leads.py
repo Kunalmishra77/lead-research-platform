@@ -59,20 +59,26 @@ TASK = "018f4a9a-0000-7000-8000-00000000aa02"
 
 #: What the index holds, chosen so that every filter under test separates them.
 #:
-#:   name              website  phone  email
-#:   Site And Phone       y        y      -
-#:   Site Only            y        -      -
-#:   Phone Only           -        y      -
-#:   Email Only           -        -      y
+#:   name              website  phone  email  instagram
+#:   Site And Phone       y        y      -       y
+#:   Site Only            y        -      -       -
+#:   Phone Only           -        y      -       y
+#:   Email Only           -        -      y       -
 #:
 #: All four are `dental_clinic`, inside Pune's box, because that is what the seeded fakes in
 #: `planner_support` know: the industry `dental-clinics` maps to the Overture category
 #: `dental_clinic`, and Pune is a city the fake geography can find.
-BUSINESSES: tuple[tuple[str, str | None, str | None, str | None], ...] = (
-    ("Site And Phone", "https://a.example.in", "+911141000001", None),
-    ("Site Only", "https://b.example.in", None, None),
-    ("Phone Only", None, "+911141000002", None),
-    ("Email Only", None, None, "d@example.in"),
+BUSINESSES: tuple[tuple[str, str | None, str | None, str | None, tuple[str, ...]], ...] = (
+    (
+        "Site And Phone",
+        "https://a.example.in",
+        "+911141000001",
+        None,
+        ("https://www.instagram.com/siteandphone",),
+    ),
+    ("Site Only", "https://b.example.in", None, None, ()),
+    ("Phone Only", None, "+911141000002", None, ("https://www.instagram.com/phoneonly",)),
+    ("Email Only", None, None, "d@example.in", ()),
 )
 
 EVERYTHING = ["Email Only", "Phone Only", "Site And Phone", "Site Only"]
@@ -95,10 +101,11 @@ def index_path(tmp_path: Path) -> Path:
                     website=website,
                     phone=phone,
                     email=email,
+                    socials=socials,
                     city="Pune",
                     country="IN",
                 )
-                for i, (name, website, phone, email) in enumerate(BUSINESSES)
+                for i, (name, website, phone, email, socials) in enumerate(BUSINESSES)
             ]
         )
         writer.finish(extract_date=datetime(2026, 9, 23, tzinfo=UTC))
@@ -218,6 +225,33 @@ async def test_a_channel_discovery_cannot_see_narrows_nothing(
     )
 
 
+async def test_asking_for_a_social_profile_delivers_only_those_that_have_one(
+    redis: Redis, make_envelope: Any, index_path: Path
+) -> None:
+    """No source can be asked "has an Instagram", so this is a delivery filter only.
+
+    Judged by the same `FieldValue`s the mapping wrote, so the filter and the stored value
+    cannot have two different ideas of what an Instagram link is.
+    """
+    assert await delivered(redis, make_envelope, index_path, social_required=["instagram"]) == [
+        "Phone Only",
+        "Site And Phone",
+    ]
+
+
+async def test_asking_for_two_platforms_requires_both(
+    redis: Redis, make_envelope: Any, index_path: Path
+) -> None:
+    """`filters.social` is keyed by platform, so naming two is asking for both -- the opposite
+    of `contact.any_of`, where one channel is enough. Nothing here has a Facebook page."""
+    assert (
+        await delivered(
+            redis, make_envelope, index_path, social_required=["instagram", "facebook"]
+        )
+        == []
+    )
+
+
 async def test_two_filters_together_narrow_to_their_intersection(
     redis: Redis, make_envelope: Any, index_path: Path
 ) -> None:
@@ -237,6 +271,7 @@ CASES: dict[str, str] = {
     "filters.location": "test_a_spec_with_no_narrowing_filter_delivers_the_whole_market",
     "filters.has_website": "test_asking_for_a_website_delivers_only_those_with_one",
     "filters.contact": "test_asking_for_a_phone_delivers_only_those_reachable_by_phone",
+    "filters.social": "test_asking_for_a_social_profile_delivers_only_those_that_have_one",
     # Not a narrowing filter: a lead the workspace already holds is still delivered, it is
     # simply not charged for again. That is billing, covered in test_discovery_handler.py.
     "exclude.existing_leads": "test_discovery_handler.py: a lead already held is not billed",

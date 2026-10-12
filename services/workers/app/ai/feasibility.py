@@ -81,9 +81,14 @@ FILTER_MODES: Final[dict[str, tuple[Mode, str]]] = {
         "releases do not carry them.",
     ),
     "filters.social": (
+        "post_filter",
+        "Whether a profile exists is checked on each result and the rest are discarded, so you "
+        "pay for results you do not see.",
+    ),
+    "filters.social.active_within_days": (
         "unsupported",
-        "Social profiles are collected where a source lists them, but whether one is active "
-        "needs the enrichment stage.",
+        "Whether a profile is active needs the enrichment stage; only its existence is checked "
+        "during discovery.",
     ),
     "filters.technologies": (
         "unsupported",
@@ -153,6 +158,7 @@ APPLIED_BY: Final[dict[str, str]] = {
         "places/index.py: _contact_where() in search() and count();"
         " handlers/discovery.py: _honour_contact_filter() before anything is stored"
     ),
+    "filters.social": "handlers/discovery.py: _honour_social_filter() before anything is stored",
     "exclude.existing_leads": "db/batch.py: deliver() -- a lead the workspace holds is not new",
 }
 

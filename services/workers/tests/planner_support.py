@@ -174,6 +174,7 @@ def make_spec(
     max_credits: int = 1000,
     has_website: bool | None = None,
     contact_any_of: list[str] | None = None,
+    social_required: list[str] | None = None,
 ) -> ResearchSpec:
     """A valid ResearchSpec, so the tests exercise the contract rather than a convenient dict."""
     filters: dict[str, Any] = {
@@ -187,6 +188,8 @@ def make_spec(
         filters["has_website"] = has_website
     if contact_any_of:
         filters["contact"] = {"any_of": contact_any_of}
+    if social_required:
+        filters["social"] = {name: {"required": True} for name in social_required}
     return ResearchSpec.model_validate(
         {
             "spec_version": 1,

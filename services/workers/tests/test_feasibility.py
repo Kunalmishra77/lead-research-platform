@@ -62,6 +62,20 @@ def test_a_sub_field_of_an_applied_filter_is_declared_too() -> None:
         )
 
 
+def test_a_sub_field_of_the_social_filter_is_declared_too() -> None:
+    """`filters.social` is `post_filter`, which is a promise about `active_within_days` as well.
+
+    It is not kept: discovery sees that a profile exists and nothing about whether anyone has
+    posted to it. Treating "active in the last 30 days" as "exists" would be the same lie this
+    file was written to stop.
+    """
+    social = set(_schema()["$defs"]["SocialFilter"]["properties"])
+    for key in sorted(social - {"required"}):
+        assert f"filters.social.{key}" in FILTER_MODES, (
+            f"filters.social.{key} is neither applied nor declared unsupported"
+        )
+
+
 def test_every_top_level_ask_has_a_mode() -> None:
     """The same for the asks that are not under `filters`."""
     for path in ("seed_company", "custom_columns", "exclude.existing_leads", "exclude.lists"):

@@ -113,6 +113,9 @@ class DiscoveryQueryPayload(BaseModel):
     #: on. A source filters on the ones it holds; `_honour_contact_filter` holds every source to
     #: them at delivery.
     contact_any_of: list[str] = Field(default_factory=list, max_length=8)
+    #: Platforms `ResearchSpec.filters.social` marked `required`. Each one is required, unlike
+    #: `contact_any_of` where one channel is enough: a spec naming two has asked for both.
+    social_required: list[str] = Field(default_factory=list, max_length=8)
     language: str = "en"
     #: Matches the contract's own ceiling (`research-spec.schema.json`, Limits.max_results). It
     #: was 200 here while the schema allowed 10,000, so a spec the API accepted could be refused
@@ -200,6 +203,7 @@ def register_discovery_handlers(
                 )
                 found = _honour_website_filter(found, payload.query.has_website)
                 found = _honour_contact_filter(found, payload.query.contact_any_of)
+                found = _honour_social_filter(found, payload.query.social_required)
                 stored = await graph.store(
                     org_id,
                     found,
@@ -440,6 +444,26 @@ def _has_channel(candidate: Any, channel: str) -> bool:
     )
 
 
+def _honour_social_filter(found: list[Any], required: Sequence[str]) -> list[Any]:
+    """Keeps only results that have a profile on every platform the spec required.
+
+    All of them, not any: `filters.social` is a dict keyed by platform, so naming two is asking
+    for both. `filters.contact.any_of` is the opposite and says so in its name.
+
+    Judged with `_has_channel`, which reads the same `FieldValue`s the mapping wrote. Matching
+    URLs with a LIKE against the index's packed `socials` column would be a second, slightly
+    different idea of what counts as an Instagram link, and the two would drift.
+
+    Nothing is asked of the source: no discovery source can be queried for "has an Instagram",
+    so this is a delivery filter only, which is why `ai/feasibility.py` calls it `post_filter`
+    -- the user pays for results they never see, and the UI says so before they spend.
+    """
+    platforms = [p for p in required if p]
+    if not platforms:
+        return found
+    return [c for c in found if all(_has_channel(c, platform) for platform in platforms)]
+
+
 def _options(payload: DiscoveryPayload) -> dict[str, Any]:
     """Per-connector extras. A source that does not understand one ignores it."""
     options: dict[str, Any] = {}
@@ -451,6 +475,9 @@ def _options(payload: DiscoveryPayload) -> dict[str, Any]:
         options["has_website"] = payload.query.has_website
     if payload.query.contact_any_of:
         options["contact_any_of"] = payload.query.contact_any_of
+    # Not sent to a source: no discovery source can be asked "has an Instagram", so this one is
+    # only ever a delivery filter. It is in the payload rather than only on the spec because the
+    # executor never sees the spec.
     return options
 
 

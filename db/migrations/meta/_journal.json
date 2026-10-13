@@ -204,6 +204,13 @@
       "when": 1791547091004,
       "tag": "0028_raw_documents",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1791547092004,
+      "tag": "0029_admin_crawl_health",
+      "breakpoints": true
     }
   ]
 }

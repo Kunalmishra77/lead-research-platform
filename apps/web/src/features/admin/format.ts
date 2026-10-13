@@ -25,3 +25,21 @@ export function formatDuration(ms: number | null): string {
   const minutes = Math.floor(seconds / 60);
   return `${minutes}m ${Math.round(seconds % 60)}s`;
 }
+
+/**
+ * Stored page sizes, which run from a few kilobytes to a few gigabytes (ADR-0019 budgets the
+ * raw store in gigabytes). Decimal units, because that is what a disk quota is sold in.
+ */
+export function formatBytes(bytes: number): string {
+  if (bytes <= 0) return '0 B';
+  const units = ['B', 'kB', 'MB', 'GB', 'TB'];
+  const index = Math.min(Math.floor(Math.log10(bytes) / 3), units.length - 1);
+  const value = bytes / 1000 ** index;
+  return `${index === 0 ? value : value.toFixed(value < 10 ? 1 : 0)} ${units[index]}`;
+}
+
+/** A share of a whole, or an em dash when the whole is zero: 0/0 is not 0%. */
+export function formatShare(part: number, whole: number): string {
+  if (whole <= 0) return '—';
+  return `${Math.round((100 * part) / whole)}%`;
+}

@@ -115,6 +115,42 @@ export interface AdminConnector {
   lastRunAt: string | null;
 }
 
+/**
+ * How the crawler is doing over a window (task 3.16).
+ *
+ * One object, not a list: the question is "how is it going", and splitting it per source would
+ * repeat `app.admin_connector_health`, which already answers that.
+ */
+export interface AdminCrawlHealth {
+  since: string;
+  tasks: number;
+  completed: number;
+  failed: number;
+  running: number;
+  pagesRead: number;
+  /** Robots said no, the host was dead, or the site turned us away. */
+  tasksWithNoPage: number;
+  tasksThatFoundNothing: number;
+  valuesWritten: number;
+  fetches: number;
+  fetchedOk: number;
+  /** A door we were told not to open. An outcome, not a failure (ADR-0019). */
+  restricted: number;
+  errored: number;
+  bodiesStored: number;
+  /** A page we already had: recorded, not stored again (docs/06 §4.9). */
+  deduplicated: number;
+  bytesStored: number;
+  avgMs: number | null;
+  p95Ms: number | null;
+  /** Every metered call in the window. The crawl itself calls no paid API. */
+  pipelineCostMicros: number;
+  leadsDelivered: number;
+  /** Null when nothing was delivered: a zero would read as free. */
+  pipelineMicrosPerLead: number | null;
+  lastCrawlAt: string | null;
+}
+
 export interface AdminMeter {
   meter: string;
   events: number;

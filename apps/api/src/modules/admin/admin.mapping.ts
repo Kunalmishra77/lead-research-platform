@@ -4,6 +4,7 @@ import { pgCode } from '../../common/db/pg-error';
 import { AppError } from '../../common/errors/app-error';
 import {
   type AdminConnector,
+  type AdminCrawlHealth,
   type AdminJob,
   type AdminMeter,
   type AdminOrg,
@@ -117,6 +118,37 @@ const ConnectorRow = z.object({
   last_run_at: timestamp.nullable(),
 });
 
+/**
+ * `app.admin_crawl_health` returns exactly one row (task 3.16), so there is no list to page.
+ * Every count arrives as a Postgres bigint, which the driver hands over as a string.
+ */
+const CrawlHealthRow = z.object({
+  since: timestamp,
+  tasks: count,
+  completed: count,
+  failed: count,
+  running: count,
+  pages_read: count,
+  tasks_with_no_page: count,
+  tasks_that_found_nothing: count,
+  values_written: count,
+  fetches: count,
+  fetched_ok: count,
+  restricted: count,
+  errored: count,
+  bodies_stored: count,
+  deduplicated: count,
+  bytes_stored: count,
+  avg_ms: count.nullable(),
+  p95_ms: count.nullable(),
+  pipeline_cost_micros: count,
+  leads_delivered: count,
+  // Null when nothing was delivered. Dividing by no leads is a question with no answer, and a
+  // zero here would read as "free" (migration 0029).
+  pipeline_micros_per_lead: count.nullable(),
+  last_crawl_at: timestamp.nullable(),
+});
+
 const MeterRow = z.object({
   meter: z.string(),
   events: count,
@@ -185,6 +217,34 @@ export function toAdminConnector(raw: unknown): AdminConnector {
     budgetExhausted: r.budget_exhausted,
     avgMs: r.avg_ms,
     lastRunAt: r.last_run_at,
+  };
+}
+
+export function toAdminCrawlHealth(raw: unknown): AdminCrawlHealth {
+  const r = CrawlHealthRow.parse(raw);
+  return {
+    since: r.since,
+    tasks: r.tasks,
+    completed: r.completed,
+    failed: r.failed,
+    running: r.running,
+    pagesRead: r.pages_read,
+    tasksWithNoPage: r.tasks_with_no_page,
+    tasksThatFoundNothing: r.tasks_that_found_nothing,
+    valuesWritten: r.values_written,
+    fetches: r.fetches,
+    fetchedOk: r.fetched_ok,
+    restricted: r.restricted,
+    errored: r.errored,
+    bodiesStored: r.bodies_stored,
+    deduplicated: r.deduplicated,
+    bytesStored: r.bytes_stored,
+    avgMs: r.avg_ms,
+    p95Ms: r.p95_ms,
+    pipelineCostMicros: r.pipeline_cost_micros,
+    leadsDelivered: r.leads_delivered,
+    pipelineMicrosPerLead: r.pipeline_micros_per_lead,
+    lastCrawlAt: r.last_crawl_at,
   };
 }
 

@@ -4,6 +4,7 @@ import { AppError } from '../../common/errors/app-error';
 import {
   mapAdminError,
   toAdminConnector,
+  toAdminCrawlHealth,
   toAdminJob,
   toAdminMeter,
   toAdminOrg,
@@ -125,6 +126,82 @@ describe('row mapping', () => {
       durationMs: null,
       input: { query: 'dental clinic in Delhi' },
     });
+  });
+
+  it('maps crawl health, with the numbers measured by hand as the fixture', () => {
+    // Every figure here is what `app.admin_crawl_health` returned over the live database on
+    // 2026-10-13, which is the same set of numbers Phase 3 reported by hand. The point of this
+    // test is the shape and the coercion -- Postgres hands every bigint over as a string, and a
+    // dashboard quietly rendering "607" as text would sort 1,000 before 99.
+    const row = toAdminCrawlHealth({
+      since: '2026-09-13T00:00:00.000+00:00',
+      tasks: '607',
+      completed: '605',
+      failed: '2',
+      running: '0',
+      pages_read: '351',
+      tasks_with_no_page: '348',
+      tasks_that_found_nothing: '19',
+      values_written: '2066',
+      fetches: '0',
+      fetched_ok: '0',
+      restricted: '0',
+      errored: '0',
+      bodies_stored: '0',
+      deduplicated: '0',
+      bytes_stored: '0',
+      avg_ms: '12884',
+      p95_ms: '28117',
+      pipeline_cost_micros: '13558121',
+      leads_delivered: '1568',
+      pipeline_micros_per_lead: '8646',
+      last_crawl_at: '2026-10-13T07:00:00.000+00:00',
+    });
+    expect(row).toMatchObject({
+      tasks: 607,
+      completed: 605,
+      pagesRead: 351,
+      tasksWithNoPage: 348,
+      valuesWritten: 2066,
+      avgMs: 12884,
+      p95Ms: 28117,
+      leadsDelivered: 1568,
+      pipelineMicrosPerLead: 8646,
+    });
+  });
+
+  it('leaves cost per lead null rather than zero when nothing was delivered', () => {
+    // A zero would read as "free". Dividing by no leads is a question with no answer, so
+    // migration 0029 returns null and the panel has to say so rather than print 0.
+    const row = toAdminCrawlHealth({
+      since: '2026-10-13T00:00:00.000+00:00',
+      tasks: '3',
+      completed: '0',
+      failed: '3',
+      running: '0',
+      pages_read: '0',
+      tasks_with_no_page: '0',
+      tasks_that_found_nothing: '0',
+      values_written: '0',
+      fetches: '3',
+      fetched_ok: '0',
+      restricted: '2',
+      errored: '1',
+      bodies_stored: '0',
+      deduplicated: '0',
+      bytes_stored: '0',
+      avg_ms: null,
+      p95_ms: null,
+      pipeline_cost_micros: '0',
+      leads_delivered: '0',
+      pipeline_micros_per_lead: null,
+      last_crawl_at: null,
+    });
+    expect(row.pipelineMicrosPerLead).toBeNull();
+    expect(row.avgMs).toBeNull();
+    expect(row.lastCrawlAt).toBeNull();
+    // A refusal is still an outcome and is counted (ADR-0019).
+    expect(row.restricted).toBe(2);
   });
 
   it('maps connector health with every error class as its own number', () => {

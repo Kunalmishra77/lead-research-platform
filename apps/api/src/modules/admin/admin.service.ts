@@ -8,6 +8,7 @@ import type { RequestOrigin } from '../audit/audit.service';
 import type { AuthUser } from '../auth/auth.types';
 import type {
   AdminConnector,
+  AdminCrawlHealth,
   AdminJob,
   AdminMeter,
   AdminOrg,
@@ -18,6 +19,7 @@ import type {
 import {
   mapAdminError,
   toAdminConnector,
+  toAdminCrawlHealth,
   toAdminJob,
   toAdminMeter,
   toAdminOrg,
@@ -105,6 +107,26 @@ export class AdminService {
         ${origin.ip}::inet, ${origin.userAgent})`,
     );
     return rows.map(toAdminConnector);
+  }
+
+  /**
+   * How the crawler is doing (task 3.16). One row, so the window is the only argument.
+   *
+   * Every number Phase 3 reported was measured by hand in a throwaway script. This is those
+   * queries where somebody other than me can read them.
+   */
+  async crawlHealth(
+    user: AuthUser,
+    origin: RequestOrigin,
+    since?: string,
+  ): Promise<AdminCrawlHealth | null> {
+    const rows = await this.call(
+      user,
+      sql`select * from app.admin_crawl_health(${uuidv7()}::uuid, ${since ?? null}::timestamptz,
+        ${origin.ip}::inet, ${origin.userAgent})`,
+    );
+    const [row] = rows;
+    return row === undefined ? null : toAdminCrawlHealth(row);
   }
 
   /** What was billed, by meter. The only honest cost figure: see migration 0022. */

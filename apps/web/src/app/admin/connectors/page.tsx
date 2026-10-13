@@ -3,11 +3,19 @@ import type { Metadata } from 'next';
 import { AdminTable, type Column } from '@/features/admin/admin-table';
 import {
   type AdminConnector,
+  type AdminCrawlHealth,
   type AdminMeter,
   connectorHealth,
+  crawlHealth,
   usageByMeter,
 } from '@/features/admin/api';
-import { formatDateTime, formatDuration, formatMicros } from '@/features/admin/format';
+import {
+  formatBytes,
+  formatDateTime,
+  formatDuration,
+  formatMicros,
+  formatShare,
+} from '@/features/admin/format';
 
 export const metadata: Metadata = { title: 'Connectors' };
 
@@ -50,8 +58,70 @@ const meterColumns: Column<Keyed<AdminMeter>>[] = [
   { header: 'Last event', cell: (m) => formatDateTime(m.lastEventAt) },
 ];
 
+/**
+ * One number with its label. A stat row rather than a table, because `admin_crawl_health`
+ * returns a single row and a one-row table reads as a bug.
+ */
+function Stat({ label, value, note }: { label: string; value: string; note?: string }) {
+  return (
+    <div className="flex flex-col gap-1 rounded-lg border p-3">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-lg font-semibold tabular-nums">{value}</span>
+      {note ? <span className="text-xs text-muted-foreground">{note}</span> : null}
+    </div>
+  );
+}
+
+function CrawlHealth({ crawl }: { crawl: AdminCrawlHealth }) {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      <Stat
+        label="Crawl tasks"
+        value={String(crawl.tasks)}
+        note={`${crawl.completed} done, ${crawl.failed} failed`}
+      />
+      <Stat
+        label="Pages read"
+        value={String(crawl.pagesRead)}
+        note={`${formatShare(crawl.pagesRead, crawl.tasks)} of tasks got a page`}
+      />
+      {/* The number that explains the email rate: most crawls never get a page at all. */}
+      <Stat
+        label="Got no page"
+        value={String(crawl.tasksWithNoPage)}
+        note="robots, dead host, or turned away"
+      />
+      <Stat label="Turned away" value={String(crawl.restricted)} note="an outcome, never retried" />
+      <Stat label="Values written" value={String(crawl.valuesWritten)} />
+      <Stat
+        label="Pages kept"
+        value={String(crawl.bodiesStored)}
+        note={`${formatBytes(crawl.bytesStored)} on disk, ${crawl.deduplicated} already had`}
+      />
+      <Stat
+        label="Time per crawl"
+        value={formatDuration(crawl.avgMs)}
+        note={`p95 ${formatDuration(crawl.p95Ms)}`}
+      />
+      {/* Named for what it measures: the crawl calls no paid API, so this is the whole
+          pipeline's spend over the leads it delivered (migration 0029). */}
+      <Stat
+        label="Pipeline cost per lead"
+        value={
+          crawl.pipelineMicrosPerLead === null ? '—' : formatMicros(crawl.pipelineMicrosPerLead)
+        }
+        note={`${formatMicros(crawl.pipelineCostMicros)} over ${crawl.leadsDelivered} leads`}
+      />
+    </div>
+  );
+}
+
 export default async function AdminConnectorsPage() {
-  const [connectors, meters] = await Promise.all([connectorHealth(), usageByMeter()]);
+  const [connectors, meters, crawl] = await Promise.all([
+    connectorHealth(),
+    usageByMeter(),
+    crawlHealth(),
+  ]);
   const spend = meters.reduce((total, m) => total + m.costMicros, 0);
 
   return (
@@ -72,6 +142,20 @@ export default async function AdminConnectorsPage() {
           firstHref={null}
         />
       </div>
+
+      {crawl ? (
+        <div className="flex flex-col gap-4">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight">Crawl</h2>
+            <p className="text-sm text-muted-foreground">
+              Since {formatDateTime(crawl.since)}. Last crawl {formatDateTime(crawl.lastCrawlAt)}.
+              Read from the rows the pipeline already writes — a counter kept in a worker would be
+              lost on every deploy, and this deploys several times a day.
+            </p>
+          </div>
+          <CrawlHealth crawl={crawl} />
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-4">
         <div>

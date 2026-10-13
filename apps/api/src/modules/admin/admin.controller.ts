@@ -7,6 +7,7 @@ import { requestOrigin } from '../../common/request-origin';
 import type { AuthUser } from '../auth/auth.types';
 import {
   type AdminConnector,
+  type AdminCrawlHealth,
   type AdminJob,
   AdminJobsQueryDto,
   AdminListQueryDto,
@@ -78,6 +79,15 @@ export class AdminController {
     @Req() request: FastifyRequest,
   ): Promise<AdminConnector[]> {
     return this.admin.connectorHealth(user, requestOrigin(request), query.since);
+  }
+
+  @Get('crawl')
+  crawl(
+    @CurrentUser() user: AuthUser,
+    @Query() query: AdminSinceQueryDto,
+    @Req() request: FastifyRequest,
+  ): Promise<AdminCrawlHealth | null> {
+    return this.admin.crawlHealth(user, requestOrigin(request), query.since);
   }
 
   @Get('usage')

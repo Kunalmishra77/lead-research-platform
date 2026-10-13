@@ -1,0 +1,66 @@
+{
+  "slug": "drpearldentalstudio",
+  "harvested_at": "2026-10-13T10:32:55+00:00",
+  "draft": true,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://drpearldentalstudio.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://drpearldentalstudio.example.in/contact-us"
+    }
+  ],
+  "expect": {
+    "email": "box26@drpearldentalstudio-26.com",
+    "phone": "+91-9268719632"
+  },
+  "also_theirs": [],
+  "absent": [
+    "9553-03-71",
+    "9381-35-60",
+    "1799978703",
+    "1799663568",
+    "1749236612",
+    "1749853749",
+    "1749463425",
+    "94.7447981",
+    "91.721272",
+    "+91-9357800521",
+    "+91-11-49499211",
+    "91) 011-95223272",
+    "99.6262538",
+    "95865424",
+    "91) 9863058360",
+    "91) 9425637170",
+    "9855-72-10",
+    "1789624647",
+    "1789135365",
+    "117948706860700"
+  ],
+  "absent_because": {
+    "9553-03-71": "a second phone found in text; review whether it is the business's own",
+    "9381-35-60": "a second phone found in text; review whether it is the business's own",
+    "1799978703": "a second phone found in text; review whether it is the business's own",
+    "1799663568": "a second phone found in text; review whether it is the business's own",
+    "1749236612": "a second phone found in text; review whether it is the business's own",
+    "1749853749": "a second phone found in text; review whether it is the business's own",
+    "1749463425": "a second phone found in text; review whether it is the business's own",
+    "94.7447981": "a second phone found in text; review whether it is the business's own",
+    "91.721272": "a second phone found in text; review whether it is the business's own",
+    "+91-9357800521": "a second phone found in tel; review whether it is the business's own",
+    "+91-11-49499211": "a second phone found in tel; review whether it is the business's own",
+    "91) 011-95223272": "a second phone found in text; review whether it is the business's own",
+    "99.6262538": "a second phone found in text; review whether it is the business's own",
+    "95865424": "a second phone found in text; review whether it is the business's own",
+    "91) 9863058360": "a second phone found in text; review whether it is the business's own",
+    "91) 9425637170": "a second phone found in text; review whether it is the business's own",
+    "9855-72-10": "a second phone found in jsonld; review whether it is the business's own",
+    "1789624647": "a second phone found in text; review whether it is the business's own",
+    "1789135365": "a second phone found in text; review whether it is the business's own",
+    "117948706860700": "a second phone found in text; review whether it is the business's own"
+  }
+}

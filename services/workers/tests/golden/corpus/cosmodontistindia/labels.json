@@ -1,0 +1,63 @@
+{
+  "slug": "cosmodontistindia",
+  "harvested_at": "2026-10-13T10:32:46+00:00",
+  "draft": true,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://cosmodontistindia.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://cosmodontistindia.example.in/contact-us.php"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://cosmodontistindia.example.in/about-us.php"
+    }
+  ],
+  "expect": {
+    "email": "box71@cosmodontistindia-71.com",
+    "phone": "+919550388117"
+  },
+  "also_theirs": [],
+  "absent": [
+    "92.856596",
+    "95.859396",
+    "94.310966",
+    "92.19362",
+    "9855 7539",
+    "9716 6483",
+    "9732 7716",
+    "101989791311900",
+    "919351468978",
+    "+919601927500",
+    "93.124965",
+    "93.637726",
+    "+01249430723",
+    "1799202179",
+    "+919639693334",
+    "1799472036"
+  ],
+  "absent_because": {
+    "92.856596": "a second phone found in text; review whether it is the business's own",
+    "95.859396": "a second phone found in text; review whether it is the business's own",
+    "94.310966": "a second phone found in text; review whether it is the business's own",
+    "92.19362": "a second phone found in text; review whether it is the business's own",
+    "9855 7539": "a second phone found in text; review whether it is the business's own",
+    "9716 6483": "a second phone found in text; review whether it is the business's own",
+    "9732 7716": "a second phone found in text; review whether it is the business's own",
+    "101989791311900": "a second phone found in text; review whether it is the business's own",
+    "919351468978": "a second phone found in whatsapp; review whether it is the business's own",
+    "+919601927500": "a second phone found in jsonld; review whether it is the business's own",
+    "93.124965": "a second phone found in text; review whether it is the business's own",
+    "93.637726": "a second phone found in text; review whether it is the business's own",
+    "+01249430723": "a second phone found in tel; review whether it is the business's own",
+    "1799202179": "a second phone found in text; review whether it is the business's own",
+    "+919639693334": "a second phone found in tel; review whether it is the business's own",
+    "1799472036": "a second phone found in text; review whether it is the business's own"
+  }
+}

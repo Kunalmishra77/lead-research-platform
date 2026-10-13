@@ -1,0 +1,32 @@
+{
+  "slug": "claremontdentalclinic",
+  "harvested_at": "2026-10-13T10:32:43+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://claremontdentalclinic.example.in/"
+    }
+  ],
+  "expect": {
+    "email": "box26@claremontdentalclini-26.com",
+    "phone": "+91-950-896-4880"
+  },
+  "also_theirs": [
+    "first68.last68@claremontdentalclini-68.com",
+    "0124-940-4482"
+  ],
+  "absent": [
+    "100919355500500",
+    "1679992393",
+    "1679966300",
+    "92047370"
+  ],
+  "absent_because": {
+    "100919355500500": "the numeric id in their Facebook profile URL, not a phone number",
+    "1679992393": "a WordPress ?ver= cache-buster on a stylesheet",
+    "1679966300": "another ?ver= cache-buster; the draft had guessed it was the phone",
+    "92047370": "an Elementor column id in data-id=, not a phone number. Dropped from this list while the site was being reviewed by hand, and caught by test_golden_corpus_is_publishable."
+  }
+}

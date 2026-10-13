@@ -1,0 +1,77 @@
+{
+  "slug": "drbhutanidentalclinic",
+  "harvested_at": "2026-10-13T10:32:51+00:00",
+  "draft": true,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://drbhutanidentalclinic.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://drbhutanidentalclinic.example.in/contact-us"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://drbhutanidentalclinic.example.in/about-clinic"
+    }
+  ],
+  "expect": {
+    "email": "box16@drbhutanidentalclini-16.com",
+    "phone": "+91-9422795979"
+  },
+  "also_theirs": [],
+  "absent": [
+    "9207-31-03",
+    "9668-36-26",
+    "96.5795500",
+    "95.5486706",
+    "+91-98286-73846",
+    "+91 98842-71386",
+    "+91 95770-16375",
+    "011 4990-0483",
+    "9289-25-83",
+    "9867-94-17",
+    "9540-47-08",
+    "1789194128",
+    "2089533-23750",
+    "+919613090376",
+    "9625-29-19",
+    "+91 97666-66529",
+    "+91-9119-228-995",
+    "9204-70-74",
+    "9365-93-93",
+    "9835-17-59",
+    "9603-48-71",
+    "011 49696885",
+    "+91 9637240429"
+  ],
+  "absent_because": {
+    "9207-31-03": "a second phone found in text; review whether it is the business's own",
+    "9668-36-26": "a second phone found in text; review whether it is the business's own",
+    "96.5795500": "a second phone found in text; review whether it is the business's own",
+    "95.5486706": "a second phone found in text; review whether it is the business's own",
+    "+91-98286-73846": "a second phone found in jsonld; review whether it is the business's own",
+    "+91 98842-71386": "a second phone found in tel; review whether it is the business's own",
+    "+91 95770-16375": "a second phone found in tel; review whether it is the business's own",
+    "011 4990-0483": "a second phone found in tel; review whether it is the business's own",
+    "9289-25-83": "a second phone found in text; review whether it is the business's own",
+    "9867-94-17": "a second phone found in text; review whether it is the business's own",
+    "9540-47-08": "a second phone found in text; review whether it is the business's own",
+    "1789194128": "a second phone found in text; review whether it is the business's own",
+    "2089533-23750": "a second phone found in tel; review whether it is the business's own",
+    "+919613090376": "a second phone found in tel; review whether it is the business's own",
+    "9625-29-19": "a second phone found in text; review whether it is the business's own",
+    "+91 97666-66529": "a second phone found in tel; review whether it is the business's own",
+    "+91-9119-228-995": "a second phone found in text; review whether it is the business's own",
+    "9204-70-74": "a second phone found in text; review whether it is the business's own",
+    "9365-93-93": "a second phone found in text; review whether it is the business's own",
+    "9835-17-59": "a second phone found in text; review whether it is the business's own",
+    "9603-48-71": "a second phone found in text; review whether it is the business's own",
+    "011 49696885": "a second phone found in tel; review whether it is the business's own",
+    "+91 9637240429": "a second phone found in tel; review whether it is the business's own"
+  }
+}

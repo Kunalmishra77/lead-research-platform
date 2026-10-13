@@ -44,6 +44,7 @@ from uuid6 import uuid7
 
 from app.connectors.types import Candidate, FieldValue
 from app.normalize.domains import is_platform_host, registrable_domain
+from app.normalize.names import matching_key
 from app.normalize.phones import to_e164
 
 
@@ -537,9 +538,13 @@ def _company_params(p: Prepared, domain: str | None) -> dict[str, Any]:
 
 
 def normalized_name(name: str) -> str:
-    """`companies.normalized_name` is NOT NULL and is what later resolution blocks on."""
-    folded = "".join(c if c.isalnum() else " " for c in name.casefold())
-    return " ".join(folded.split())
+    """`companies.normalized_name` is NOT NULL and is what later resolution blocks on.
+
+    The rule itself is `app/normalize/names.py` (ADR-0018). It stays reachable from here because
+    every caller and test knows it from here, and because the column it fills is written two
+    statements below this line.
+    """
+    return matching_key(name)
 
 
 def _country(code: str | None) -> str | None:

@@ -30,6 +30,7 @@ dependencies = [
   "extruct>=0.18.0",
   "osmium>=4.3,<5",
   "duckdb>=1.5,<2",
+  "anyascii>=0.3.3",
 ]
 
 [dependency-groups]

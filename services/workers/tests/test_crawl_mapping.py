@@ -177,4 +177,13 @@ def test_merging_is_stable_when_two_pages_agree_exactly() -> None:
 
 def test_field_names_lists_what_a_crawl_covered() -> None:
     facts = values_from_page(LINKED, page_url=PAGE_URL, region="IN")
-    assert field_names(facts.values) == ["email", "instagram", "phone", "phone_type"]
+    # `email_role` joined this list in task 3.12. The crawl always worked out whether an address
+    # was a shared mailbox or a named person's -- docs/10 handles the two differently -- and
+    # threw the answer away. It is a row of its own now, beside `phone_type`.
+    assert field_names(facts.values) == [
+        "email",
+        "email_role",
+        "instagram",
+        "phone",
+        "phone_type",
+    ]

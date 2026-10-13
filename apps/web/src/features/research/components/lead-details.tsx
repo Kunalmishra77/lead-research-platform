@@ -93,7 +93,10 @@ function Evidence({ value }: { value: LeadValue }) {
 
 /** Field groups, in the order someone working a lead reads them. */
 const GROUPS: { heading: string; fields: string[] }[] = [
-  { heading: 'Contact', fields: ['email', 'phone', 'phone_type', 'whatsapp', 'website'] },
+  {
+    heading: 'Contact',
+    fields: ['email', 'email_role', 'phone', 'phone_type', 'whatsapp', 'website'],
+  },
   {
     heading: 'Location',
     fields: ['address', 'city', 'state', 'postal_code', 'country', 'geo'],
@@ -116,6 +119,10 @@ const GROUPS: { heading: string; fields: string[] }[] = [
 
 const LABELS: Record<string, string> = {
   email: 'Email',
+  // Whether the address is a shared mailbox or a named person's. It decides how the address
+  // may be handled (docs/10) and how it should be written to, so it belongs next to the
+  // address rather than inside a tooltip.
+  email_role: 'Mailbox',
   phone: 'Phone',
   phone_type: 'Line type',
   whatsapp: 'WhatsApp',

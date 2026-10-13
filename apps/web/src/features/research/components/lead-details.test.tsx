@@ -81,6 +81,16 @@ describe('LeadDetails', () => {
     expect(screen.queryByText('Business')).not.toBeInTheDocument();
   });
 
+  it('says whether an address is a shared mailbox or a person, next to the address', () => {
+    // The crawl always worked this out and threw it away (task 3.12). It changes what someone
+    // should write: `info@` takes a pitch, a named person's address takes a different tone and,
+    // under docs/10, different handling. Beside the address rather than in a tooltip, because
+    // whoever is about to send the mail is looking at the address.
+    render(<LeadDetails lead={lead([EMAIL, value({ field: 'email_role', value: 'role' })])} />);
+    expect(screen.getByText('Mailbox')).toBeInTheDocument();
+    expect(screen.getByText('role')).toBeInTheDocument();
+  });
+
   it('shows a field it has no group for rather than dropping it', () => {
     // A value stored and then hidden is worse than one under an ugly heading: the second is
     // fixable by reading this list, the first is invisible.

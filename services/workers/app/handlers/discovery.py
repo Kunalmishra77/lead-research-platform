@@ -16,6 +16,7 @@ charged from what the write actually returned rather than from what the search r
 """
 
 from collections.abc import Sequence
+from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Any, Final
 
@@ -40,6 +41,7 @@ from app.jobs.redact import redact
 from app.jobs.registry import FailureHook, HandlerRegistry
 from app.metering.context import CallContext
 from app.metering.usage import UsageRecorder
+from app.normalize.cities import lookup_name as lookup_city
 from app.normalize.domains import is_platform_host
 from app.planner.plan import TASK_TYPE_BY_SOURCE, PlannedTask
 
@@ -201,9 +203,8 @@ def register_discovery_handlers(
                     connectors=connectors,
                     org_id=org_id,
                 )
-                found = _honour_website_filter(found, payload.query.has_website)
-                found = _honour_contact_filter(found, payload.query.contact_any_of)
-                found = _honour_social_filter(found, payload.query.social_required)
+                found = _narrow_to_what_was_asked(found, payload.query)
+                found = await _canonical_cities(found, reference)
                 stored = await graph.store(
                     org_id,
                     found,
@@ -391,6 +392,19 @@ async def _search(
 _CHECKABLE_CONTACT: Final[frozenset[str]] = frozenset({"phone", "email"})
 
 
+def _narrow_to_what_was_asked(found: list[Any], query: "DiscoveryQueryPayload") -> list[Any]:
+    """Every spec filter that has to hold whatever the source could do about it.
+
+    The place index applies what it can in SQL, which is what keeps the job's result cap from
+    being spent on rows that will be thrown away. Google Places has no such parameters and a
+    source added later will not either, so the guarantee lives here, at the last point before
+    anything is stored, and `ai/feasibility.py` names this function for each of them.
+    """
+    found = _honour_website_filter(found, query.has_website)
+    found = _honour_contact_filter(found, query.contact_any_of)
+    return _honour_social_filter(found, query.social_required)
+
+
 def _honour_website_filter(found: list[Any], has_website: bool | None) -> list[Any]:
     """Holds every source to `has_website`, including the ones that cannot filter on it.
 
@@ -462,6 +476,55 @@ def _honour_social_filter(found: list[Any], required: Sequence[str]) -> list[Any
     if not platforms:
         return found
     return [c for c in found if all(_has_channel(c, platform) for platform in platforms)]
+
+
+async def _canonical_cities(found: list[Any], reference: ReferenceData) -> list[Any]:
+    """Rewrites each candidate's city to the spelling the seeded geography uses.
+
+    Measured on the live graph: `Gurugram` 955, `Gurgaon` 9, `Gurugram Sub-District` 6 -- one
+    city in three spellings -- and `New Delhi` 288 against `Delhi` 128. A customer filtering on
+    "Gurgaon" was shown 9 of 970 businesses and nothing looked wrong, because every row returned
+    was a real business in the right place.
+
+    `app.geo_areas` already held the answer: Gurugram carries the alias Gurgaon, and the city
+    Delhi carries New Delhi. So no spelling is chosen here -- `find_area` does the matching, and
+    `app/normalize/cities.py` only strips what a census extract appends, which no alias list
+    will ever carry.
+
+    Only the candidate's `city` changes, which is what reaches `companies.city` and
+    `company_locations.city`. The `city` *field value* keeps the source's own words: it records
+    what a source said and rewriting it would misquote the source.
+
+    A city the seed has never heard of is left exactly as it came. Bahadurgarh, Manesar and
+    Dhankot are all in the live graph and none of them is in the 157 cities seeded; inventing a
+    canonical form for them would be a guess stored as a fact.
+    """
+    wanted = {(c.city, c.country) for c in found if getattr(c, "city", None)}
+    if not wanted:
+        return found
+
+    # One lookup per distinct spelling, not per candidate: a search of one city hands this the
+    # same string two hundred times.
+    canonical: dict[tuple[str, str | None], str] = {}
+    for city, country in wanted:
+        asked = lookup_city(city) or city
+        area = await reference.find_area(asked, country=country)
+        # The seeded name where the geography knows the place. Where it does not, the
+        # suffix-stripped form anyway: "Bahadurgarh Sub-District" is not a name anyone uses, and
+        # dropping the word is not a choice between two names. Without that half, 101 rows said
+        # Bahadurgarh and 4 said Bahadurgarh Sub-District with nothing to join them.
+        better = area.name if area is not None and area.is_city else asked
+        if better != city:
+            canonical[(city, country)] = better
+
+    if not canonical:
+        return found
+    return [
+        replace(c, city=canonical[(c.city, c.country)])
+        if getattr(c, "city", None) and (c.city, c.country) in canonical
+        else c
+        for c in found
+    ]
 
 
 def _options(payload: DiscoveryPayload) -> dict[str, Any]:

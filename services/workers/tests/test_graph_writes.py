@@ -97,7 +97,8 @@ def test_a_national_number_is_normalised_once_the_country_is_known() -> None:
 )
 def test_a_number_we_cannot_prove_is_e164_is_left_out(phone: str | None) -> None:
     # It is still stored as a `phone` field value with its provenance; it is simply not claimed
-    # to be E.164 here. Real normalisation arrives with app/normalize/phone.py in Phase 3.
+    # to be E.164 here. `app/normalize/phones.py` now does the real parsing, and these are the
+    # cases it refuses even with a country: a PIN code, a year, a well-formed unallocated range.
     assert to_e164(phone) is None
 
 
@@ -106,7 +107,30 @@ def test_a_name_is_normalised_for_matching_not_for_display() -> None:
     # keeps what the source actually said.
     assert normalized_name("Dr. Sanap's Clinic") == "dr sanap s clinic"
     assert normalized_name("  BLUE   Tokai  ") == "blue tokai"
-    assert normalized_name("Café Müller") == "café müller"
+
+
+def test_the_matching_key_folds_accents_away() -> None:
+    """Changed in task 3.12, deliberately: this used to assert `café müller` came back as it
+    went in.
+
+    An accent kept in the key means the same business written either way is two keys, and the
+    live graph had 11 such keys -- two of them written in mathematical bold capitals, which no
+    plain spelling could ever have matched. ADR-0018 has the measurement and why `anyascii`
+    rather than GPL `unidecode`.
+    """
+    assert normalized_name("Café Müller") == "cafe muller"
+    assert normalized_name("BOŁT Fitness") == "bolt fitness"
+
+
+def test_a_legal_suffix_is_not_part_of_the_matching_key() -> None:
+    """docs/06 section 6. It merges nothing on today's graph -- 8 of 1,550 names carry one and
+    no two of them are the same business -- and it is what makes a customer's own CRM export
+    line up, where "Pvt Ltd" is written far more often than on a map listing."""
+    assert normalized_name("Acme Industries Pvt. Ltd.") == normalized_name("Acme Industries")
+    assert normalized_name("TRINORVA ASCENDANT LLP") == "trinorva ascendant"
+    # Nothing left over is worse than a suffix: the column is NOT NULL and an empty key blocks
+    # against every other empty key.
+    assert normalized_name("Ltd") == "ltd"
 
 
 @pytest.mark.parametrize(

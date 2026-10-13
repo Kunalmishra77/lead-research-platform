@@ -446,3 +446,42 @@ def test_the_overture_release_url_is_openable() -> None:
     assert DEFAULT_RELEASE in release_url()
     # The reader still gets the s3 form; the two must not be confused for each other.
     assert places_url().startswith("s3://")
+
+
+async def test_an_email_from_a_release_is_normalised_and_flagged(
+    index: PlaceIndex, ctx: CallContext
+) -> None:
+    """The release's email went straight into `field_values` as it came.
+
+    Two things follow from normalising it here. One spelling: `field_values` keeps one current
+    row per (entity, field), so a release's `Info@Clinic.IN` and the same clinic's own site
+    saying `info@clinic.in` would otherwise be two values for one mailbox. And a flag: docs/10
+    handles a named person's address differently from a shared one, and the crawl had always
+    worked that out and thrown it away.
+    """
+    [gym] = await OvertureConnector(index).search(
+        DiscoveryQuery(text="x", bbox=DELHI, options={"categories": ["gym"], "has_website": True}),
+        ctx,
+    )
+    by_field = {v.field: v.value for v in gym.values}
+    assert by_field["email"] == "84.gurgaon@anytimefitness.in"
+    assert by_field["email_role"] == "person"
+
+
+async def test_a_release_email_that_is_not_an_address_is_not_stored(
+    index: PlaceIndex, ctx: CallContext, tmp_path: Path
+) -> None:
+    """The index checks that a value is *plausible*, which caught the Delhi row where every
+    column had shifted one place. Plausible is not the same as usable: a placeholder from a
+    template nobody filled in passes that check and is refused here."""
+    path = tmp_path / "placeholder.sqlite"
+    with IndexWriter(path) as writer:
+        writer.add([_place("o9", "Template Gym", ("gym",), email="you@example.com")])
+        writer.finish(extract_date=RELEASED)
+
+    [gym] = await OvertureConnector(PlaceIndex(path)).search(
+        DiscoveryQuery(text="x", bbox=DELHI, options={"categories": ["gym"]}), ctx
+    )
+    fields = {v.field for v in gym.values}
+    assert "email" not in fields
+    assert "email_role" not in fields

@@ -27,33 +27,18 @@ from typing import Protocol
 from urllib.parse import unquote, urlsplit
 
 import phonenumbers
-from email_validator import EmailNotValidError, validate_email
 from scrapling import Selector
 
-from app.normalize.domains import has_real_tld
+from app.normalize.emails import ROLE_LOCAL_PARTS as EMAIL_ROLE_LOCAL_PARTS
+from app.normalize.emails import is_role as is_role_email
+from app.normalize.emails import normalize as normalize_email
 from app.normalize.phones import line_type
 from app.normalize.phones import parse as parse_phone
 
-#: Role accounts. Kept, but flagged: `info@` is a lead, `priya@` is a person, and docs/10 treats
-#: the second as personal data with different handling.
-ROLE_LOCAL_PARTS = frozenset(
-    {
-        "info", "contact", "enquiry", "enquiries", "inquiry", "inquiries", "hello", "hi",
-        "sales", "support", "help", "admin", "office", "mail", "email", "care",
-        "reception", "frontdesk", "appointments", "booking", "bookings", "service",
-        "team", "hr", "careers", "jobs", "accounts", "billing", "finance", "noreply",
-        "no-reply", "donotreply",
-    }
-)  # fmt: skip
-
-#: Addresses that belong to the page's plumbing rather than to the business.
-_IGNORED_EMAIL_HOSTS = re.compile(
-    r"(?i)(^|\.)(example\.(com|org|net)|sentry\.io|wixpress\.com|sentry-next\.wixpress\.com"
-    r"|domain\.com|yourdomain\.com|email\.com|company\.com|godaddy\.com|wordpress\.com)$"
-)
-
-#: Plainly not a person's or a company's address, whatever the syntax says.
-_IGNORED_LOCAL_PARTS = frozenset({"you", "your", "name", "email", "someone", "user", "username"})
+#: Re-exported: this was the home of the role list and every caller and test knows it from
+#: here. The list itself is `app/normalize/emails.py`, because the place index's mapping needs
+#: the same answer and will not import a web crawler to get it.
+ROLE_LOCAL_PARTS = EMAIL_ROLE_LOCAL_PARTS
 
 #: `@` written so a scraper misses it. Each alternative is a literal substitution, never a guess.
 _AT = r"(?:@|\(\s*at\s*\)|\[\s*at\s*\]|\{\s*at\s*\}|\s+at\s+|&#0*64;|&commat;|%40)"
@@ -151,27 +136,18 @@ def decode_entities(text: str) -> str:
 
 
 def _tidy_email(local: str, domain: str) -> str | None:
-    """One candidate, cleaned and validated, or None when it is not an address worth keeping."""
+    """One candidate from a page, un-obfuscated, then held to the shared rule.
+
+    Only the un-obfuscating is here. `name (at) clinic (dot) in` is about how a page hides an
+    address from scrapers, which nothing but the crawler can know about; what counts as a usable
+    business address is `app/normalize/emails.py`, because every source needs the same answer.
+    """
     local = re.sub(r"\s+", "", local)
     domain = re.sub(r"(?i)\s*(\(|\[|\{)?\s*dot\s*(\)|\]|\})?\s*", ".", domain)
-    domain = re.sub(r"\s+", "", domain).strip(".")
-    if not local or not domain or local.lower() in _IGNORED_LOCAL_PARTS:
+    domain = re.sub(r"\s+", "", domain)
+    if not local or not domain:
         return None
-    if _IGNORED_EMAIL_HOSTS.search(domain):
-        return None
-    # A real top-level domain. `validate_email` below checks shape, not existence, so without
-    # this a page reading "treatment done@Dr.Bhatia's clinic" yields `done@dr.bhatia` -- which
-    # went out in a customer's results before this line existed.
-    if not has_real_tld(domain):
-        return None
-    address = f"{local}@{domain}".lower()
-    try:
-        # No DNS: the page is the source of truth for what it said, and deliverability is a
-        # separate paid step in Phase 4. This only rejects what cannot be an address at all.
-        validate_email(address, check_deliverability=False)
-    except EmailNotValidError:
-        return None
-    return address
+    return normalize_email(f"{local}@{domain}")
 
 
 def emails_from(html_text: str | bytes, *, selector: Selector | None = None) -> list[Email]:
@@ -207,7 +183,7 @@ def emails_from(html_text: str | bytes, *, selector: Selector | None = None) -> 
 
 
 def _is_role(address: str) -> bool:
-    return address.split("@", 1)[0] in ROLE_LOCAL_PARTS
+    return is_role_email(address)
 
 
 def phones_from(

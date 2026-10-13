@@ -85,7 +85,7 @@ Each extracted value -> `FieldValue(entity, field, value, source_id, source_url,
 | phone | phonenumbers parse with default region from spec/company country -> E.164; type mobile/fixed |
 | email | lowercase, strip mailto/params, validate syntax, role account flag (info@, sales@) |
 | url / domain | lowercase host, strip www and tracking params, tldextract registrable domain; mark platform domains (wixsite, blogspot, linktr.ee, facebook.com, instagram.com, business.site, etc.) |
-| name | trim, collapse whitespace, strip legal suffixes (pvt ltd, private limited, llp, ltd, inc, llc, gmbh) for `normalized_name`; unidecode for matching key |
+| name | trim, collapse whitespace, strip legal suffixes (pvt ltd, private limited, llp, ltd, inc, llc, gmbh) for `normalized_name`; transliterate to ASCII with `anyascii` for the matching key — ISC rather than GPL `unidecode`, which this table used to name (ADR-0018). `app/normalize/names.py` |
 | address | parse components, country ISO-2, city canonical via geo table; geocode from Places where available |
 | social | canonical handle per platform (lowercase, no @, no query) |
 | industry | map categories -> internal taxonomy via synonyms table, then embedding similarity, then LLM if unresolved |

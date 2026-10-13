@@ -17,6 +17,8 @@ from datetime import datetime
 
 from app.connectors.types import Candidate, FieldValue
 from app.crawl.contacts import social_from_url
+from app.normalize.emails import is_role as is_role_email
+from app.normalize.emails import normalize as normalize_email
 from app.places.model import OVERTURE, Place
 
 #: How much a value from a bulk dataset is trusted.
@@ -99,7 +101,17 @@ def to_field_values(place: Place, *, released_at: datetime | None = None) -> lis
     add("postal_code", place.postcode)
     add("phone", place.phone)
     add("website", place.website)
-    add("email", place.email)
+    # Normalised rather than passed through. The index's own check is that the value is
+    # *plausible*; `field_values` is unique per (entity, field) for the current row, so
+    # `Info@Clinic.IN` from a release and `info@clinic.in` from that clinic's own site are two
+    # values for one mailbox -- the second retires the first and the first's provenance is lost.
+    email = normalize_email(place.email)
+    add("email", email)
+    if email:
+        # Computed here and stored, because docs/10 treats a named person's address as personal
+        # data and a shared mailbox as not. The crawl has always worked this out and thrown it
+        # away: 52 of the 424 addresses on the live graph are role accounts and nothing said so.
+        add("email_role", "role" if is_role_email(email) else "person")
     add("geo", {"lat": place.lat, "lng": place.lon})
     if place.operating_status:
         add("business_status", place.operating_status.lower())

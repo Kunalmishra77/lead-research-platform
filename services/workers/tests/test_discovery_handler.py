@@ -6,6 +6,7 @@ the same search twice, and a cancelled job buys nothing at all.
 """
 
 import json
+from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Any, ClassVar
 
@@ -29,6 +30,7 @@ from app.jobs.envelope import ENVELOPE_FIELD, stream_for
 from app.jobs.errors import InvalidInputError, TransientError
 from app.jobs.progress import ProgressPublisher
 from app.jobs.registry import HandlerRegistry
+from tests.planner_support import FakeReference as PlannerReference
 
 ORG = "018f4a9a-0000-7000-8000-000000000001"
 JOB = "018f4a9a-0000-7000-8000-000000000002"
@@ -107,8 +109,16 @@ class FakeReference:
         "research_deep": 8,
     }
 
+    #: The seeded geography, borrowed rather than re-stubbed. `find_area` does real alias
+    #: matching through the real `slugify`, and a second looser copy of it here would agree with
+    #: whatever the handler does and notice nothing.
+    GEOGRAPHY: ClassVar[PlannerReference] = PlannerReference()
+
     async def source_id(self, key: str) -> str:
         return "018f4a9a-0000-7000-8000-0000000000ff"
+
+    async def find_area(self, name: str, *, country: str | None = None) -> Any:
+        return await self.GEOGRAPHY.find_area(name, country=country)
 
     async def credit_rate(self, meter: str) -> int | None:
         return self.RATES.get(meter)
@@ -1010,3 +1020,102 @@ def test_the_contact_filter_is_honoured_for_a_source_that_cannot_filter() -> Non
     # list alone. An empty result would read as "no such businesses" rather than "not checkable".
     assert _honour_contact_filter(found, []) == found
     assert _honour_contact_filter(found, ["whatsapp", "contact_form"]) == found
+
+
+@pytest.mark.asyncio
+async def test_a_city_the_geography_knows_is_stored_under_one_spelling(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """One city in three spellings was the state of the live graph.
+
+    `Gurugram` 955, `Gurgaon` 9, `Gurugram Sub-District` 6; `New Delhi` 288 against `Delhi` 128.
+    A customer filtering on "Gurgaon" was shown 9 of 970 businesses, and nothing about the result
+    looked wrong -- every row was a real business in the right place.
+    """
+    found = [
+        candidate("p1", "Poona Dental"),
+        candidate("p2", "Pune Dental"),
+        candidate("p3", "Sub District Dental"),
+    ]
+    # `candidate` builds no city, so set the three spellings the sources actually report.
+    found = [
+        replace(found[0], city="Poona", country="IN"),
+        replace(found[1], city="Pune", country="IN"),
+        replace(found[2], city="Pune Sub-District", country="IN"),
+    ]
+    graph, _tasks, _jobs, _usage = await run(
+        redis, make_envelope, connectors=FakeConnectors(found)
+    )
+
+    assert [c.city for c in graph.stored[0]] == ["Pune", "Pune", "Pune"]
+
+
+@pytest.mark.asyncio
+async def test_the_stored_value_still_says_what_the_source_said(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """Only the column is canonicalised. `field_values` records what a source reported, with
+    provenance, and rewriting "Poona" to "Pune" there would misquote the source -- which is the
+    one thing the whole provenance rule exists to prevent."""
+    original = replace(candidate("p1", "Poona Dental"), city="Poona", country="IN")
+    original = replace(
+        original,
+        values=(
+            *original.values,
+            FieldValue(
+                entity_type="company",
+                field="city",
+                value="Poona",
+                source_key="google_places",
+                source_url="https://maps.google.com/?q=place_id:p1",
+                observed_at=datetime.now(UTC),
+                method="api",
+                derivation="found",
+                confidence=0.85,
+            ),
+        ),
+    )
+
+    graph, _tasks, _jobs, _usage = await run(
+        redis, make_envelope, connectors=FakeConnectors([original])
+    )
+
+    [stored] = graph.stored[0]
+    assert stored.city == "Pune", "the column is what filters read"
+    city_values = [v.value for v in stored.values if v.field == "city"]
+    assert city_values == ["Poona"], "the evidence keeps the source's own words"
+
+
+@pytest.mark.asyncio
+async def test_a_city_the_geography_has_never_heard_of_is_left_alone(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """Bahadurgarh, Manesar and Dhankot are all in the live graph and none of the 157 seeded
+    cities. Inventing a canonical form for them would be a guess stored as a fact."""
+    found = [replace(candidate("p1", "Dhankot Dental"), city="Dhankot", country="IN")]
+
+    graph, _tasks, _jobs, _usage = await run(
+        redis, make_envelope, connectors=FakeConnectors(found)
+    )
+
+    assert [c.city for c in graph.stored[0]] == ["Dhankot"]
+
+
+@pytest.mark.asyncio
+async def test_an_administrative_suffix_comes_off_a_city_the_seed_does_not_know(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """The half that only showed up in the backfill's rehearsal.
+
+    101 rows said Bahadurgarh and 4 said Bahadurgarh Sub-District, and the seeded geography has
+    never heard of either -- so a lookup alone left them split. Dropping the word is not a
+    choice between two names, which is why it happens whether the seed knows the place or not.
+    """
+    found = [replace(candidate("p1", "Bahadurgarh Dental"), city="Bahadurgarh Sub-District",
+                     country="IN")]
+
+    graph, _tasks, _jobs, _usage = await run(
+        redis, make_envelope, connectors=FakeConnectors(found)
+    )
+
+    assert [c.city for c in graph.stored[0]] == ["Bahadurgarh"]

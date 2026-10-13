@@ -100,11 +100,12 @@ def values_from_page(
 
     best_email = preferred(emails)
     if best_email is not None:
-        add(
-            "email",
-            best_email.value,
-            CONFIDENCE_LINKED if best_email.from_link else CONFIDENCE_TEXT,
-        )
+        confidence = CONFIDENCE_LINKED if best_email.from_link else CONFIDENCE_TEXT
+        add("email", best_email.value, confidence)
+        # `role_account` was worked out for every address and never written down. It decides
+        # how the address may be handled (docs/10: a named person's is personal data) and
+        # whether it is worth sending anything to, so it is worth a row of its own.
+        add("email_role", "role" if best_email.role_account else "person", confidence)
     best_phone = preferred(phones)
     if best_phone is not None:
         add(

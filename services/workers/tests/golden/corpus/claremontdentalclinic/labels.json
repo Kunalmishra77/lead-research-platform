@@ -1,6 +1,6 @@
 {
   "slug": "claremontdentalclinic",
-  "harvested_at": "2026-10-13T10:32:43+00:00",
+  "harvested_at": "2026-10-13T11:53:53+00:00",
   "draft": false,
   "pages": [
     {
@@ -10,23 +10,23 @@
     }
   ],
   "expect": {
-    "email": "box26@claremontdentalclini-26.com",
-    "phone": "+91-950-896-4880"
+    "email": "first68.last68@claremontdentalclini-68.com",
+    "phone": "+91-820-896-4880"
   },
   "also_theirs": [
-    "first68.last68@claremontdentalclini-68.com",
-    "0124-940-4482"
+    "box26@claremontdentalclini-26.com",
+    "0124-448-2331"
   ],
   "absent": [
-    "100919355500500",
-    "1679992393",
-    "1679966300",
-    "92047370"
+    "100001893555005",
+    "1674000763",
+    "1674093816",
+    "04737020"
   ],
   "absent_because": {
-    "100919355500500": "the numeric id in their Facebook profile URL, not a phone number",
-    "1679992393": "a WordPress ?ver= cache-buster on a stylesheet",
-    "1679966300": "another ?ver= cache-buster; the draft had guessed it was the phone",
-    "92047370": "an Elementor column id in data-id=, not a phone number. Dropped from this list while the site was being reviewed by hand, and caught by test_golden_corpus_is_publishable."
+    "100001893555005": "part of a social profile URL, not a phone number",
+    "1674000763": "a cache-busting ?ver= on a stylesheet or script",
+    "1674093816": "a cache-busting ?ver= on a stylesheet or script",
+    "04737020": "a page-builder element id"
   }
 }

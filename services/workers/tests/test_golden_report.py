@@ -23,7 +23,16 @@ from app.golden.report import render, run, same
 
 #: What the corpus scored when this floor was written, rounded down. A change that improves
 #: extraction should raise it in the same commit; a change that lowers it has to say why.
-RECALL_FLOOR = 1.0
+#: A ratchet, not an aspiration. It was 1.0 when the corpus was two sites chosen by hand, which
+#: is a floor that only holds while the corpus is small enough to be lucky. At ten sites the
+#: measured figure is 92.9%, and the one gap is understood: `drpearldentalstudio` prints its
+#: address only inside `<meta property="og:description">`, an attribute the extractor never reads,
+#: because the visible copy is behind Cloudflare's email obfuscation.
+#:
+#: So this sits just under the measured value: any regression trips it, and the number goes up
+#: when the extractors improve. Raising it is the point -- it is the one place the corpus says out
+#: loud how good the pipeline currently is.
+RECALL_FLOOR = 0.92
 
 
 def test_the_corpus_has_sites_in_it() -> None:
@@ -94,12 +103,24 @@ def test_a_phone_is_compared_by_its_digits() -> None:
 
     Digits rather than running the normalizer on both sides: calling the code under test to
     decide whether it is right would hide the bug worth catching.
+
+    Compared on the last ten digits, which is an Indian subscriber number. This assertion used
+    to read `same("phone", "0124-940-4482", "+911249404482") is False`, on the grounds that "a
+    missing country code is a different number" -- but that pair is a printed national number
+    and its correct E.164 form, so the rule it encoded scored a correct extraction as a miss.
+    It did: `remedium-dental-care` prints `9001268807`, the pipeline read `+919001268807`, and
+    the report called it a failure.
+
+    Whether the pipeline emits E.164 at all is a question for `app/normalize/phones.py` and its
+    own tests. What the report has to answer is whether we found the right business's number.
     """
     assert same("phone", "+91-950-896-4880", "+919508964880")
-    assert same("phone", "0124-940-4482", "+911249404482") is False, (
-        "a missing country code is a different number and must not be forgiven"
-    )
-    assert not same("phone", "+919508964880", "+919508964881")
+    assert same("phone", "9001268807", "+919001268807"), "the same number, printed and stored"
+    assert same("phone", "0124-940-4482", "+911249404482"), "a trunk zero becomes a country code"
+
+    assert not same("phone", "+919508964880", "+919508964881"), "one digit apart is not the same"
+    assert not same("phone", "0124-940-4482", "+91124940448"), "a dropped digit is not forgiven"
+    assert not same("phone", "", "+919508964880")
 
 
 def test_an_email_is_compared_without_case() -> None:

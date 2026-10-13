@@ -1,7 +1,7 @@
 {
   "slug": "drbhutanidentalclinic",
-  "harvested_at": "2026-10-13T10:32:51+00:00",
-  "draft": true,
+  "harvested_at": "2026-10-13T11:54:00+00:00",
+  "draft": false,
   "pages": [
     {
       "role": "homepage",
@@ -21,57 +21,27 @@
   ],
   "expect": {
     "email": "box16@drbhutanidentalclini-16.com",
-    "phone": "+91-9422795979"
+    "phone": "+91 95842-71386"
   },
-  "also_theirs": [],
+  "also_theirs": [
+    "+91-84286-73846",
+    "+91 94770-16375",
+    "+91-8122795979",
+    "011 4048-3783",
+    "+919213090376",
+    "+91 82666-66529",
+    "+91-9919-228-995",
+    "+91 8237240429",
+    "011 46885336"
+  ],
   "absent": [
-    "9207-31-03",
-    "9668-36-26",
-    "96.5795500",
-    "95.5486706",
-    "+91-98286-73846",
-    "+91 98842-71386",
-    "+91 95770-16375",
-    "011 4990-0483",
-    "9289-25-83",
-    "9867-94-17",
-    "9540-47-08",
-    "1789194128",
-    "2089533-23750",
-    "+919613090376",
-    "9625-29-19",
-    "+91 97666-66529",
-    "+91-9119-228-995",
-    "9204-70-74",
-    "9365-93-93",
-    "9835-17-59",
-    "9603-48-71",
-    "011 49696885",
-    "+91 9637240429"
+    "45.4867065",
+    "1784128795",
+    "15.7955008"
   ],
   "absent_because": {
-    "9207-31-03": "a second phone found in text; review whether it is the business's own",
-    "9668-36-26": "a second phone found in text; review whether it is the business's own",
-    "96.5795500": "a second phone found in text; review whether it is the business's own",
-    "95.5486706": "a second phone found in text; review whether it is the business's own",
-    "+91-98286-73846": "a second phone found in jsonld; review whether it is the business's own",
-    "+91 98842-71386": "a second phone found in tel; review whether it is the business's own",
-    "+91 95770-16375": "a second phone found in tel; review whether it is the business's own",
-    "011 4990-0483": "a second phone found in tel; review whether it is the business's own",
-    "9289-25-83": "a second phone found in text; review whether it is the business's own",
-    "9867-94-17": "a second phone found in text; review whether it is the business's own",
-    "9540-47-08": "a second phone found in text; review whether it is the business's own",
-    "1789194128": "a second phone found in text; review whether it is the business's own",
-    "2089533-23750": "a second phone found in tel; review whether it is the business's own",
-    "+919613090376": "a second phone found in tel; review whether it is the business's own",
-    "9625-29-19": "a second phone found in text; review whether it is the business's own",
-    "+91 97666-66529": "a second phone found in tel; review whether it is the business's own",
-    "+91-9119-228-995": "a second phone found in text; review whether it is the business's own",
-    "9204-70-74": "a second phone found in text; review whether it is the business's own",
-    "9365-93-93": "a second phone found in text; review whether it is the business's own",
-    "9835-17-59": "a second phone found in text; review whether it is the business's own",
-    "9603-48-71": "a second phone found in text; review whether it is the business's own",
-    "011 49696885": "a second phone found in tel; review whether it is the business's own",
-    "+91 9637240429": "a second phone found in tel; review whether it is the business's own"
+    "45.4867065": "a map coordinate from the page's geo metadata",
+    "1784128795": "part of an image filename or the srcset beside it",
+    "15.7955008": "a map coordinate from the page's geo metadata"
   }
 }

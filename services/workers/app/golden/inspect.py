@@ -29,9 +29,15 @@ class Occurrence:
 
 
 def occurrences(site: Labels, root: Path = CORPUS) -> list[Occurrence]:
-    """Every place a labelled value appears, with the markup around it."""
+    """Every place a labelled value appears, with the markup around it.
+
+    All three categories, `also_theirs` included. Leaving it out made the labelling loop lossy:
+    `propose --write` moves a value into `also_theirs`, the next `propose` could not see it, and
+    the next `--write` deleted it -- a scrubber-written value in no category at all. The leak
+    gate caught it, which is what the gate is for, but the cause was here.
+    """
     wanted = sorted(
-        {*site.expect.values(), *site.absent},
+        {*site.expect.values(), *site.also_theirs, *site.absent},
         key=len,
         reverse=True,
     )

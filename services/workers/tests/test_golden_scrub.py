@@ -17,7 +17,8 @@ import re
 
 import pytest
 
-from app.golden.scrub import scrub
+from app.golden.scrub import _MOBILE_KINDS, scrub
+from app.normalize.phones import line_type, parse
 
 PAGE = """<html><head>
 <script type="application/ld+json">{"@type":"Dentist","telephone":"+91 124 456 7890",
@@ -118,6 +119,66 @@ def test_a_mobile_stays_a_mobile() -> None:
     digits = re.sub(r"\D", "", phone.replacement)
     assert digits.startswith("91")
     assert digits[2] in "6789", "India's mobile ranges start 6 to 9"
+
+
+@pytest.mark.parametrize(
+    ("printed", "mobile"),
+    [
+        ("+91 97111 74449", True),
+        ("097111 74449", True),
+        ("9811223344", True),
+        ("+91 124 456 7890", False),
+        ("011 4567 8900", False),
+        ("022 2654 3210", False),
+        ("1800 123 4567", False),
+        ("6123456789", False),
+    ],
+)
+def test_the_replacement_is_the_same_kind_of_number(printed: str, mobile: bool) -> None:
+    """The property the two tests above only approximate, asserted on the result.
+
+    Keeping a prefix is a means, not the end. `1800 123 4567` keeps three digits and lands in
+    no toll-free range; `6123456789` is a landline whose first digit is in the mobile range, so
+    keeping that digit makes it a mobile. Both passed a prefix check and were wrong.
+    """
+    [phone] = scrub(f"<p>{printed}</p>", slug="p").substitutions
+    parsed = parse(phone.replacement, "IN")
+    assert parsed is not None, f"{phone.replacement} is not dialable at all"
+    assert (line_type(parsed) in _MOBILE_KINDS) is mobile, line_type(parsed)
+
+
+def test_an_unreadable_number_stays_unreadable() -> None:
+    """Faithfulness, not failure. `+91 124 9684614` is printed on a real page and
+    `phonenumbers` refuses it; a fixture that quietly repaired it would test a page nobody has,
+    and the pipeline would look better on the corpus than it is in the world."""
+    [phone] = scrub("<p>+91 124 9684614</p>", slug="p").substitutions
+    assert parse(phone.replacement, "IN") is None, phone.replacement
+    assert phone.replacement.startswith("+91 124"), "and it still looks like what it was"
+
+
+def test_a_library_version_is_not_an_email() -> None:
+    """`cdn.jsdelivr.net/npm/bootstrap@5.3.8` matched the email pattern, and the fixture came
+    out with a mailbox where the page had a library. A TLD is never all digits, so skipping
+    these cannot drop a real address."""
+    html = '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/b.css" rel="s">'
+    result = scrub(html, slug="p")
+    assert result.substitutions == []
+    assert "bootstrap@5.3.8" in result.html
+
+
+def test_a_real_address_with_a_numeric_label_is_still_substituted() -> None:
+    """The guard is on the TLD, not on digits anywhere: `info@clinic24.in` is an address."""
+    [sub] = scrub('<a href="mailto:info@clinic24.in">x</a>', slug="p").substitutions
+    assert sub.kind == "email"
+
+
+def test_inline_css_is_not_a_phone_number() -> None:
+    """`<style>` elements were stripped and `style="..."` attributes were not, so a shadow
+    colour became a contact value a reviewer had to read and reject by hand."""
+    html = '<div style="box-shadow: 0px 0px 7px 0px #00000029">Clinic</div>'
+    result = scrub(html, slug="p")
+    assert result.substitutions == []
+    assert 'style=""' in result.html, "the attribute stays, so the markup keeps its shape"
 
 
 def test_a_role_account_keeps_its_mailbox_name() -> None:

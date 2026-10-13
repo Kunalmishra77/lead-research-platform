@@ -1,6 +1,6 @@
 {
   "slug": "royaldente",
-  "harvested_at": "2026-10-13T10:27:13+00:00",
+  "harvested_at": "2026-10-13T11:54:17+00:00",
   "draft": false,
   "pages": [
     {
@@ -11,19 +11,15 @@
   ],
   "expect": {
     "email": "box54@royaldente-54.com",
-    "phone": "+919590785139"
-  },
-  "absent": [
-    "1719734964",
-    "9602-25-46",
-    "9453-70-44"
-  ],
-  "absent_because": {
-    "1719734964": "a cache-busting ?ver= on a Google Fonts stylesheet, not a phone number",
-    "9602-25-46": "a datePublished in the JSON-LD, mangled by the scrubber being over-broad",
-    "9453-70-44": "a dateModified in the JSON-LD, likewise"
+    "phone": "+919490785139"
   },
   "also_theirs": [
-    "09193049633"
-  ]
+    "09793049633"
+  ],
+  "absent": [
+    "1711964724"
+  ],
+  "absent_because": {
+    "1711964724": "a unix timestamp in seconds, not a number in any range this page dials"
+  }
 }

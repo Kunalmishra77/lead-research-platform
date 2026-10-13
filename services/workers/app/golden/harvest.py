@@ -169,12 +169,21 @@ async def harvest_many(
     want: int,
     root: Path = CORPUS,
     delay_s: float = 2.0,
+    refresh: bool = False,
 ) -> list[str]:
     """`want` sites, one at a time with a pause, stopping once that many are added.
 
     `want` rather than "all of them": the first version took a limit and used it only to size
     the candidate query, so `--limit 12` harvested 26 sites. A flag that does not do what it
     says is worse than no flag.
+
+    `refresh` inverts which sites are eligible: only the ones already in the corpus, rebuilt
+    from the live page. It exists because the scrubber is what writes the labels, so a fix to
+    the scrubber makes every fixture it wrote out of date -- and the fix that prompted it had
+    left three numbers in the corpus that `phonenumbers` refuses and every labelled phone a
+    mobile, so `phone_type=fixed_line` was being measured on nothing. A refreshed site is a
+    draft again, and that is not a cost of the mechanism but the point of it: the human agreed
+    to the old values, and these are different values (ADR-0020).
 
     Serial and slow on purpose: this reads other people's servers for our convenience, and
     doing it politely costs nothing we need.
@@ -184,7 +193,10 @@ async def harvest_many(
         if len(added) >= want:
             break
         slug = slug_for(name, domain)
-        if (root / slug / LABELS).exists():
+        known = (root / slug / LABELS).exists()
+        if known and not refresh:
+            continue
+        if refresh and not known:
             continue
         labels = await harvest(domain, slug, root=root)
         if labels is not None:

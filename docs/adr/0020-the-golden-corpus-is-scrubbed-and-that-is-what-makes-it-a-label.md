@@ -100,3 +100,43 @@ read them.
   therefore accept `.test` in fixtures — which it does not, so the corpus keeps the original
   TLD on the domain and changes only the label before it. That is a deliberate compromise: a
   corpus full of `.test` would pass through a code path real pages never take.
+
+## Amendment, 2026-10-13: the leak gate may not share the scrubber's patterns
+
+The first version of the gate imported `_PHONE` and `_EMAIL` from the scrubber and asked whether
+every match was a value some label accounted for. That is a detector built out of the thing it
+detects, and it inherited every blind spot:
+
+- `tel:099103%2008147` -- a space URL-encoded inside the link. The pattern splits around the `%`
+  into `099103` and `2008147`, both too short to match, so **the number was never substituted and
+  never flagged**. `tel:%2B919876543210` matches nothing at all.
+- the span `{6,16}` is one character short of a ten-digit number written with a separator between
+  every digit, so `9-2-1-7-8-3-6-5-2-1` was invisible to both the scrubber and the gate.
+
+Six real business numbers reached a pushed public commit this way (`a971c8c`): a Gurugram landline
+and a mobile on one site, four mobiles on another. All six are printed on those clinics' own public
+homepages, and all six are now substituted, but the commit stands in history and the decision about
+rewriting it belongs to whoever owns the repository.
+
+So the rule is now explicit. **The gate is adversarial and independent**: a wider pattern of its
+own, percent-escapes decoded before it looks, and `phonenumbers` asked the only question that
+matters for a published file -- can somebody dial this? Any exemption it makes (a numeric TLD, an
+ISO date) is expressed with the scrubber's own constant, so the two cannot drift apart silently.
+
+Three more rules earned by the same session:
+
+- **A value's identity is decided before its dialability.** `1794677085` is a WordPress
+  `form_time`, and `phonenumbers` normalises it to `+911794677085` and types it `fixed_line`,
+  because `179` is a real Chandigarh-region area code. Asking "is it dialable" first put four
+  timestamps into a site's contact labels. Nothing of that shape has reached the live graph --
+  0 of 6,191 stored phones -- because the extractor reads text nodes only, and attributes,
+  scripts and hidden inputs are where this noise lives.
+- **A substitution preserves what the pipeline stores, checked rather than approximated.**
+  `phone_type` is a column, so the replacement has to be the same kind of number; keeping a
+  prefix was a proxy for that and it failed twice (a toll-free `1800` needs four digits kept, and
+  `6123456789` is a landline whose first digit is in the mobile range). The scrubber now checks
+  the line type of each candidate and widens how much of the original it keeps until it matches,
+  down to a floor of five free digits.
+- **A date and a library version are left alone.** `2024-03-12` was being replaced by
+  `3644-44-80` and `bootstrap@5.3.8` by a mailbox. Neither is anybody's personal data, and a TLD
+  is never all digits, so skipping them cannot hide an address.

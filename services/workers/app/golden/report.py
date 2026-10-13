@@ -16,6 +16,7 @@ and counting guesses as ground truth is how a quality gate comes to measure noth
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Final
 
 from app.crawl.mapping import merge_pages, values_from_page
 from app.golden.corpus import CORPUS, Labels, load, pages_of
@@ -77,10 +78,34 @@ def same(field: str, label: str, extracted: str) -> bool:
     Digits rather than running the normalizer on both sides: calling the code under test to
     decide whether the code under test is right would hide exactly the bug worth catching. A
     normalisation that dropped the country code changes the digits and is still caught here.
+
+    Compared on the last ten, because exact digit equality cannot bridge the two forms: a
+    printed `09052507004` becomes `+919052507004`, where the trunk zero is *replaced* by the
+    country code rather than prefixed, so neither string is a suffix of the other. Ten digits is
+    a full Indian subscriber number and everything in front of it is notation. Before this,
+    `9001268807` and `+919001268807` scored as a miss, and the report said the pipeline had
+    failed on a number it had read correctly.
     """
     if field in _PHONE_FIELDS:
-        return _digits(label) == _digits(extracted)
+        return _same_number(_digits(label), _digits(extracted))
     return label.strip().lower() == extracted.strip().lower()
+
+
+#: An Indian subscriber number, which is what two spellings of one phone number have in common.
+_SUBSCRIBER_DIGITS: Final[int] = 10
+
+
+def _same_number(label: str, extracted: str) -> bool:
+    """Whether two runs of digits are the same number written two ways."""
+    if not label or not extracted:
+        return False
+    if label == extracted:
+        return True
+    if min(len(label), len(extracted)) < _SUBSCRIBER_DIGITS:
+        # Too short to hold a subscriber number, so there is nothing to compare but the whole
+        # thing -- and the whole thing already differed.
+        return False
+    return label[-_SUBSCRIBER_DIGITS:] == extracted[-_SUBSCRIBER_DIGITS:]
 
 
 def _digits(value: str) -> str:

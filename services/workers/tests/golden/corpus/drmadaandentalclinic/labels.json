@@ -1,7 +1,7 @@
 {
   "slug": "drmadaandentalclinic",
-  "harvested_at": "2026-10-13T10:32:37+00:00",
-  "draft": true,
+  "harvested_at": "2026-10-13T11:53:44+00:00",
+  "draft": false,
   "pages": [
     {
       "role": "homepage",
@@ -11,37 +11,31 @@
   ],
   "expect": {
     "email": "box18@drmadaandentalclinic-18.com",
-    "phone": "+919906426445"
+    "phone": "+919806426445"
   },
-  "also_theirs": [],
+  "also_theirs": [
+    "09875293306"
+  ],
   "absent": [
-    "9377-14-31",
-    "9336-35-87",
-    "1739435898",
-    "1739770143",
-    "09375293306",
-    "9795-22-94",
-    "96574876",
-    "2149595125",
-    "2149716366",
-    "2149105091",
-    "2149887996",
-    "95076994",
-    "1799142220"
+    "2149296295",
+    "2147866942",
+    "2145091001",
+    "2149225291",
+    "1792220356",
+    "1732598654",
+    "1732643476",
+    "57487657",
+    "07699487"
   ],
   "absent_because": {
-    "9377-14-31": "a second phone found in text; review whether it is the business's own",
-    "9336-35-87": "a second phone found in text; review whether it is the business's own",
-    "1739435898": "a second phone found in text; review whether it is the business's own",
-    "1739770143": "a second phone found in text; review whether it is the business's own",
-    "09375293306": "a second phone found in text; review whether it is the business's own",
-    "9795-22-94": "a second phone found in whatsapp; review whether it is the business's own",
-    "96574876": "a second phone found in text; review whether it is the business's own",
-    "2149595125": "a second phone found in text; review whether it is the business's own",
-    "2149716366": "a second phone found in text; review whether it is the business's own",
-    "2149105091": "a second phone found in text; review whether it is the business's own",
-    "2149887996": "a second phone found in text; review whether it is the business's own",
-    "95076994": "a second phone found in text; review whether it is the business's own",
-    "1799142220": "a second phone found in text; review whether it is the business's own"
+    "2149296295": "part of an image filename or the srcset beside it",
+    "2147866942": "part of an image filename or the srcset beside it",
+    "2145091001": "part of an image filename or the srcset beside it",
+    "2149225291": "part of an image filename or the srcset beside it",
+    "1792220356": "a date or time in the markup",
+    "1732598654": "a cache-busting ?ver= on a stylesheet or script",
+    "1732643476": "a cache-busting ?ver= on a stylesheet or script",
+    "57487657": "a page-builder element id",
+    "07699487": "a form's one-time token"
   }
 }

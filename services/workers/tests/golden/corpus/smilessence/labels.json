@@ -1,7 +1,7 @@
 {
   "slug": "smilessence",
-  "harvested_at": "2026-10-13T10:32:39+00:00",
-  "draft": true,
+  "harvested_at": "2026-10-13T11:53:47+00:00",
+  "draft": false,
   "pages": [
     {
       "role": "homepage",
@@ -21,43 +21,26 @@
   ],
   "expect": {
     "email": "box13@smilessence-13.com",
-    "phone": "+919731916614"
+    "phone": "+91-9965116059"
   },
-  "also_theirs": [],
+  "also_theirs": [
+    "+919531916614",
+    "+91 124 4614328",
+    "+91 9853470191",
+    "+919452790471"
+  ],
   "absent": [
-    "box49@smilessence-49.3.8",
-    "+91-9365116059",
-    "97.2833155",
-    "93.2876826",
-    "9484-70-08",
-    "9640-58-73",
-    "9417-42-40",
-    "9767-80-78",
-    "9123-91-90",
-    "95377036620000",
-    "94.7620286",
-    "92.379218",
-    "+919552790471",
-    "+91 124 9684614",
-    "+91 9153470191",
-    "09281047"
+    "60002237703662",
+    "17.6202864",
+    "32.8331557",
+    "82.8768263",
+    "37.921836"
   ],
   "absent_because": {
-    "box49@smilessence-49.3.8": "a second email found in text; review whether it is the business's own",
-    "+91-9365116059": "a second phone found in text; review whether it is the business's own",
-    "97.2833155": "a second phone found in text; review whether it is the business's own",
-    "93.2876826": "a second phone found in text; review whether it is the business's own",
-    "9484-70-08": "a second phone found in text; review whether it is the business's own",
-    "9640-58-73": "a second phone found in text; review whether it is the business's own",
-    "9417-42-40": "a second phone found in text; review whether it is the business's own",
-    "9767-80-78": "a second phone found in text; review whether it is the business's own",
-    "9123-91-90": "a second phone found in text; review whether it is the business's own",
-    "95377036620000": "a second phone found in text; review whether it is the business's own",
-    "94.7620286": "a second phone found in text; review whether it is the business's own",
-    "92.379218": "a second phone found in text; review whether it is the business's own",
-    "+919552790471": "a second phone found in tel; review whether it is the business's own",
-    "+91 124 9684614": "a second phone found in text; review whether it is the business's own",
-    "+91 9153470191": "a second phone found in text; review whether it is the business's own",
-    "09281047": "a second phone found in text; review whether it is the business's own"
+    "60002237703662": "part of a social profile URL, not a phone number",
+    "17.6202864": "a decimal number -- a coordinate, a price or a version",
+    "32.8331557": "a map coordinate from the page's geo metadata",
+    "82.8768263": "a map coordinate from the page's geo metadata",
+    "37.921836": "a decimal number -- a coordinate, a price or a version"
   }
 }

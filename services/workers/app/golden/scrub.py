@@ -33,6 +33,9 @@ import hashlib
 import re
 from dataclasses import dataclass, field
 from typing import Final
+from urllib.parse import unquote
+
+from app.normalize.phones import line_type, parse
 
 #: Deliberately broader than `app/crawl/contacts.py`: this has to catch what the extractors
 #: miss. It accepts any `@` between plausible local and domain parts, including the obfuscated
@@ -45,6 +48,13 @@ _EMAIL: Final[re.Pattern[str]] = re.compile(
     r"[A-Za-z0-9](?:[A-Za-z0-9\-]{0,62}[A-Za-z0-9])?)+)"
 )
 
+#: A `name@version` out of a CDN URL -- `cdn.jsdelivr.net/npm/bootstrap@5.3.8` -- which `_EMAIL`
+#: reads as an address with the domain `5.3.8`. Skipped rather than substituted, because a TLD is
+#: never all digits (ICANN forbids it, and IDNA could not encode it), so this cannot drop a real
+#: address; and leaving the URL intact is better for the fixture than replacing a library version
+#: with a mailbox.
+_NUMERIC_TLD: Final[re.Pattern[str]] = re.compile(r"\.[0-9]+$")
+
 #: Any run of digits long enough to be a phone number, with the separators people use. Broader
 #: than `phonenumbers` accepts on purpose: a PIN code, a price and a year all match, and the
 #: labelling step is where they are marked as things the extractor must *not* report.
@@ -52,7 +62,28 @@ _EMAIL: Final[re.Pattern[str]] = re.compile(
 #: The trailing guard is `(?!\d)` and not `(?![\w.])`. The stricter version rejected a number at
 #: the end of a sentence -- `... or on 097111 74449.` -- and left a real phone number in a fixture
 #: bound for a public repository. A boundary that fails closed is not a boundary.
-_PHONE: Final[re.Pattern[str]] = re.compile(r"(?<![\w.])(\+?\d[\d\s\-().]{6,16}\d)(?!\d)")
+#:
+#: The span is `{6,24}` and was `{6,16}`, which is one short of a ten-digit number written with a
+#: separator between every digit: `9-2-1-7-8-3-6-5-2-1` needs 17, matched nothing, and six real
+#: numbers went into the corpus untouched. The digit count is checked afterwards, in
+#: `replace_phone`, so widening the span here costs nothing and closes that class.
+_PHONE: Final[re.Pattern[str]] = re.compile(r"(?<![\w.])(\+?\d[\d\s\-().]{6,24}\d)(?!\d)")
+
+#: An ISO date, which `_PHONE` reads as an eight-digit number: `2024-03-12` became `3644-44-80`
+#: in six fixtures, so a `<time dateTime>` and a JSON-LD `uploadDate` both held a nonsense date.
+#: Left alone instead. A date is nobody's personal data, no Indian number is written this way, so
+#: skipping it hides nothing -- and a fixture with a real date is what the page actually serves.
+_ISO_DATE: Final[re.Pattern[str]] = re.compile(r"^(19|20)\d\d-\d{1,2}-\d{1,2}$")
+
+#: A `tel:` or `mailto:` with percent-escapes in it, which is how five numbers survived
+#: scrubbing: `tel:099103%2008147` splits into `099103` and `2008147` around the `%`, both too
+#: short for `_PHONE`, so the real number was published verbatim -- and the leak gate, running the
+#: same pattern, could not see it either. Worse, `tel:%2B919876543210` matches nothing at all.
+#:
+#: Decoded in these two schemes only, where a percent-escape has exactly one meaning.
+#: `app/crawl/contacts.py` unquotes hrefs as well, so a decoded fixture is the string the
+#: extractor works from in any case.
+_LINK_HREF: Final[re.Pattern[str]] = re.compile(r"""(?i)(?:tel|mailto):[^"'<>\s]*""")
 
 #: Elements no contact extractor reads, and which are most of a page's bytes.
 _STRIP: Final[tuple[str, ...]] = ("style", "svg", "noscript", "iframe", "canvas", "template")
@@ -73,6 +104,11 @@ _COMMENT: Final[re.Pattern[str]] = re.compile(r"(?s)<!--.*?-->")
 #: possible, was not seen in the corpus, and a pattern with a back-reference for the quote is
 #: the kind that looks right and silently matches nothing -- this one did, for one revision.
 _ESCAPED_SVG: Final[re.Pattern[str]] = re.compile(r'(?is)="[^"]*&lt;svg[^"]*"')
+
+#: An inline `style="..."`, which `_STRIP` cannot reach: it is an attribute, not an element. No
+#: extractor reads CSS, and a `box-shadow: 0 0 7px #00000029` put a "phone number" in the labels.
+#: The attribute is kept and emptied rather than removed, so the markup keeps its shape.
+_INLINE_STYLE: Final[re.Pattern[str]] = re.compile(r'(?is)\sstyle="[^"]*"')
 
 #: A base64 image inlined into the markup. Megabytes of it, and nothing reads it.
 _DATA_URI: Final[re.Pattern[str]] = re.compile(r"(?i)data:[a-z/+.-]+;base64,[A-Za-z0-9+/=]+")
@@ -146,6 +182,8 @@ def reduce_page(html: str) -> str:
         kept = re.sub(rf"(?is)<{tag}\b[^>]*/?>", "", kept)
     kept = _COMMENT.sub("", kept)
     kept = _ESCAPED_SVG.sub('="svg removed"', kept)
+    kept = _INLINE_STYLE.sub(' style=""', kept)
+    kept = _LINK_HREF.sub(lambda m: unquote(m.group(0)), kept)
     kept = _DATA_URI.sub("data:removed", kept)
     # Collapse the whitespace a stripped page leaves behind, so a fixture reads in a diff.
     kept = re.sub(r"\n{3,}", "\n\n", kept)
@@ -198,7 +236,10 @@ def _synthetic_email(local: str, domain: str, slug: str) -> str:
 
 
 def _country_digits(digits: list[str]) -> int:
-    """How many leading digits are kept verbatim: country code, trunk prefix, and area code.
+    """Where the search *starts*: country code, trunk prefix, and area code or series digit.
+
+    `_synthetic_phone` widens this when it has to, so being wrong here costs a few more real
+    digits in the fixture, not a broken number. Being right here is what keeps it to the few.
 
     The country code and the trunk prefix are kept because they are the shape: `+91 ...` must
     stay `+91 ...`, and a national `0...` must keep its leading zero, which is the digit
@@ -207,6 +248,12 @@ def _country_digits(digits: list[str]) -> int:
     The area code is kept for the same reason one level down. `+91 124 456 7890` is a Gurugram
     landline; replacing the `124` with a mobile prefix makes every landline in the corpus a
     mobile and quietly deletes the only test of `phone_type`.
+
+    A mobile keeps one digit for exactly the same reason, in the other direction. In India the
+    first subscriber digit *is* the series -- 6 to 9 is a mobile, anything else is not -- so a
+    body walked from an unconstrained hash turns `+91 97111 74449` into `+91 35643 89586`, a
+    landline. Keeping that one digit is the mirror of keeping the area code, and it is the same
+    `phone_type` test being protected.
     """
     prefix = 0
     if digits[:2] == ["9", "1"] and len(digits) > 10:
@@ -215,26 +262,33 @@ def _country_digits(digits: list[str]) -> int:
         prefix = 1
 
     rest = digits[prefix:]
-    if len(rest) >= 10 and rest[0] not in _MOBILE_FIRST:
+    if len(rest) < 10:
+        return prefix
+    if rest[0] not in _MOBILE_FIRST:
         # A landline: keep enough of the area code that the number stays one. Indian STD codes
         # are two to four digits after the trunk prefix; three covers the metros and Gurugram.
         return prefix + 3
-    return prefix
+    return prefix + 1
 
 
-def _synthetic_phone(original: str, slug: str) -> str:
-    """The same digits-and-separators shape, with digits that belong to nobody.
+#: How far to walk looking for a number phonenumbers accepts. Allocated ranges are contiguous
+#: blocks, so a valid one is usually within a few steps; this bound exists so a range with none
+#: at all fails fast rather than hanging a harvest.
+_SEARCH: Final[int] = 400
 
-    India's `9xxxxxxxxx` mobile range is used for the body, because `phonenumbers` validates
-    against the real allocation and a corpus of unallocated numbers would be refused by the very
-    code it is meant to measure.
-    """
-    number = _token(original, slug)
-    digits = [c for c in original if c.isdigit()]
-    kept = _country_digits(digits)
-    body_length = max(len(digits) - kept, 0)
-    body = f"9{(number % 900000000) + 100000000:09d}"[:body_length]
+#: The fewest digits that must still be synthetic. Keeping more of the original is how an odd
+#: range is matched, and this is the line it may not cross: five free digits mean a replacement
+#: cannot coincide with the number it replaced except at one chance in a hundred thousand.
+_FREE_DIGITS: Final[int] = 5
 
+#: Treated as one class, because phonenumbers cannot always tell them apart: several Indian
+#: ranges answer `FIXED_LINE_OR_MOBILE`. The distinction the corpus needs is mobile against
+#: landline -- `+91 124` must not come out a mobile -- not a label phonenumbers itself hedges.
+_MOBILE_KINDS: Final[frozenset[str]] = frozenset({"mobile", "fixed_line_or_mobile"})
+
+
+def _fill(original: str, digits: list[str], kept: int, body: str) -> str:
+    """`original` with its digits after `kept` replaced by `body`, separators untouched."""
     out: list[str] = []
     taken = 0
     for char in original:
@@ -250,6 +304,63 @@ def _synthetic_phone(original: str, slug: str) -> str:
     return "".join(out)
 
 
+def _is_mobile(value: str) -> bool | None:
+    """Whether this is a mobile, or None when it is not a phone number at all."""
+    parsed = parse(value, "IN")
+    return line_type(parsed) in _MOBILE_KINDS if parsed else None
+
+
+def _synthetic_phone(original: str, slug: str) -> str:
+    """The same digits-and-separators shape, with digits that belong to nobody.
+
+    **Every candidate is checked against `phonenumbers`, for two properties, not one.**
+
+    *It has to be dialable.* The first version filled the body from a hash and stopped there,
+    and every synthetic landline it produced was invalid -- `0124 940 4482` became
+    `0124 953 3188`, which is in no allocated range. The corpus then held `tel:` links the
+    pipeline refuses to read, so those pages could not be labelled with the number they plainly
+    show, and recall was being measured against values nothing could ever extract.
+
+    *And it has to be the same kind of number.* `phone_type` is a stored field, so a landline
+    that comes out a mobile deletes the only test of it. Checking the type beats guessing at
+    prefix lengths: keeping the area code saved `+91 124 456 7890` and keeping the series digit
+    saved `+91 97111 74449`, but `1800 123 4567` needs four digits kept, and `6123456789` is a
+    landline whose first digit is in the mobile range. So the search keeps widening -- one more
+    real digit each round -- until both properties hold, and stops at `_FREE_DIGITS`.
+
+    One condition covers both, and the third case falls out of it: when the original is not a
+    number phonenumbers reads, the replacement has to be unreadable too. A page printing
+    `+91 124 9684614`, which `phonenumbers` refuses, must stay a page the pipeline cannot read
+    it from -- otherwise the fixture claims a dialable number the business never published, and
+    recall on the corpus comes out better than recall in the world.
+
+    Candidates are tried in a deterministic order, so a re-harvest produces the same fixture.
+
+    `parse` and `line_type` are consulted here, and only to ask what kind of number this is.
+    That is a different question from the one the report asks, which is whether the pipeline
+    found the right one.
+    """
+    digits = [c for c in original if c.isdigit()]
+    seed = _token(original, slug)
+    wanted = _is_mobile(original)
+    widest = max(len(digits) - _FREE_DIGITS, 0)
+
+    # Walked numerically from a hashed start rather than re-hashed per attempt: allocated ranges
+    # are contiguous blocks, so stepping finds one, where twelve independent hashes did not.
+    # Then widened, because stepping only moves the last few digits -- 400 steps never reach a
+    # different range, which is what `1800` needs.
+    for kept in range(min(_country_digits(digits), widest), widest + 1):
+        body_length = max(len(digits) - kept, 0)
+        for step in range(_SEARCH):
+            body = f"{(seed + step) % (10 ** body_length):0{body_length}d}" if body_length else ""
+            candidate = _fill(original, digits, kept, body)
+            if _is_mobile(candidate) == wanted:
+                return candidate
+
+    # Unreachable for anything phonenumbers reads, since the last round keeps every digit but
+    # five of a number it already accepted. Returned rather than raised: a harvest that dies on
+    # one number in one page is worse than a fixture a reviewer throws out.
+    return _fill(original, digits, widest, "0" * _FREE_DIGITS)
 def _context_of(html: str, start: int) -> str:
     """Where a value sat, which is what decides how strong the evidence is.
 
@@ -320,6 +431,8 @@ def scrub(html: str, *, slug: str, reduce: bool = True) -> Scrubbed:
         local, joiner, domain = match.group(1), match.group(2), match.group(3)
         flat_domain = re.sub(r"\s*(?:\(\s*dot\s*\)|\[\s*dot\s*\])\s*", ".", domain)
         flat_domain = re.sub(r"\s+", "", flat_domain)
+        if _NUMERIC_TLD.search(flat_domain):
+            return match.group(0)
         key = f"email:{local}@{flat_domain}".lower()
         if key not in seen:
             seen[key] = _synthetic_email(local, flat_domain, slug)
@@ -340,6 +453,8 @@ def scrub(html: str, *, slug: str, reduce: bool = True) -> Scrubbed:
         original = match.group(1)
         digits = [c for c in original if c.isdigit()]
         if not 7 <= len(digits) <= 15:
+            return original
+        if _ISO_DATE.match(original.strip()):
             return original
         key = f"phone:{''.join(digits)}"
         if key not in seen:

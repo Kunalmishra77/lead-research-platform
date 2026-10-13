@@ -1,7 +1,7 @@
 {
   "slug": "dentwell",
-  "harvested_at": "2026-10-13T10:32:59+00:00",
-  "draft": true,
+  "harvested_at": "2026-10-13T11:54:11+00:00",
+  "draft": false,
   "pages": [
     {
       "role": "homepage",
@@ -20,45 +20,34 @@
     }
   ],
   "expect": {
-    "phone": "09252507004"
+    "phone": "01246378681"
   },
-  "also_theirs": [],
+  "also_theirs": [
+    "09052507004",
+    "093858 14994"
+  ],
   "absent": [
-    "9835-04-78",
-    "9207-75-60",
-    "1799944677",
-    "1799963436",
-    "01249306378",
-    "99612501460000",
-    "2029-88-62-850770",
-    "9936-28-69",
-    "2029-93-23-454",
-    "2029-81-16-905",
-    "2029-92-61-467",
-    "097858 14994",
-    "1799383200",
-    "962893420",
-    "912088251",
-    "9379-72-03",
-    "1799574929"
+    "2020-34-86-285077",
+    "2021-16-90-583",
+    "60003561250146",
+    "2022-61-46-728",
+    "2023-23-45-424",
+    "1794677085",
+    "1793436319",
+    "1793200723",
+    "1791229711",
+    "526770182"
   ],
   "absent_because": {
-    "9835-04-78": "a second phone found in text; review whether it is the business's own",
-    "9207-75-60": "a second phone found in text; review whether it is the business's own",
-    "1799944677": "a second phone found in text; review whether it is the business's own",
-    "1799963436": "a second phone found in text; review whether it is the business's own",
-    "01249306378": "a second phone found in tel; review whether it is the business's own",
-    "99612501460000": "a second phone found in text; review whether it is the business's own",
-    "2029-88-62-850770": "a second phone found in text; review whether it is the business's own",
-    "9936-28-69": "a second phone found in text; review whether it is the business's own",
-    "2029-93-23-454": "a second phone found in text; review whether it is the business's own",
-    "2029-81-16-905": "a second phone found in text; review whether it is the business's own",
-    "2029-92-61-467": "a second phone found in text; review whether it is the business's own",
-    "097858 14994": "a second phone found in text; review whether it is the business's own",
-    "1799383200": "a second phone found in text; review whether it is the business's own",
-    "962893420": "a second phone found in text; review whether it is the business's own",
-    "912088251": "a second phone found in text; review whether it is the business's own",
-    "9379-72-03": "a second phone found in text; review whether it is the business's own",
-    "1799574929": "a second phone found in text; review whether it is the business's own"
+    "2020-34-86-285077": "part of an image filename or the srcset beside it",
+    "2021-16-90-583": "part of an image filename or the srcset beside it",
+    "60003561250146": "part of a social profile URL, not a phone number",
+    "2022-61-46-728": "part of an image filename or the srcset beside it",
+    "2023-23-45-424": "part of an image filename or the srcset beside it",
+    "1794677085": "a cache-busting ?ver= on a stylesheet or script",
+    "1793436319": "a cache-busting ?ver= on a stylesheet or script",
+    "1793200723": "a cache-busting ?ver= on a stylesheet or script",
+    "1791229711": "a cache-busting ?ver= on a stylesheet or script",
+    "526770182": "digits inside Cloudflare's email-protection hex, which hides the address from harvesters"
   }
 }

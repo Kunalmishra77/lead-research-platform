@@ -92,14 +92,17 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
         crawl_client,
         RobotsPolicy(redis, _robots_fetch(crawl_client)),
     )
+    # One instance, shared: it is a read-through cache over the two seeded lookup tables, and a
+    # second copy would load the geography and the taxonomy again per worker for nothing.
+    reference = ReferenceData(engine)
     registry = build_registry(
         job_runs=SqlJobRunsRepo(engine),
         gateway=gateway,
         connectors=connectors,
-        reference=ReferenceData(engine),
+        reference=reference,
         research_tasks=SqlResearchTasksRepo(engine),
         research_jobs=SqlResearchJobsRepo(engine),
-        graph=SqlGraphRepo(engine),
+        graph=SqlGraphRepo(engine, geography=reference),
         usage=usage,
         crawler=crawler,
         frontier=Frontier(redis),

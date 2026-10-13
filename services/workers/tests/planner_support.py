@@ -28,7 +28,9 @@ MAHARASHTRA = GeoArea(
     country="IN",
     bbox=(15.6, 72.6, 22.0, 80.9),
     population=112_374_333,
-    aliases=frozenset({"maharashtra"}),
+    #: `MH` because that is the shape 870 of the live graph's state values have: sources report
+    #: the ISO 3166-2 subdivision code, not the name.
+    aliases=frozenset({"maharashtra", "mh"}),
 )
 MUMBAI = GeoArea(
     slug="mumbai-maharashtra",
@@ -101,6 +103,22 @@ class FakeReference:
             if slug:
                 found.setdefault(slug, None)
         return tuple(found)
+
+    async def find_state(self, name: str, *, country: str | None = None) -> GeoArea | None:
+        """Only state-kind areas, as the real one does.
+
+        Written out rather than delegated to `find_area`, because the difference between them is
+        the thing being tested: `find_area` prefers a city on a tie, and "Delhi" is both.
+        """
+        wanted = slugify(name)
+        matches = [
+            a
+            for a in self._areas
+            if a.kind == "state"
+            and a.answers_to(wanted)
+            and (country is None or a.country == country.upper())
+        ]
+        return max(matches, key=lambda a: a.population or 0) if matches else None
 
     async def find_area(self, name: str, *, country: str | None = None) -> GeoArea | None:
         # The real `slugify`, not a copy of it: a fake that reimplements the thing under test

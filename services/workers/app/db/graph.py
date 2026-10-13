@@ -34,8 +34,9 @@ from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 from uuid6 import uuid7
 
 from app.connectors.types import Candidate, FieldValue
-from app.db import batch
+from app.db import batch, best
 from app.db.batch import normalized_name
+from app.db.best import StateLookup
 from app.db.tenant import tenant_transaction
 from app.normalize.phones import to_e164
 
@@ -77,8 +78,12 @@ class GraphRepo(Protocol):
 
 
 class SqlGraphRepo:
-    def __init__(self, engine: AsyncEngine) -> None:
+    def __init__(self, engine: AsyncEngine, *, geography: StateLookup | None = None) -> None:
         self._engine = engine
+        #: Used only to place a state name (`app/db/best.py`). Optional because a test that
+        #: cares about rows rather than about geography should not have to seed one, and
+        #: `recompute` stores no state at all without it rather than guessing.
+        self._geography = geography
 
     #: Candidates per transaction. Large, because the statement count no longer grows with it:
     #: a chunk costs about a dozen round trips whether it holds ten candidates or a hundred.
@@ -152,6 +157,13 @@ class SqlGraphRepo:
         await batch.upsert_locations(conn, pending)
         await batch.record_domains(conn, pending)
         await batch.write_values(conn, batch.value_rows(pending), source_id=source_id)
+
+        # The derived cache, after the observations it derives from and inside the same
+        # transaction: a `best` that disagrees with the values it was computed from is worse
+        # than no `best` at all, and a reader cannot tell which it is looking at.
+        await best.recompute(
+            conn, [p.company_id for p in pending], geography=self._geography
+        )
         await batch.deliver(
             conn,
             pending,

@@ -208,4 +208,33 @@ describe('geography seed', () => {
     expect(delhi?.bboxSource).toBe('boundary');
     expect(delhi?.aliases).toContain('New Delhi');
   });
+
+  it('every state and union territory carries its ISO 3166-2 code', () => {
+    // Sources report the code far more often than the name: 870 of the live graph's company
+    // state values were `HR` and 245 were `Haryana`. 20 of the 36 subdivisions had no code at
+    // all, so `DL` -- 19 companies -- could not be placed and `companies.state` stayed null.
+    const states = geo.areas.filter((a) => a.kind === 'state' && a.country === 'IN');
+    expect(states).toHaveLength(36);
+    for (const state of states) {
+      const codes = state.aliases.filter((a) => /^[A-Z]{2}$/.test(a));
+      expect(codes.length, `${state.name} has no ISO 3166-2 code`).toBeGreaterThan(0);
+    }
+  });
+
+  it('no two subdivisions claim the same code', () => {
+    // A duplicate would mean one of them silently wins every lookup, and the loser's companies
+    // would be filed under the wrong state with nothing in the data to show it.
+    const owner = new Map<string, string>();
+    for (const state of geo.areas.filter((a) => a.kind === 'state' && a.country === 'IN')) {
+      for (const code of state.aliases.filter((a) => /^[A-Z]{2}$/.test(a))) {
+        expect(owner.has(code), `${code} claimed by ${owner.get(code)} and ${state.slug}`).toBe(
+          false,
+        );
+        owner.set(code, state.slug);
+      }
+    }
+    // 36 current codes plus the seven superseded by the 2020 merger and the 2023 revision
+    // (CT, DN, DD, OR, TG, UT, UL), which older releases still carry.
+    expect(owner.size).toBe(43);
+  });
 });

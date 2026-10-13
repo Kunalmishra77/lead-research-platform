@@ -23,8 +23,9 @@ from uuid6 import uuid7
 
 from app.config import Settings
 from app.connectors.types import Candidate, FieldValue
-from app.db import batch
+from app.db import batch, best
 from app.db.engine import create_engine
+from tests.planner_support import FakeReference as PlannerReference
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("DATABASE_URL_WORKERS"),
@@ -440,3 +441,206 @@ async def test_a_phone_without_a_country_is_still_refused(tenant: Tenant) -> Non
         )
     ).scalar()
     assert stored is None
+
+
+async def test_the_best_value_per_field_is_the_most_confident_one(tenant: Tenant) -> None:
+    """docs/04: per field, the current row with the highest confidence; ties go to the newest.
+
+    `companies.best` has existed since migration 0012 and nothing had ever written to it -- all
+    1,550 companies held `{}`. It is a derived cache and nothing here decides anything: the
+    winner is picked by numbers somebody else set when they observed the value.
+    """
+    conn = tenant[0]
+    place = str(uuid7())
+    source_id = await _source_id(conn)
+
+    def phone(number: str, confidence: float, day: int) -> FieldValue:
+        return FieldValue(
+            entity_type="company",
+            field="phone",
+            value=number,
+            source_key="overture",
+            source_url="https://example.test/p",
+            observed_at=datetime(2026, 9, day, tzinfo=UTC),
+            method="provider",
+            derivation="found",
+            confidence=confidence,
+        )
+
+    pending = batch.prepare(
+        [
+            candidate(
+                place,
+                "Best Value Clinic",
+                fields=(value("name", "Best Value Clinic"), phone("+911141000001", 0.5, 1)),
+            )
+        ]
+    )
+    await batch.insert_companies(conn, pending)
+    await batch.upsert_locations(conn, pending)
+    await batch.write_values(conn, batch.value_rows(pending), source_id=source_id)
+    # A second, more confident observation of the same field, as a crawl of the site would make.
+    await batch.write_values(
+        conn,
+        [batch.ValueRow(str(uuid7()), pending[0].company_id, phone("+911141000002", 0.9, 2))],
+        source_id=source_id,
+    )
+
+    assert await best.recompute(conn, [pending[0].company_id]) == 1
+
+    stored = (
+        await conn.execute(
+            text("select best from app.companies where id = :c"), {"c": pending[0].company_id}
+        )
+    ).scalar()
+    assert stored["phone"] == "+911141000002", "the more confident value wins"
+    assert stored["name"] == "Best Value Clinic"
+
+
+async def test_a_tie_on_confidence_goes_to_the_newest(tenant: Tenant) -> None:
+    conn = tenant[0]
+    place = str(uuid7())
+    source_id = await _source_id(conn)
+
+    def website(url: str, day: int) -> FieldValue:
+        return FieldValue(
+            entity_type="company",
+            field="website",
+            value=url,
+            source_key="overture",
+            source_url="https://example.test/p",
+            observed_at=datetime(2026, 9, day, tzinfo=UTC),
+            method="provider",
+            derivation="found",
+            confidence=0.85,
+        )
+
+    pending = batch.prepare([candidate(place, "Tie Clinic", fields=(website("https://a.in", 1),))])
+    await batch.insert_companies(conn, pending)
+    await batch.upsert_locations(conn, pending)
+    await batch.write_values(conn, batch.value_rows(pending), source_id=source_id)
+    await batch.write_values(
+        conn,
+        [batch.ValueRow(str(uuid7()), pending[0].company_id, website("https://b.in", 9))],
+        source_id=source_id,
+    )
+
+    await best.recompute(conn, [pending[0].company_id])
+
+    stored = (
+        await conn.execute(
+            text("select best from app.companies where id = :c"), {"c": pending[0].company_id}
+        )
+    ).scalar()
+    assert stored["website"] == "https://b.in"
+
+
+async def test_a_retired_value_is_not_the_best_one(tenant: Tenant) -> None:
+    """`is_current` is the filter. A value that was true last month still says so in
+    `field_values`, which is the point of the table, and must not be offered as the answer."""
+    conn = tenant[0]
+    place = str(uuid7())
+    source_id = await _source_id(conn)
+    pending = batch.prepare(
+        [candidate(place, "Moved Clinic", fields=(value("phone", "+911141000003"),))]
+    )
+    await batch.insert_companies(conn, pending)
+    await batch.upsert_locations(conn, pending)
+    await batch.write_values(conn, batch.value_rows(pending), source_id=source_id)
+    # The same field again, which retires the first.
+    await batch.write_values(
+        conn,
+        [batch.ValueRow(str(uuid7()), pending[0].company_id, value("phone", "+911141000004"))],
+        source_id=source_id,
+    )
+
+    await best.recompute(conn, [pending[0].company_id])
+
+    stored = (
+        await conn.execute(
+            text("select best from app.companies where id = :c"), {"c": pending[0].company_id}
+        )
+    ).scalar()
+    assert stored["phone"] == "+911141000004"
+
+
+async def test_a_company_with_no_values_is_not_given_an_empty_best(tenant: Tenant) -> None:
+    """Nothing to compute is not the same as computed and empty. `recompute` reports 0 so a
+    caller's log says what happened, and the column keeps its default."""
+    conn = tenant[0]
+    assert await best.recompute(conn, []) == 0
+    assert await best.recompute(conn, [str(uuid7())]) == 0
+
+
+async def test_the_state_column_is_filled_from_the_winning_value(tenant: Tenant) -> None:
+    """`_company_params` wrote a literal `None` into `companies.state` for every company ever
+    stored: 1,546 of 1,550 had no state and no state-level filter could work.
+
+    Through the geography, not straight from the value, because the sources do not agree on a
+    spelling -- the live graph held `HR` 870 against `Haryana` 245 for one state.
+    """
+    conn = tenant[0]
+    place = str(uuid7())
+    source_id = await _source_id(conn)
+    pending = batch.prepare(
+        [candidate(place, "State Clinic", fields=(value("state", "MH"),))]
+    )
+    await batch.insert_companies(conn, pending)
+    await batch.upsert_locations(conn, pending)
+    await batch.write_values(conn, batch.value_rows(pending), source_id=source_id)
+
+    await best.recompute(conn, [pending[0].company_id], geography=PlannerReference())
+
+    row = (
+        await conn.execute(
+            text("select state, best from app.companies where id = :c"),
+            {"c": pending[0].company_id},
+        )
+    ).first()
+    assert row is not None
+    assert row[0] == "Maharashtra", "the column holds the state's name"
+    assert row[1]["state"] == "MH", "the evidence keeps the code the source reported"
+
+
+async def test_a_state_value_that_is_not_a_state_is_not_stored(tenant: Tenant) -> None:
+    """`Gurugram` (a city), `India` and `IN` (a country) and `CA` all arrived in this field on
+    the live graph. Storing them would put a city in a state filter."""
+    conn = tenant[0]
+    source_id = await _source_id(conn)
+    for junk in ("Gurugram", "India", "IN", "CA"):
+        place = str(uuid7())
+        pending = batch.prepare([candidate(place, f"Junk {junk}", fields=(value("state", junk),))])
+        await batch.insert_companies(conn, pending)
+        await batch.upsert_locations(conn, pending)
+        await batch.write_values(conn, batch.value_rows(pending), source_id=source_id)
+
+        await best.recompute(conn, [pending[0].company_id], geography=PlannerReference())
+
+        state = (
+            await conn.execute(
+                text("select state from app.companies where id = :c"),
+                {"c": pending[0].company_id},
+            )
+        ).scalar()
+        assert state is None, f"{junk!r} is not a state and must not be stored as one"
+
+
+async def test_without_a_geography_no_state_is_invented(tenant: Tenant) -> None:
+    """`recompute` is callable without one -- a test about rows should not have to seed a
+    geography -- and then it stores no state rather than the raw value."""
+    conn = tenant[0]
+    place = str(uuid7())
+    source_id = await _source_id(conn)
+    pending = batch.prepare([candidate(place, "No Geo Clinic", fields=(value("state", "MH"),))])
+    await batch.insert_companies(conn, pending)
+    await batch.upsert_locations(conn, pending)
+    await batch.write_values(conn, batch.value_rows(pending), source_id=source_id)
+
+    await best.recompute(conn, [pending[0].company_id])
+
+    state = (
+        await conn.execute(
+            text("select state from app.companies where id = :c"), {"c": pending[0].company_id}
+        )
+    ).scalar()
+    assert state is None

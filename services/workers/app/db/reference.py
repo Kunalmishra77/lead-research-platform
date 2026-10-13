@@ -201,6 +201,31 @@ class ReferenceData:
         # name the larger wins: naming no state, a user almost always means that one.
         return max(matches, key=lambda a: (a.is_city, a.population or 0))
 
+    async def find_state(self, name: str, *, country: str | None = None) -> GeoArea | None:
+        """A state or union territory by the words a source used, or None.
+
+        Separate from `find_area` because that one prefers a city on a tie -- "Delhi" is both,
+        and a user naming it almost always means the city. Asked about the `state` field it is
+        the wrong answer, so the kind is part of the question here rather than a filter the
+        caller has to remember to apply.
+
+        None is a real answer and the caller must store nothing: `Gurugram` (a city), `India`
+        and `IN` (a country) all arrive in sources' state fields, and none of them is a state.
+        """
+        wanted = slugify(name)
+        if not wanted:
+            return None
+        matches = [
+            area
+            for area in await self.areas()
+            if area.kind == "state"
+            and area.answers_to(wanted)
+            and (country is None or area.country == country.upper())
+        ]
+        if not matches:
+            return None
+        return max(matches, key=lambda a: a.population or 0)
+
     async def google_types_for(self, taxonomy_ids: list[str]) -> tuple[str, ...]:
         """Places types for the spec's industries, in order and without duplicates."""
         return await self._source_categories(taxonomy_ids, "google_types")

@@ -38,6 +38,28 @@ def storage_key(url_hash: str, fetched_at: datetime) -> str:
     return f"raw/{fetched_at:%Y}/{fetched_at:%m}/{url_hash}/{stamp}.html.gz"
 
 
+def writable(root: Path) -> str | None:
+    """None when pages can actually be written here, or the reason they cannot.
+
+    Checked by writing a file, not by `os.access` and not by the directory existing. A fresh
+    Docker named volume is created root-owned while the worker runs as uid 1001, so `/data/raw`
+    existed, was reported ready, and failed every single write -- which the recorder then
+    swallowed into a log line, exactly as it is meant to when a disk is full. The store was
+    deployed and silently kept nothing.
+
+    So "ready" has to mean ready. A worker that cannot write here runs without a store and says
+    so once, loudly, rather than discovering it a page at a time.
+    """
+    probe = root / ".writable"
+    try:
+        root.mkdir(parents=True, exist_ok=True)
+        probe.write_bytes(b"")
+        probe.unlink()
+    except OSError as exc:
+        return f"{type(exc).__name__}: {exc}"
+    return None
+
+
 class RawStore(Protocol):
     """Somewhere to put a page's bytes and take them back out."""
 

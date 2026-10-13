@@ -115,6 +115,9 @@ const GROUPS: { heading: string; fields: string[] }[] = [
     ],
   },
   { heading: 'Profiles', fields: ['facebook', 'instagram', 'linkedin', 'x', 'youtube'] },
+  // Task 3.15 left this group for 3.9, which is where the first technology signal came from.
+  // Mail hosting first because it is the one that changes how you reach the business.
+  { heading: 'Technology', fields: ['mail_provider', 'mail_exchanger'] },
 ];
 
 const LABELS: Record<string, string> = {
@@ -123,6 +126,10 @@ const LABELS: Record<string, string> = {
   // may be handled (docs/10) and how it should be written to, so it belongs next to the
   // address rather than inside a tooltip.
   email_role: 'Mailbox',
+  // Who runs the domain's mail, read from its MX records. `mail_exchanger` is the host itself,
+  // which is the evidence the label was derived from, so both are shown.
+  mail_provider: 'Mail hosted by',
+  mail_exchanger: 'Mail host',
   phone: 'Phone',
   phone_type: 'Line type',
   whatsapp: 'WhatsApp',

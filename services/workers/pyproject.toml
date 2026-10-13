@@ -31,6 +31,7 @@ dependencies = [
   "osmium>=4.3,<5",
   "duckdb>=1.5,<2",
   "anyascii>=0.3.3",
+  "dnspython>=2.8.0",
 ]
 
 [dependency-groups]

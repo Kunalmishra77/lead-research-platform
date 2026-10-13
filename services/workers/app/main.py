@@ -16,7 +16,7 @@ from app.connectors.factory import build_connectors, close_clients
 from app.connectors.http_client import CallCost, ConnectorHttpClient
 from app.crawl.fetcher import CrawlFetcher, crawl_http_client
 from app.crawl.frontier import Frontier
-from app.crawl.rawstore import RETENTION_DAYS, LocalRawStore, prune
+from app.crawl.rawstore import RETENTION_DAYS, LocalRawStore, prune, writable
 from app.crawl.robots import RobotsFetcher, RobotsPolicy
 from app.db.engine import create_engine
 from app.db.graph import SqlGraphRepo
@@ -156,7 +156,18 @@ def _raw_documents(settings: Settings, engine: AsyncEngine) -> SqlRawDocuments |
     if root is None:
         log.warning("RAW_STORE_PATH is not set; crawled pages will not be kept")
         return None
-    root.mkdir(parents=True, exist_ok=True)
+    # Proved by writing, not assumed from the directory existing. A fresh named volume is
+    # root-owned and the worker is uid 1001, so the first deploy of this had a `/data/raw` it
+    # could not write to -- and the recorder swallowed every failure into a log line, as it
+    # should when a disk is full, so the store kept nothing and said it was ready.
+    reason = writable(root)
+    if reason is not None:
+        log.error(
+            "the raw store is not writable; crawled pages will not be kept",
+            path=str(root),
+            reason=reason,
+        )
+        return None
 
     # docs/04 keeps bodies 90 days. The database sweeper runs on pg_cron and can only delete
     # rows; the files are on this host's disk and only a process here can unlink them. Done at

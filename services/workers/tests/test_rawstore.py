@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from app.crawl.rawstore import LocalRawStore, Pruned, prune, storage_key
+from app.crawl.rawstore import LocalRawStore, Pruned, prune, storage_key, writable
 
 FETCHED = datetime(2026, 10, 13, 14, 25, 36, 123456, tzinfo=UTC)
 DIGEST = "a" * 64
@@ -216,3 +216,29 @@ def test_a_stray_directory_does_not_stop_the_sweep(tmp_path: Path) -> None:
     to run because it found something it does not recognise."""
     (tmp_path / "raw" / "notayear" / "notamonth").mkdir(parents=True)
     assert prune(tmp_path).files == 0
+
+
+def test_a_writable_directory_reports_nothing_wrong(tmp_path: Path) -> None:
+    assert writable(tmp_path / "fresh") is None
+    assert (tmp_path / "fresh").is_dir(), "and it is created on the way"
+
+
+def test_a_directory_that_cannot_be_written_to_says_why(tmp_path: Path) -> None:
+    """The bug this function exists for, and the reason it writes rather than asking.
+
+    A fresh Docker named volume is created root-owned while the worker runs as uid 1001. The
+    directory existed, `mkdir(exist_ok=True)` succeeded, the worker logged "raw store ready", and
+    every write then failed into the log line the recorder uses for a full disk. The store was
+    deployed and kept nothing for as long as nobody checked.
+
+    `os.chmod` is a no-op for the owner on Windows, so this stands a file where the directory
+    should be: `mkdir` on a path that is a file fails the same way a read-only mount does, which
+    is the property under test -- that the probe reports a reason instead of claiming success.
+    """
+    blocked = tmp_path / "blocked"
+    blocked.write_bytes(b"not a directory")
+
+    reason = writable(blocked)
+
+    assert reason is not None
+    assert "Error" in reason, reason

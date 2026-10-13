@@ -91,6 +91,24 @@ describe('LeadDetails', () => {
     expect(screen.getByText('role')).toBeInTheDocument();
   });
 
+  it('shows who hosts the mail, under Technology', () => {
+    // Task 3.15 left the Technology group for 3.9, which produced the first signal for it:
+    // a domain's MX records say who runs its mail, which changes how a business is reached.
+    render(
+      <LeadDetails
+        lead={lead([
+          value({ field: 'mail_provider', value: 'Microsoft 365', source: 'dns', confidence: 0.9 }),
+          value({ field: 'mail_exchanger', value: 'x.mail.protection.outlook.com', source: 'dns' }),
+        ])}
+      />,
+    );
+    expect(screen.getByText('Technology')).toBeInTheDocument();
+    expect(screen.getByText('Mail hosted by')).toBeInTheDocument();
+    expect(screen.getByText('Microsoft 365')).toBeInTheDocument();
+    // The host as well as the label: it is the evidence the label was derived from.
+    expect(screen.getByText('x.mail.protection.outlook.com')).toBeInTheDocument();
+  });
+
   it('shows a field it has no group for rather than dropping it', () => {
     // A value stored and then hidden is worse than one under an ugly heading: the second is
     // fixable by reading this list, the first is invisible.

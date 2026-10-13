@@ -28,6 +28,7 @@ Order, and the reason for it:
 """
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any, cast
 from urllib.parse import urljoin
 
@@ -41,6 +42,7 @@ from app.crawl.discovery import (
     page_budget,
     sitemap_urls,
 )
+from app.crawl.dns_records import CONFIDENCE_DNS, MailDnsLookup, mail_dns
 from app.crawl.fetcher import CrawlFetcher, Fetched
 from app.crawl.frontier import Frontier, host_of
 from app.crawl.mapping import SOURCE_KEY, merge_pages, values_from_page
@@ -60,6 +62,7 @@ from app.jobs.errors import (
 )
 from app.jobs.redact import redact
 from app.jobs.registry import HandlerRegistry
+from app.normalize.domains import registrable_domain
 
 JOB_TYPE = "crawl.company_site"
 
@@ -91,6 +94,10 @@ def register_crawl_handlers(
     tasks: ResearchTasksRepo,
     jobs: ResearchJobsRepo,
     raw: RawDocumentsRepo | None = None,
+    #: How a domain's mail records are read. Injected like the fetcher so a test never touches a
+    #: real resolver (CLAUDE.md: tests never hit live third-party services), and so a worker can
+    #: be run with DNS disabled on a network that blocks it.
+    resolve_mail: MailDnsLookup = mail_dns,
 ) -> None:
     async def on_failure(
         envelope: Any, error_class: ErrorClass, error: str, attempts: int | None
@@ -153,6 +160,18 @@ def register_crawl_handlers(
                 payload.company_id,
                 outcome.values,
                 source_id=await reference.source_id(SOURCE_KEY),
+            )
+            # A separate call because these come from a different source: the MX records of a
+            # domain are not the content of its website, and `field_values.source_id` is what a
+            # customer disputing a value reads. One lookup per crawl, after the pages, so a
+            # resolver that is having a bad day costs these two fields and not the emails.
+            written += await _record_mail_dns(
+                ctx,
+                payload,
+                graph=graph,
+                reference=reference,
+                org_id=org_id,
+                resolve=resolve_mail,
             )
         except JobCancelledError:
             await tasks.mark_cancelled(org_id, task_id)
@@ -220,6 +239,85 @@ class _Outcome:
         self.pages_read = 0
         self.pages_restricted = 0
         self.emails_seen = 0
+
+
+async def _record_mail_dns(
+    ctx: JobContext,
+    payload: CrawlPayload,
+    *,
+    graph: GraphRepo,
+    reference: ReferenceData,
+    org_id: str,
+    resolve: MailDnsLookup,
+) -> int:
+    """The domain's mail hosts, as two field values (task 3.9, docs/06 §5.3).
+
+    `mail_exchanger` is found: it is the host a sender would hand mail to, read from the records.
+    `mail_provider` is `derived_pattern`: the hostname is the evidence and the label is our
+    reading of it, which is the same honesty rule a pattern-derived email follows (CLAUDE.md).
+
+    A domain with no MX gets neither. 51% of the graph's domains have none, and whether that
+    makes an address undeliverable is task 4.5's verdict rather than this one's -- so the absence
+    is recorded by being absent, and nothing here claims a business cannot be emailed.
+
+    Never fails the task. The pages are the product and this is a bonus fact about them, so a
+    resolver that times out costs a log line.
+    """
+    domain = registrable_domain(payload.website)
+    if not domain:
+        return 0
+    try:
+        records = await resolve(domain)
+    except Exception as exc:
+        ctx.log.warning(
+            "could not read the domain's mail records",
+            domain=domain,
+            error_class=classify(exc).value,
+            error=redact(str(exc)),
+        )
+        return 0
+    if records is None:
+        return 0
+
+    observed = datetime.now(UTC)
+    # A DNS answer has no URL, and `field_values.source_url` is NOT NULL and CHECKed against
+    # `^https?://`. This names the domain the records belong to, which with `source_id = dns` is
+    # unambiguous about what was consulted; the record itself is identified by the field.
+    source_url = f"https://{domain}/"
+    values = [
+        FieldValue(
+            entity_type="company",
+            field="mail_exchanger",
+            value=records.preferred,
+            source_key="dns",
+            source_url=source_url,
+            observed_at=observed,
+            method="api",
+            derivation="found",
+            confidence=CONFIDENCE_DNS,
+        )
+    ]
+    if records.provider is not None:
+        values.append(
+            FieldValue(
+                entity_type="company",
+                field="mail_provider",
+                value=records.provider,
+                source_key="dns",
+                source_url=source_url,
+                observed_at=observed,
+                method="api",
+                derivation="derived_pattern",
+                confidence=CONFIDENCE_DNS,
+            )
+        )
+
+    return await graph.add_company_values(
+        org_id,
+        payload.company_id,
+        values,
+        source_id=await reference.source_id("dns"),
+    )
 
 
 async def _crawl_site(

@@ -44,7 +44,12 @@ RUN useradd --uid 1001 --create-home worker && chown -R worker:worker /app
 # directory, ownership included, and a volume mounted over a path that does not exist is owned
 # by root -- which a non-root process cannot write, so building the index would fail on
 # permissions at the one moment nobody is watching for it.
-RUN mkdir -p /data/places && chown -R worker:worker /data
+# Both data directories exist in the image and belong to `worker`, which is what makes a
+# *fresh* named volume usable: Docker initialises an empty volume from the image's content
+# at that path, ownership included. A path the image does not have is created at runtime as
+# root, and the container runs as uid 1001 -- which is exactly what happened to /data/raw on
+# its first deploy, and the store then failed every write while reporting itself ready.
+RUN mkdir -p /data/places /data/raw && chown -R worker:worker /data
 
 USER worker
 ENV PATH="/app/services/workers/.venv/bin:$PATH"

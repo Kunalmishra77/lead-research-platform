@@ -14,6 +14,7 @@ import structlog
 from redis.asyncio import Redis
 
 from app.connectors.types import FieldValue
+from app.crawl.dns_records import MailDns
 from app.crawl.fetcher import CrawlFetcher, crawl_http_client
 from app.crawl.frontier import Frontier
 from app.crawl.robots import RobotsPolicy
@@ -107,6 +108,7 @@ def build(
     robots: bytes = b"User-agent: *\nAllow: /\n",
     robots_status: int = 200,
     raw: FakeRawDocuments | None = None,
+    mail: MailDns | None = None,
 ) -> tuple[HandlerRegistry, FakeGraph, FakeTasks, FakeJobs, Any]:
     http = crawl_http_client()
     policy = RobotsPolicy(FakeRedis(), FakeFetcher(robots_status, robots))
@@ -122,8 +124,19 @@ def build(
         tasks=tasks,  # type: ignore[arg-type]
         jobs=jobs,  # type: ignore[arg-type]
         raw=raw,  # type: ignore[arg-type]
+        # Never the real resolver. CLAUDE.md: a test does not touch a live third-party service,
+        # and a DNS query is one -- it leaves the machine, it is slow, and its answer changes
+        # under you.
+        resolve_mail=_stub_mail(mail),
     )
     return registry, graph, tasks, jobs, http
+
+
+def _stub_mail(records: MailDns | None) -> Any:
+    async def resolve(domain: str) -> MailDns | None:
+        return records
+
+    return resolve
 
 
 class _AllowAll:
@@ -529,3 +542,116 @@ async def test_a_worker_with_no_raw_store_still_crawls(
 
     assert tasks.status == "completed"
     assert graph.written
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_the_domains_mail_host_is_recorded_with_who_runs_it(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """Task 3.9's DNS half. Two values from one lookup, with different honesty.
+
+    `mail_exchanger` is found -- it is the host a sender hands mail to, read from the records.
+    `mail_provider` is `derived_pattern`, because the hostname is the evidence and the label is
+    our reading of it; CLAUDE.md asks for that distinction on anything a pattern produced.
+    """
+    mock_site()
+    records = MailDns(
+        exchangers=("clinicdelhi-in.mail.protection.outlook.com",), provider="Microsoft 365"
+    )
+    registry, graph, _tasks, _jobs, http = build(redis, mail=records)
+    try:
+        await run(redis, make_envelope, registry)
+    finally:
+        await http.aclose()
+
+    by_field = {v.field: v for v in graph.written}
+    assert by_field["mail_exchanger"].value == "clinicdelhi-in.mail.protection.outlook.com"
+    assert by_field["mail_exchanger"].derivation == "found"
+    assert by_field["mail_provider"].value == "Microsoft 365"
+    assert by_field["mail_provider"].derivation == "derived_pattern"
+    # The records came from the domain's own nameservers, not from a page that might be a
+    # testimonial, so they are believed more than anything the crawl read.
+    assert by_field["mail_exchanger"].confidence > by_field["email"].confidence
+    assert by_field["mail_exchanger"].source_key == "dns", "not the website's source"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_a_domain_with_no_mail_records_gets_no_mail_fields(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """51% of the graph's domains have no MX. Whether that makes an address undeliverable is
+    task 4.5's verdict, so the absence is recorded by being absent and nothing here claims a
+    business cannot be emailed."""
+    mock_site()
+    registry, graph, _tasks, _jobs, http = build(redis, mail=None)
+    try:
+        await run(redis, make_envelope, registry)
+    finally:
+        await http.aclose()
+
+    fields = {v.field for v in graph.written}
+    assert "mail_exchanger" not in fields
+    assert "mail_provider" not in fields
+    assert "email" in fields, "and the crawl's own findings are untouched"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_an_unrecognised_mail_host_is_recorded_without_a_guess(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """Three of the graph's domains use `jellyfish.systems`, which matches no pattern.
+
+    The host is a fact and the provider is not known, so one value is written and the other is
+    left out. Labelling it "other" would be a guess stored as a fact.
+    """
+    mock_site()
+    registry, graph, _tasks, _jobs, http = build(
+        redis, mail=MailDns(exchangers=("mx1-hosting.jellyfish.systems",), provider=None)
+    )
+    try:
+        await run(redis, make_envelope, registry)
+    finally:
+        await http.aclose()
+
+    fields = {v.field for v in graph.written}
+    assert "mail_exchanger" in fields
+    assert "mail_provider" not in fields
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_a_resolver_that_fails_costs_the_two_fields_and_nothing_else(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """The pages are the product and this is a bonus fact about them."""
+    mock_site()
+
+    async def explode(domain: str) -> MailDns | None:
+        raise TimeoutError("the resolver never answered")
+
+    registry, graph, tasks, _jobs, http = build(redis)
+    # Re-register with a resolver that throws, which `build` cannot express.
+    registry = HandlerRegistry()
+    register_crawl_handlers(
+        registry,
+        fetcher=CrawlFetcher(
+            http, RobotsPolicy(FakeRedis(), FakeFetcher(200, b"User-agent: *\nAllow: /\n")),
+            resolver=_AllowAll(), pacer=None,
+        ),
+        frontier=Frontier(redis, cooldown_s=0.0),
+        graph=graph,  # type: ignore[arg-type]
+        reference=FakeReference(),  # type: ignore[arg-type]
+        tasks=tasks,  # type: ignore[arg-type]
+        jobs=FakeJobs(),  # type: ignore[arg-type]
+        resolve_mail=explode,
+    )
+    try:
+        await run(redis, make_envelope, registry)
+    finally:
+        await http.aclose()
+
+    assert tasks.status == "completed"
+    assert "email" in {v.field for v in graph.written}

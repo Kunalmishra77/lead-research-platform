@@ -27,7 +27,8 @@ Order, and the reason for it:
 5. write the values in one transaction, then report.
 """
 
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, cast
 from urllib.parse import urljoin
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -44,6 +45,7 @@ from app.crawl.fetcher import CrawlFetcher, Fetched
 from app.crawl.frontier import Frontier, host_of
 from app.crawl.mapping import SOURCE_KEY, merge_pages, values_from_page
 from app.db.graph import GraphRepo
+from app.db.raw_documents import AccessStatus, RawDocumentsRepo
 from app.db.reference import ReferenceData
 from app.db.research_jobs import ResearchJobsRepo
 from app.db.research_tasks import ResearchTasksRepo
@@ -88,6 +90,7 @@ def register_crawl_handlers(
     reference: ReferenceData,
     tasks: ResearchTasksRepo,
     jobs: ResearchJobsRepo,
+    raw: RawDocumentsRepo | None = None,
 ) -> None:
     async def on_failure(
         envelope: Any, error_class: ErrorClass, error: str, attempts: int | None
@@ -143,6 +146,7 @@ def register_crawl_handlers(
                 fetcher=fetcher,
                 frontier=frontier,
                 research_job_id=research_job_id,
+                recorder=_Recorder(raw, reference),
             )
             written = await graph.add_company_values(
                 org_id,
@@ -225,10 +229,13 @@ async def _crawl_site(
     fetcher: CrawlFetcher,
     frontier: Frontier,
     research_job_id: str,
+    recorder: "_Recorder",
 ) -> _Outcome:
     """Reads the homepage, picks the rest from it, and merges what every page said."""
     outcome = _Outcome()
-    homepage = await _read(ctx, payload.website, fetcher=fetcher, frontier=frontier)
+    homepage = await _read(
+        ctx, payload.website, fetcher=fetcher, frontier=frontier, recorder=recorder
+    )
     if homepage is None:
         outcome.pages_restricted += 1
         return outcome
@@ -237,9 +244,9 @@ async def _crawl_site(
     outcome.pages_read += 1
     budget = page_budget(payload.depth or "standard")
     chosen = choose_pages(
-        homepage.url,
-        links_from(homepage.body, homepage.url),
-        sitemap=await _sitemap(ctx, homepage.url, fetcher=fetcher, frontier=frontier),
+        homepage.page.url,
+        links_from(homepage.page.body, homepage.page.url),
+        sitemap=await _sitemap(ctx, homepage.page.url, fetcher=fetcher, frontier=frontier),
         limit=budget,
     )
 
@@ -247,7 +254,9 @@ async def _crawl_site(
         if candidate.role is PageRole.HOMEPAGE:
             continue
         await raise_if_cancelled(ctx.redis, research_job_id)
-        page = await _read(ctx, candidate.url, fetcher=fetcher, frontier=frontier)
+        page = await _read(
+            ctx, candidate.url, fetcher=fetcher, frontier=frontier, recorder=recorder
+        )
         if page is None:
             outcome.pages_restricted += 1
             continue
@@ -256,12 +265,15 @@ async def _crawl_site(
 
     facts = [
         values_from_page(
-            page.body,
-            page_url=page.url,
+            read.page.body,
+            page_url=read.page.url,
             region=payload.country,
+            # Which copy each value came from, carried through `merge_pages` so the winning
+            # value still names its own page rather than whichever was read first.
+            raw_document_id=read.raw_document_id,
         )
-        for page in pages
-        if page.body
+        for read in pages
+        if read.page.body
     ]
     outcome.values = merge_pages(facts)
     outcome.emails_seen = sum(f.emails_found for f in facts)
@@ -269,43 +281,133 @@ async def _crawl_site(
 
 
 async def _read(
-    ctx: JobContext, url: str, *, fetcher: CrawlFetcher, frontier: Frontier
-) -> Fetched | None:
+    ctx: JobContext,
+    url: str,
+    *,
+    fetcher: CrawlFetcher,
+    frontier: Frontier,
+    recorder: "_Recorder | None",
+) -> "_Page | None":
     """One page, or None when we were refused, told not to, or could not safely ask.
 
     None rather than an exception, because none of those is a failure of this job. A site is
     entitled to turn us away, and retrying a refusal three times would be both rude and pointless.
+
+    Every one of those endings is recorded as a `raw_documents` row (task 3.6), which is why the
+    recording happens here and not at the caller: this is the only place that knows *which*
+    ending it was. "This door was shut on this date" is the answer to "why has this company no
+    email", and under CLAUDE.md the crawler stops rather than evades, so a refusal is an outcome
+    and not a failure.
+
+    `recorder=None` fetches without recording anything, which is what `/sitemap.xml` wants: no
+    value is ever extracted from one, so a copy of it is bytes spent on nothing.
     """
     host = host_of(url)
     if host and not await frontier.wait_for_host(host):
         # Another worker is on this host and still will be. Better to report the page unread than
-        # to hold this worker until the site's clock frees up.
+        # to hold this worker until the site's clock frees up. Deliberately not recorded: nothing
+        # was asked of the site, so there is no outcome to record.
         ctx.log.info("crawl skipped a page: host busy", url=url)
         return None
     try:
         page = await fetcher.fetch(url)
     except AccessRestrictedError as exc:
         ctx.log.info("crawl refused", url=url, reason=str(exc), error_class="access_restricted")
+        if recorder is not None:
+            await recorder.record(ctx, url, access_status="restricted")
         return None
     except InvalidInputError as exc:
         # The SSRF guard, or a URL that was never fetchable. Recorded and dropped: no retry can
         # make a private address public.
         ctx.log.info("crawl refused an unsafe url", url=url, reason=str(exc))
+        if recorder is not None:
+            await recorder.record(ctx, url, access_status="error")
         return None
     if not page.ok or not page.body:
         ctx.log.info("crawl read nothing useful", url=url, status=page.status)
+        if recorder is not None:
+            await recorder.record(ctx, url, access_status="error", http_status=page.status)
         return None
-    return page
+    document_id = (
+        await recorder.record(
+            ctx,
+            page.url,
+            access_status="ok",
+            http_status=page.status,
+            content_type=page.headers.get("content-type"),
+            body=page.body,
+        )
+        if recorder is not None
+        else None
+    )
+    return _Page(page=page, raw_document_id=document_id)
+
+
+@dataclass(frozen=True, slots=True)
+class _Page:
+    """A fetched page and the copy of it that was kept, if one was."""
+
+    page: Fetched
+    raw_document_id: str | None
+
+
+class _Recorder:
+    """Writes a `raw_documents` row for each fetch, when there is somewhere to write it.
+
+    Optional on purpose. A worker with no `RAW_STORE_PATH` still crawls and still extracts; it
+    simply keeps no copies, and a test about extraction should not have to provide a store. What
+    it must never do is fail a crawl because the bookkeeping failed -- the leads are the product
+    and the copy is a cache, so a store that is full or a disk that is read-only costs a log line.
+    """
+
+    def __init__(self, repo: RawDocumentsRepo | None, reference: ReferenceData) -> None:
+        self._repo = repo
+        self._reference = reference
+
+    async def record(
+        self,
+        ctx: JobContext,
+        url: str,
+        *,
+        access_status: str,
+        http_status: int | None = None,
+        content_type: str | None = None,
+        body: bytes | None = None,
+    ) -> str | None:
+        if self._repo is None:
+            return None
+        try:
+            recorded = await self._repo.record(
+                url=url,
+                source_id=await self._reference.source_id(SOURCE_KEY),
+                access_status=cast("AccessStatus", access_status),
+                http_status=http_status,
+                content_type=content_type,
+                body=body,
+            )
+        except Exception as exc:
+            ctx.log.warning(
+                "the page was read but not kept",
+                url=url,
+                error_class=classify(exc).value,
+                error=redact(str(exc)),
+            )
+            return None
+        return recorded.raw_document_id
 
 
 async def _sitemap(
     ctx: JobContext, homepage_url: str, *, fetcher: CrawlFetcher, frontier: Frontier
 ) -> list[str]:
     """`/sitemap.xml`, if the site has one. Absent is the common case and costs nothing."""
-    page = await _read(
-        ctx, urljoin(homepage_url, "/sitemap.xml"), fetcher=fetcher, frontier=frontier
+    read = await _read(
+        ctx,
+        urljoin(homepage_url, "/sitemap.xml"),
+        fetcher=fetcher,
+        frontier=frontier,
+        recorder=None,
     )
-    return sitemap_urls(page.body) if page is not None else []
+    return sitemap_urls(read.page.body) if read is not None else []
 
 
 def _research_job_id(ctx: JobContext) -> str:

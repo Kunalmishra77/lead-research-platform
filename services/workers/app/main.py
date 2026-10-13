@@ -8,6 +8,7 @@ import socket
 import sys
 
 from redis.asyncio import Redis
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.ai.factory import build_gateway
 from app.config import Settings, get_settings
@@ -15,10 +16,12 @@ from app.connectors.factory import build_connectors, close_clients
 from app.connectors.http_client import CallCost, ConnectorHttpClient
 from app.crawl.fetcher import CrawlFetcher, crawl_http_client
 from app.crawl.frontier import Frontier
+from app.crawl.rawstore import RETENTION_DAYS, LocalRawStore, prune
 from app.crawl.robots import RobotsFetcher, RobotsPolicy
 from app.db.engine import create_engine
 from app.db.graph import SqlGraphRepo
 from app.db.job_runs import SqlJobRunsRepo
+from app.db.raw_documents import SqlRawDocuments
 from app.db.reference import ReferenceData
 from app.db.research_jobs import SqlResearchJobsRepo
 from app.db.research_tasks import SqlResearchTasksRepo
@@ -103,6 +106,7 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
         research_tasks=SqlResearchTasksRepo(engine),
         research_jobs=SqlResearchJobsRepo(engine),
         graph=SqlGraphRepo(engine, geography=reference),
+        raw_documents=_raw_documents(settings, engine),
         usage=usage,
         crawler=crawler,
         frontier=Frontier(redis),
@@ -139,6 +143,39 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
         await redis.aclose()
         await engine.dispose()
         log.info("workers stopped")
+
+
+def _raw_documents(settings: Settings, engine: AsyncEngine) -> SqlRawDocuments | None:
+    """The raw store, when this host has somewhere to put pages (ADR-0019).
+
+    None when `RAW_STORE_PATH` is unset, and the crawler then keeps no copies and still records
+    nothing -- which is the right behaviour for a worker that was deployed without the volume,
+    because a crawl that cannot save a page is still a crawl that found an email.
+    """
+    root = settings.RAW_STORE_PATH
+    if root is None:
+        log.warning("RAW_STORE_PATH is not set; crawled pages will not be kept")
+        return None
+    root.mkdir(parents=True, exist_ok=True)
+
+    # docs/04 keeps bodies 90 days. The database sweeper runs on pg_cron and can only delete
+    # rows; the files are on this host's disk and only a process here can unlink them. Done at
+    # startup because there is no worker-side scheduler yet and a deploy happens often enough to
+    # bound the store -- `python -m app.crawl prune` is the same sweep by hand. It is
+    # synchronous and runs before the consumers start, so it never walks a directory tree while
+    # a crawl is waiting on the event loop.
+    pruned = prune(root)
+    if pruned.files:
+        log.info(
+            "pruned the raw store",
+            files=pruned.files,
+            megabytes=round(pruned.bytes / 1_000_000, 1),
+            months_removed=pruned.months_removed,
+            keep_days=RETENTION_DAYS,
+        )
+
+    log.info("raw store ready", path=str(root))
+    return SqlRawDocuments(engine, LocalRawStore(root))
 
 
 def main() -> None:

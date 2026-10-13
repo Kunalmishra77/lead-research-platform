@@ -360,9 +360,10 @@ async def write_values(conn: AsyncConnection, rows: Sequence[ValueRow], *, sourc
         text(
             "insert into app.field_values"
             " (id, entity_type, entity_id, field, value, source_id, source_url,"
-            "  method, derivation, confidence, observed_at)"
+            "  raw_document_id, method, derivation, confidence, observed_at)"
             " values (:id, 'company', :entity, :field, cast(cast(:value as text) as jsonb),"
-            "  :source, :url, cast(:method as app.value_method), :derivation,"
+            "  :source, :url, cast(:raw_document as uuid),"
+            "  cast(:method as app.value_method), :derivation,"
             "  :confidence, :observed)"
         ),
         [
@@ -373,6 +374,9 @@ async def write_values(conn: AsyncConnection, rows: Sequence[ValueRow], *, sourc
                 "value": json.dumps(r.value.value),
                 "source": source_id,
                 "url": r.value.source_url,
+                # Which *copy* of the page, where there is one (task 3.6). `source_url` says
+                # which page; this survives the page changing afterwards.
+                "raw_document": r.value.raw_document_id,
                 "method": r.value.method,
                 "derivation": r.value.derivation,
                 "confidence": r.value.confidence,

@@ -72,6 +72,11 @@ class Settings(BaseSettings):
     #: makes it free of both quota and per-row cost. Unset means the index is not available and
     #: the connector is not registered, exactly as a missing API key means for the others.
     PLACES_INDEX_PATH: Path | None = None
+    #: Where crawled pages are kept (ADR-0019). A directory on this host rather than a bucket: a
+    #: lakh of leads is about 660 MB of gzipped pages against a 1 GB object-storage free plan,
+    #: and this host has 134 GB. Unset means nothing is stored and the `raw_documents` row is
+    #: still written -- the row is the evidence, the body is the cache.
+    RAW_STORE_PATH: Path | None = None
 
     #: Comma-separated pools this process consumes, e.g. "system,crawl_http" (streams jobs:<pool>).
     WORKER_POOLS: str = "system"

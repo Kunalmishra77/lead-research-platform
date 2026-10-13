@@ -69,12 +69,27 @@ type TenantTable = (typeof TENANT_TABLES)[number];
  * table but cannot be exercised by the INSERT and UPDATE/DELETE loops below. `leads` is
  * worker-insert, api-update-on-seven-columns and delete-for-nobody (ADR-0012), so a refusal there
  * would come from the grant rather than from the policy and would prove nothing about isolation.
+ *
+ * `research_job_leads` is the same shape (0025: worker inserts, the API only reads) and had been
+ * missing from these lists since migration 0024 added it. The test below checks that every table
+ * in schema `app` appears here, so it had been failing for anyone who ran it with a full set of
+ * database URLs -- which `pnpm test` does not, because the live suites skip without them.
  */
-const WORKFLOW_TABLES = ['leads'] as const;
+const WORKFLOW_TABLES = ['leads', 'research_job_leads'] as const;
 const USER_SCOPED_TABLES = ['user_profiles'] as const;
 const GLOBAL_TABLES = ['sources'] as const;
 /** Shared company graph: both roles read, only app_worker writes (ADR-0007). */
-const GRAPH_TABLES = ['companies', 'company_domains', 'company_locations', 'field_values'] as const;
+const GRAPH_TABLES = [
+  'companies',
+  'company_domains',
+  'company_locations',
+  'field_values',
+  // The crawler's kept responses and the key table that makes them referenceable
+  // (task 3.6, ADR-0019). Append-only for app_worker, like field_values: it may add a
+  // document and may never rewrite one, and deleting is the retention sweeper's job.
+  'raw_documents',
+  'raw_document_keys',
+] as const;
 /** Seeded reference data: read-only for both app roles. */
 const REFERENCE_TABLES = ['industries', 'geo_areas', 'credit_rates', 'plans'] as const;
 
@@ -187,6 +202,11 @@ describe.skipIf(!live)('RLS isolation between organizations', () => {
                 values (${o.company}, ${`${label} dental`}, ${`${label} dental`})`;
     await owner`insert into app.leads (id, org_id, workspace_id, company_id, research_job_id)
                 values (${o.lead}, ${o.org}, ${o.workspace}, ${o.company}, ${o.job})`;
+    // Which job delivered which lead (0024). Seeded because the isolation loop below needs a
+    // row of org A's in every table it covers, and a table with no rows proves nothing about
+    // whether org B can see them.
+    await owner`insert into app.research_job_leads (org_id, research_job_id, lead_id, is_new)
+                values (${o.org}, ${o.job}, ${o.lead}, true)`;
   }
 
   beforeAll(async () => {
@@ -594,6 +614,12 @@ describe.skipIf(!live)('RLS isolation between organizations', () => {
           return `insert into app.company_locations (id, company_id, city) values ('${id}', '${company}', 'Delhi')`;
         case 'field_values':
           return `insert into app.field_values (id, entity_type, entity_id, field, value, source_id, source_url, method, confidence, observed_at) values ('${id}', 'company', '${company}', 'name', '"Probe"', '${sourceId}', 'https://maps.google.com/?cid=1', 'api', 0.9, now())`;
+        case 'raw_documents':
+          // 32 bytes of hash, because the CHECKs insist on sha256 and a probe that fails on a
+          // constraint would pass this test for the wrong reason (task 3.6).
+          return `insert into app.raw_documents (id, url, url_hash, source_id, fetched_at, access_status) values ('${id}', 'https://probe.invalid/${id}', decode(repeat('ab', 32), 'hex'), '${sourceId}', now(), 'error')`;
+        case 'raw_document_keys':
+          return `insert into app.raw_document_keys (raw_document_id, url_hash, content_hash, fetched_at) values ('${id}', decode(repeat('cd', 32), 'hex'), decode(repeat('ef', 32), 'hex'), now())`;
       }
     };
 

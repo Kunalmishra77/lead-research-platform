@@ -69,3 +69,10 @@ export const valueMethod = app.enum('value_method', ['api', 'crawl', 'ai', 'user
 export const entityType = app.enum('entity_type', ['company', 'person', 'location']);
 
 export const geoKind = app.enum('geo_kind', ['country', 'state', 'district', 'city', 'locality']);
+
+/**
+ * How a fetch ended (ADR-0019). `restricted` is a door we were told not to open -- a login, a
+ * paywall, a bot challenge -- and is an outcome, not a failure: the crawler stops and never
+ * evades (CLAUDE.md, docs/08).
+ */
+export const accessStatus = app.enum('access_status', ['ok', 'restricted', 'error']);

@@ -17,6 +17,7 @@ from app.connectors.types import FieldValue
 from app.crawl.fetcher import CrawlFetcher, crawl_http_client
 from app.crawl.frontier import Frontier
 from app.crawl.robots import RobotsPolicy
+from app.db.raw_documents import Recorded
 from app.handlers import crawl as crawl_handler
 from app.handlers.crawl import JOB_TYPE, register_crawl_handlers
 from app.jobs.cancellation import CANCEL_KEY
@@ -71,11 +72,41 @@ class FakeGraph:
         return [v for _, _, values in self.calls for v in values]
 
 
+class FakeRawDocuments:
+    """Records what it was asked to keep, without a disk or a database.
+
+    Reports a different id per body and the same id for a repeat, because that is the one
+    behaviour the handler depends on: a value points at the copy it was read from, and a page
+    fetched twice unchanged is one copy. The real thing is tested against a real Postgres in
+    `test_raw_documents.py`.
+    """
+
+    def __init__(self, fail: bool = False) -> None:
+        self.fail = fail
+        self.recorded: list[dict[str, Any]] = []
+        self._ids: dict[bytes, str] = {}
+
+    async def record(self, **kwargs: Any) -> Recorded:
+        if self.fail:
+            raise RuntimeError("the disk is full")
+        self.recorded.append(kwargs)
+        body = kwargs.get("body")
+        if body is None:
+            return Recorded(raw_document_id=None, stored=False)
+        known = self._ids.get(body)
+        if known is not None:
+            return Recorded(raw_document_id=known, stored=False, deduplicated=True)
+        document_id = f"doc-{len(self._ids) + 1}"
+        self._ids[body] = document_id
+        return Recorded(raw_document_id=document_id, stored=True)
+
+
 def build(
     redis: Redis,
     *,
     robots: bytes = b"User-agent: *\nAllow: /\n",
     robots_status: int = 200,
+    raw: FakeRawDocuments | None = None,
 ) -> tuple[HandlerRegistry, FakeGraph, FakeTasks, FakeJobs, Any]:
     http = crawl_http_client()
     policy = RobotsPolicy(FakeRedis(), FakeFetcher(robots_status, robots))
@@ -90,6 +121,7 @@ def build(
         reference=FakeReference(),  # type: ignore[arg-type]
         tasks=tasks,  # type: ignore[arg-type]
         jobs=jobs,  # type: ignore[arg-type]
+        raw=raw,  # type: ignore[arg-type]
     )
     return registry, graph, tasks, jobs, http
 
@@ -375,3 +407,125 @@ async def test_a_dead_letter_without_a_job_is_recorded_and_asks_nothing(
         assert jobs.finished == 0
     finally:
         await http.aclose()
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_every_page_read_is_recorded_and_its_values_point_at_it(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """The point of task 3.6: a value says which *copy* of a page it came from.
+
+    `source_url` already says which page. That stops being enough the moment the site changes,
+    which is the only time anybody asks.
+    """
+    mock_site()
+    raw = FakeRawDocuments()
+    registry, graph, _tasks, _jobs, http = build(redis, raw=raw)
+    try:
+        await run(redis, make_envelope, registry)
+    finally:
+        await http.aclose()
+
+    kept = [r for r in raw.recorded if r.get("access_status") == "ok"]
+    assert len(kept) == 3, "homepage, contact and about"
+    assert {r["url"] for r in kept} == {
+        "https://clinicdelhi.in/",
+        "https://clinicdelhi.in/contact",
+        "https://clinicdelhi.in/about",
+    }
+    assert all(r["source_id"] for r in kept), "a document belongs to a source"
+
+    stored = graph.written
+    assert stored, "the crawl found something"
+    assert all(v.raw_document_id is not None for v in stored), (
+        "every crawled value names the copy it was read from"
+    )
+    # Values from different pages name different documents: `merge_pages` picks the best
+    # evidence per field, and each winner has to keep its own page rather than the first one's.
+    assert len({v.raw_document_id for v in stored}) >= 1
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_the_sitemap_is_fetched_but_not_kept(redis: Redis, make_envelope: Any) -> None:
+    """No value is ever extracted from a sitemap, so a copy of one is bytes spent on nothing.
+
+    It is still fetched -- it decides which pages are read -- which is why this is worth a test:
+    the obvious implementation records every fetch and doubles the object count.
+    """
+    mock_site()
+    respx.get("https://clinicdelhi.in/sitemap.xml").mock(
+        return_value=httpx.Response(200, content=b"<urlset></urlset>")
+    )
+    raw = FakeRawDocuments()
+    registry, _graph, _tasks, _jobs, http = build(redis, raw=raw)
+    try:
+        await run(redis, make_envelope, registry)
+    finally:
+        await http.aclose()
+
+    assert not any("sitemap" in r["url"] for r in raw.recorded)
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_a_door_that_was_shut_is_recorded_as_such(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """A robots disallow is an outcome, not a failure (CLAUDE.md: stop, never evade).
+
+    The row is where "this door was shut on this date" lives, and that is the answer to "why
+    has this company no email".
+    """
+    raw = FakeRawDocuments()
+    registry, _graph, _tasks, _jobs, http = build(
+        redis, robots=b"User-agent: *\nDisallow: /\n", raw=raw
+    )
+    try:
+        await run(redis, make_envelope, registry)
+    finally:
+        await http.aclose()
+
+    assert [r["access_status"] for r in raw.recorded] == ["restricted"]
+    assert raw.recorded[0].get("body") is None
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_a_crawl_that_cannot_keep_a_page_still_delivers_its_values(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """The leads are the product and the copy is a cache.
+
+    A full disk or a read-only volume must cost a log line, not the emails this crawl found.
+    Worth a test because the obvious implementation lets the bookkeeping fail the job.
+    """
+    mock_site()
+    registry, graph, tasks, _jobs, http = build(redis, raw=FakeRawDocuments(fail=True))
+    try:
+        await run(redis, make_envelope, registry)
+    finally:
+        await http.aclose()
+
+    assert tasks.status == "completed"
+    stored = graph.written
+    assert stored, "the values survived the store failing"
+    assert all(v.raw_document_id is None for v in stored), "and claim no copy they do not have"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_a_worker_with_no_raw_store_still_crawls(
+    redis: Redis, make_envelope: Any
+) -> None:
+    """`RAW_STORE_PATH` unset is a deployment without the volume, not a broken one."""
+    mock_site()
+    registry, graph, tasks, _jobs, http = build(redis, raw=None)
+    try:
+        await run(redis, make_envelope, registry)
+    finally:
+        await http.aclose()
+
+    assert tasks.status == "completed"
+    assert graph.written

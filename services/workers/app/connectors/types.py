@@ -100,6 +100,11 @@ class FieldValue:
     derivation: str | None = None
     model: str | None = None
     prompt_version: str | None = None
+    #: The copy of the page this was read from (`app.raw_document_keys`, task 3.6). `source_url`
+    #: says which page; this says which *copy*, which is the difference when the page has since
+    #: changed and a customer is disputing the value. None for a value from an API or a bulk
+    #: release, where there is no document to keep.
+    raw_document_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

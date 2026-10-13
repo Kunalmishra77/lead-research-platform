@@ -69,7 +69,7 @@ Return candidates: `{source_key, external_id, name, url?, phone?, address?, geo?
 6. Browser fallback only if: HTML body text < 500 chars AND scripts indicate SPA. 20 s timeout; block images/media/fonts.
 7. Restriction detection (stop, never evade): HTTP 401/403/407/429-with-challenge, CAPTCHA markers, login forms on target page, Cloudflare/challenge interstitials, paywall markers -> `access_status=restricted`, event logged, no retry.
 8. SSRF guard: block private/link-local/metadata IPs after DNS resolution; only http/https; limit redirects to 5.
-9. Store raw gzip in S3 key `raw/{yyyy}/{mm}/{url_hash}/{fetched_at}.html.gz`; skip storing when `content_hash` unchanged.
+9. Store raw gzip in the raw store under `raw/{yyyy}/{mm}/{url_hash}/{fetched_at}.html.gz`; skip storing when `content_hash` unchanged. The store is a volume on the worker host, not S3 — a lakh of leads is about 660 MB of gzipped pages against a 1 GB object-storage free plan, and these are a 90-day cache of public pages rather than customer data (ADR-0019). `app/crawl/rawstore.py`; the row goes to `raw_documents` whether or not a body does.
 
 ## 5. Extraction (cheapest first)
 1. `extruct`: JSON-LD, microdata, OpenGraph -> Organization/LocalBusiness fields, sameAs social links, address, telephone, openingHours.

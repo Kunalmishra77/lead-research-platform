@@ -106,6 +106,11 @@ services:
       # Build it into the volume below, once, and again when a release is worth picking up:
       #   docker compose exec workers uv run python -m app.places       #     --data-dir /data/places build-overture
       PLACES_INDEX_PATH: ${PLACES_INDEX_PATH:-/data/places/overture.sqlite}
+      # Crawled pages, on this host's own disk rather than in a bucket (ADR-0019): a lakh
+      # of leads is about 660 MB of gzipped pages against a 1 GB object-storage free plan,
+      # and this host has 134 GB. They are a 90-day cache of public pages -- re-fetchable,
+      # not customer data -- so losing the volume costs a re-crawl and nothing else.
+      RAW_STORE_PATH: ${RAW_STORE_PATH:-/data/raw}
       REDIS_URL: redis://redis:6379
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY}
@@ -127,6 +132,7 @@ services:
       # redeploy starts with no index at all, and discovery silently falls back to the paid
       # source until somebody notices.
       - places-data:/data/places
+      - raw-data:/data/raw
     depends_on:
       redis:
         condition: service_healthy
@@ -165,3 +171,6 @@ services:
 volumes:
   redis-data:
   places-data:
+  # Named, not a bind mount and not the container's own layer: without this line the raw
+  # store writes into the image and every deploy throws the pages away.
+  raw-data:

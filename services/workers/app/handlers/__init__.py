@@ -6,6 +6,7 @@ from app.crawl.fetcher import CrawlFetcher
 from app.crawl.frontier import Frontier
 from app.db.graph import GraphRepo
 from app.db.job_runs import JobRunsRepo
+from app.db.raw_documents import RawDocumentsRepo
 from app.db.reference import ReferenceData
 from app.db.research_jobs import ResearchJobsRepo
 from app.db.research_tasks import ResearchTasksRepo
@@ -30,6 +31,9 @@ def build_registry(
     usage: UsageRecorder | None = None,
     crawler: CrawlFetcher | None = None,
     frontier: Frontier | None = None,
+    #: Where crawled pages are kept (task 3.6). Optional: a worker with no `RAW_STORE_PATH`
+    #: still crawls and still extracts, it simply keeps no copies.
+    raw_documents: RawDocumentsRepo | None = None,
     discovery_pool: str = DEFAULT_DISCOVERY_POOL,
     crawl_pool: str = DEFAULT_CRAWL_POOL,
 ) -> HandlerRegistry:
@@ -92,5 +96,6 @@ def build_registry(
             reference=reference,
             tasks=research_tasks,
             jobs=research_jobs,
+            raw=raw_documents,
         )
     return registry

@@ -78,11 +78,17 @@ def values_from_page(
     page_url: str,
     observed_at: datetime | None = None,
     region: str | None = None,
+    raw_document_id: str | None = None,
 ) -> PageFacts:
     """Everything one page says about the business whose site it is.
 
     `region` is the company's country as ISO-3166 alpha-2, and it decides whether `98765 43210`
     reads as a phone number at all. Without it only numbers written with a country code survive.
+
+    `raw_document_id` is the copy of the page these values were read from (task 3.6). It travels
+    on every value, so after `merge_pages` has picked the best evidence per field each value
+    still names the page it came from -- which matters when the site has since changed and a
+    customer is asking where a number came from.
     """
     when = observed_at or datetime.now(UTC)
     text = html if isinstance(html, str) else html.decode("utf-8", errors="ignore")
@@ -91,7 +97,7 @@ def values_from_page(
     business = business_from(text, base_url=page_url)
 
     values: list[FieldValue] = []
-    add = _adder(values, page_url=page_url, when=when)
+    add = _adder(values, page_url=page_url, when=when, raw_document_id=raw_document_id)
 
     # Structured data first: anything it covers is better evidence than a regex on the same page,
     # and `add` keeps the first value offered for a field.
@@ -126,7 +132,13 @@ def values_from_page(
     )
 
 
-def _adder(values: list[FieldValue], *, page_url: str, when: datetime) -> Any:
+def _adder(
+    values: list[FieldValue],
+    *,
+    page_url: str,
+    when: datetime,
+    raw_document_id: str | None = None,
+) -> Any:
     """Appends one value per field, keeping the first offered.
 
     First, not last: callers are ordered strongest evidence first, so a schema.org telephone is
@@ -145,6 +157,7 @@ def _adder(values: list[FieldValue], *, page_url: str, when: datetime) -> Any:
                 value=value,
                 source_key=SOURCE_KEY,
                 source_url=page_url,
+                raw_document_id=raw_document_id,
                 observed_at=when,
                 method="crawl",
                 # Literally present on the page. A decoded `[at]` is still found: every character

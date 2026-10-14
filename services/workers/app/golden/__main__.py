@@ -112,9 +112,11 @@ def _propose(slug: str, root: Path, reasons: bool = False, write: bool = False) 
     if write:
         left = write_propose(site, root)
         print()
-        print(f"written to {slug}/{LABELS}, still a DRAFT -- `review {slug}` when you agree")
-        if left:
-            print(f"{len(left)} undecided value(s) went nowhere, and the leak gate will say so:")
+        if not left:
+            print(f"written to {slug}/{LABELS}, still a DRAFT -- `review {slug}` when you agree")
+        else:
+            print(f"nothing written: {len(left)} value(s) are undecided, and a partial labelling")
+            print("would drop them from labels.json, where the next run could no longer see them:")
             for value in left:
                 print(f"    {value}")
             return 1

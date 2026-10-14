@@ -18,7 +18,7 @@ from typing import Final
 from urllib.parse import unquote
 
 from app.golden.corpus import CORPUS
-from app.golden.scrub import _EMAIL, _ISO_DATE, _NUMERIC_TLD, _PHONE
+from app.golden.scrub import _EMAIL, _NUMERIC_TLD, _PHONE, is_structural
 from app.normalize.phones import to_e164
 
 
@@ -108,10 +108,13 @@ def test_every_number_in_the_corpus_is_one_the_scrubber_wrote() -> None:
             digits = _digits(match.group(1))
             if not 7 <= len(digits) <= 15:
                 continue
-            if _ISO_DATE.match(match.group(1).strip()):
-                # A date the scrubber now leaves on the page. Exempted with its own constant so
-                # the gate and the scrubber agree by construction: `2024-03-12` was being
-                # replaced by `3644-44-80`, which published nothing but corrupted the fixture.
+            printed = match.group(1).strip()
+            if is_structural(printed):
+                # A date or an IP address, both of which the scrubber now leaves on the page:
+                # neither is anybody's personal data and mangling them corrupted a URL and a
+                # `<time>` element. Exempted with the scrubber's own constants, so the gate and
+                # the scrubber cannot drift apart -- `2024-03-12` was becoming `3644-44-80` and
+                # `103.197.101.15` a phone number nobody has.
                 continue
             if digits not in known_digits:
                 unaccounted.append(f"{fixture.parent.name}: {match.group(1)!r}")
@@ -147,3 +150,18 @@ def test_no_fixture_names_the_site_it_came_from() -> None:
             assert "example.in" in str(page["url"]), (
                 f"{labels_path.parent.name}: {page['url']} still names a real host"
             )
+
+
+def test_every_page_on_disk_is_one_its_labels_list() -> None:
+    """A page nobody labelled is a page nobody checked.
+
+    A re-harvest that lost one page to a timeout used to leave the previous scrub of that page on
+    disk while rewriting the labels from only the pages it fetched. The orphan then held a
+    substituted value no label accounted for -- and from the gate's side that is indistinguishable
+    from a real number the scrubber missed, which is the one thing this file exists to catch.
+    """
+    for labels in sorted(CORPUS.glob("*/labels.json")):
+        raw = json.loads(labels.read_text(encoding="utf-8"))
+        listed = {page["file"] for page in raw["pages"]}
+        on_disk = {path.name for path in labels.parent.glob("*.html")}
+        assert on_disk == listed, f"{labels.parent.name}: {on_disk ^ listed} unaccounted"

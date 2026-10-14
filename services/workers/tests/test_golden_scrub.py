@@ -13,11 +13,12 @@ every property the extractors read: a national number's leading zero, a landline
 `mailto:` being a link rather than text, an obfuscated `(at)` still obfuscated.
 """
 
+import json
 import re
 
 import pytest
 
-from app.golden.scrub import _MOBILE_KINDS, scrub
+from app.golden.scrub import _MOBILE_KINDS, is_structural, scrub
 from app.normalize.phones import line_type, parse
 
 PAGE = """<html><head>
@@ -290,3 +291,30 @@ def test_an_empty_page_is_not_an_error() -> None:
     result = scrub("", slug="p")
     assert result.html == ""
     assert result.substitutions == []
+
+
+def test_a_coordinate_is_left_alone_so_the_json_stays_valid() -> None:
+    """The worst of the three, because it failed silently.
+
+    `"longitude":76.911353` was substituted to `"longitude":02.911353`, and a leading zero is
+    invalid JSON. All three of that site's pages then had JSON-LD that `extruct` refused, so the
+    structured extractor saw nothing and the report blamed the pipeline for a corpus artefact.
+    """
+    html = '<script type="application/ld+json">{"geo":{"longitude":76.911353}}</script>'
+    result = scrub(html, slug="p")
+    assert result.substitutions == []
+    assert json.loads(result.html.split(">", 1)[1].rsplit("<", 1)[0])["geo"]["longitude"]
+
+
+def test_a_date_and_an_ip_are_left_alone_too() -> None:
+    """Same class: structure rather than anybody's contact details."""
+    for value in ("2024-03-12", "103.197.101.15"):
+        assert scrub(f"<p>{value}</p>", slug="p").substitutions == [], value
+
+
+def test_a_structural_shape_is_not_a_way_to_hide_a_number() -> None:
+    """The skip is narrow on purpose, and the gate asks `phonenumbers` rather than this pattern,
+    so a number dressed as a decimal would fail loudly rather than be published quietly."""
+    assert not is_structural("+91 98765 43210")
+    assert not is_structural("0124 456 7890")
+    assert is_structural("22.845769")

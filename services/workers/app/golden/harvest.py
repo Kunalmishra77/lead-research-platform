@@ -129,6 +129,17 @@ async def harvest(domain: str, slug: str, *, root: Path = CORPUS) -> Labels | No
                 wanted.append((candidate.role.value, str(page.url), page.text))
 
     site.mkdir(parents=True, exist_ok=True)
+    # Pages this harvest did not fetch are removed, so the directory always matches the labels
+    # beside it. Without this, a re-harvest that lost one page to a timeout left the *previous*
+    # scrub of that page on disk while rewriting the labels from only the pages it got -- and the
+    # stale page then held a substituted value no label accounted for, which is precisely what
+    # the leak gate is unable to tell apart from a real number nobody scrubbed. It failed on
+    # exactly that, and it was right to.
+    keep = {f"{role}.html" for role, _url, _html in wanted}
+    for stale in site.glob("*.html"):
+        if stale.name not in keep:
+            stale.unlink()
+
     for role, url, html in wanted:
         scrubbed = scrub(html, slug=slug)
         name = f"{role}.html"

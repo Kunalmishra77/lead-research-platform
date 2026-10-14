@@ -1,0 +1,31 @@
+{
+  "slug": "symmetrydentals",
+  "harvested_at": "2026-10-13T13:27:04+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://symmetrydentals.example.in/"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://symmetrydentals.example.in/dental-clinic-in-gurgaon.php"
+    }
+  ],
+  "expect": {
+    "email": "box93@symmetrydentals-93.com",
+    "phone": "+91-8638803223"
+  },
+  "also_theirs": [
+    "info@symmetrydentals-63.com",
+    "+91-8355350229"
+  ],
+  "absent": [
+    "211055200141"
+  ],
+  "absent_because": {
+    "211055200141": "glued to the end of a URL path, which cannot happen to a number printed in prose"
+  }
+}

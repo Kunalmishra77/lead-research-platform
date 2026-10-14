@@ -78,6 +78,13 @@ def normalize(address: str | None) -> str | None:
         # a page reading "treatment done@Dr.Bhatia's clinic" yields `done@dr.bhatia` -- which
         # went out in a customer's results before the crawl's version of this line existed.
         or not has_real_tld(domain)
+        # A masked address. One clinic publishes `"email": "**********info@…"` in its own
+        # JSON-LD, and `*` is legal atext under RFC 5322, so the extractor dutifully read ten
+        # asterisks as part of the mailbox name. Rejected rather than stripped: stripping would
+        # guess at the characters the site chose to hide and hand a customer an address that
+        # looks right and bounces, which is worse than handing them nothing. No mail provider
+        # issues a mailbox with `*` in it, so this cannot cost a real address.
+        or "*" in local
     ):
         return None
 

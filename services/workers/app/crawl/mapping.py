@@ -36,6 +36,7 @@ from app.crawl.contacts import (
     socials_from,
 )
 from app.crawl.structured import Business, business_from
+from app.normalize.emails import normalize as normalize_email
 
 SOURCE_KEY = "website"
 
@@ -176,7 +177,12 @@ def _add_structured(add: Any, business: Business, *, region: str | None) -> None
     add("name", business.name, confidence)
     add("description", business.description, confidence)
     if business.emails:
-        add("email", business.emails[0], confidence)
+        # Through the shared rule, like the telephone beside it. It was not, and a clinic that
+        # publishes `"email": "**********info@…"` in its own JSON-LD put ten asterisks into the
+        # graph as a mailbox name -- along with any `Info@` stored uncased, and any host or
+        # top-level domain the normalizer exists to refuse. `app/normalize/emails.py` says every
+        # source needs the same answer; this path was the one that did not ask.
+        add("email", normalize_email(business.emails[0]), confidence)
     if business.telephones:
         add("phone", _e164(business.telephones[0], region), confidence)
     address = business.address

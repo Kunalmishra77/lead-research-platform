@@ -18,7 +18,7 @@ from app.golden.corpus import Labels, load
 from app.golden.propose import propose, write
 
 FIXTURE = """<html><body>
-<a href="mailto:info@clinic.example">Email</a>
+<a href="mailto:info@clinic-7.in">Email</a>
 <a href="tel:+91 98765 43210">Call</a>
 <p>Our other line is 0124 456 7890.</p>
 <link href="https://cdn.example/a.css?ver=1794677085" rel="stylesheet">
@@ -33,12 +33,12 @@ def _site(root: Path) -> Labels:
         json.dumps(
             {
                 "slug": "clinic",
-                "domain": "clinic.example",
+                "domain": "clinic-7.in",
                 "pages": [{"role": "homepage", "file": "homepage.html", "url": "https://x/"}],
                 "expect": {},
                 "also_theirs": [],
                 "absent": [
-                    "info@clinic.example",
+                    "info@clinic-7.in",
                     "+91 98765 43210",
                     "0124 456 7890",
                     "1794677085",
@@ -77,7 +77,7 @@ def test_every_value_keeps_a_category(tmp_path: Path) -> None:
         *raw["also_theirs"],
         *raw["absent"],
     }
-    for value in ("info@clinic.example", "+91 98765 43210", "0124 456 7890", "1794677085"):
+    for value in ("info@clinic-7.in", "+91 98765 43210", "0124 456 7890", "1794677085"):
         assert value in accounted, value
 
 
@@ -98,3 +98,44 @@ def test_the_linked_number_is_preferred_over_the_one_in_prose(tmp_path: Path) ->
     proposal = propose(site, tmp_path)
     assert proposal.expect["phone"] == "+91 98765 43210"
     assert "0124 456 7890" in proposal.also_theirs
+
+
+UNDECIDABLE = """<html><body>
+<a href="mailto:info@clinic-7.in">Email</a>
+<p>Reference 55512345 for your appointment.</p>
+</body></html>"""
+
+
+def test_a_partial_labelling_is_refused_whole(tmp_path: Path) -> None:
+    """The loss class, and the reason `write` is all-or-nothing.
+
+    Writing the decided values and leaving the rest out seemed safe, because the leak gate
+    fails on a value in no category. It does fail -- but the dropped value is also gone from
+    `labels.json`, so the next `propose` cannot see it and the next `--write` cannot restore it.
+    Two sites lost a value that way before this was fixed, and only a re-harvest brought them
+    back.
+    """
+    (tmp_path / "clinic").mkdir(parents=True)
+    (tmp_path / "clinic" / "homepage.html").write_text(UNDECIDABLE, encoding="utf-8")
+    labels = tmp_path / "clinic" / "labels.json"
+    labels.write_text(
+        json.dumps(
+            {
+                "slug": "clinic",
+                "domain": "clinic-7.in",
+                "pages": [{"role": "homepage", "file": "homepage.html", "url": "https://x/"}],
+                "expect": {},
+                "also_theirs": [],
+                # An eight-digit reference in prose: dialable to nobody, named by nothing.
+                "absent": ["info@clinic-7.in", "55512345"],
+                "absent_because": {},
+                "draft": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    before = labels.read_text(encoding="utf-8")
+
+    [site] = load(tmp_path)
+    assert write(site, tmp_path) == ["55512345"], "it has to say what it could not place"
+    assert labels.read_text(encoding="utf-8") == before, "and it must not have written anything"

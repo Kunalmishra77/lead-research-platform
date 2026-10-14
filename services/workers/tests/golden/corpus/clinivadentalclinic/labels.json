@@ -1,0 +1,18 @@
+{
+  "slug": "clinivadentalclinic",
+  "harvested_at": "2026-10-13T13:27:20+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://clinivadentalclinic.example.in/"
+    }
+  ],
+  "expect": {
+    "phone": "+91 92476 04460"
+  },
+  "also_theirs": [],
+  "absent": [],
+  "absent_because": {}
+}

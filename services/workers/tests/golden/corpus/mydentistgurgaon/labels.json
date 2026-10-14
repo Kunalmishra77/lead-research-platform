@@ -1,0 +1,45 @@
+{
+  "slug": "mydentistgurgaon",
+  "harvested_at": "2026-10-13T13:27:37+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://mydentistgurgaon.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://mydentistgurgaon.example.in/book-now"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://mydentistgurgaon.example.in/about-us"
+    }
+  ],
+  "expect": {
+    "email": "box95@mydentistgurgaon-95.com",
+    "phone": "+91-8352559967"
+  },
+  "also_theirs": [
+    "hello@mydentistgurgaon-80.com",
+    "87971 03397",
+    "+91 86807 61796"
+  ],
+  "absent": [
+    "1580027832531-34",
+    "1571879254997",
+    "1593734923901",
+    "1546652687",
+    "1600039893574-01"
+  ],
+  "absent_because": {
+    "1580027832531-34": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1571879254997": "a CSS value, escaped inside an attribute",
+    "1593734923901": "a CSS value, escaped inside an attribute",
+    "1546652687": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1600039893574-01": "inside a src, href or data- attribute, which the text extractor never reads"
+  }
+}

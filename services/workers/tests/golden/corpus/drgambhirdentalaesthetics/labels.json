@@ -1,0 +1,75 @@
+{
+  "slug": "drgambhirdentalaesthetics",
+  "harvested_at": "2026-10-13T13:26:22+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://drgambhirdentalaesthetics.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://drgambhirdentalaesthetics.example.in/contactus.php"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://drgambhirdentalaesthetics.example.in/aboutus.php"
+    }
+  ],
+  "expect": {
+    "email": "first58.last58@drgambhirdentalaesth-58.com",
+    "phone": "+919147740152"
+  },
+  "also_theirs": [
+    "+91 8471967280"
+  ],
+  "absent": [
+    "60000116662756",
+    "1775767244",
+    "1773156774",
+    "1775837709",
+    "1775399296",
+    "1777898268",
+    "1775994157",
+    "1774616776",
+    "1773240395",
+    "1777375354",
+    "1777063655",
+    "1772669848",
+    "1775524891",
+    "1775163908",
+    "1775680453",
+    "1772787763",
+    "1775916872",
+    "1775117705",
+    "1772777188",
+    "1772394390",
+    "1776035531"
+  ],
+  "absent_because": {
+    "60000116662756": "part of a social profile URL, not a phone number",
+    "1775767244": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1773156774": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1775837709": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1775399296": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1777898268": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1775994157": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1774616776": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1773240395": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1777375354": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1777063655": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1772669848": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1775524891": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1775163908": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1775680453": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1772787763": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1775916872": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1775117705": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1772777188": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1772394390": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1776035531": "inside a src, href or data- attribute, which the text extractor never reads"
+  }
+}

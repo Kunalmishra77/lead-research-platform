@@ -1,6 +1,6 @@
 {
   "slug": "dentwell",
-  "harvested_at": "2026-10-13T11:54:11+00:00",
+  "harvested_at": "2026-10-13T13:26:01+00:00",
   "draft": false,
   "pages": [
     {
@@ -28,26 +28,26 @@
   ],
   "absent": [
     "2020-34-86-285077",
-    "2021-16-90-583",
-    "60003561250146",
-    "2022-61-46-728",
     "2023-23-45-424",
+    "60003561250146",
+    "2021-16-90-583",
+    "2022-61-46-728",
     "1794677085",
     "1793436319",
     "1793200723",
     "1791229711",
-    "526770182"
+    "012054804"
   ],
   "absent_because": {
     "2020-34-86-285077": "part of an image filename or the srcset beside it",
-    "2021-16-90-583": "part of an image filename or the srcset beside it",
-    "60003561250146": "part of a social profile URL, not a phone number",
-    "2022-61-46-728": "part of an image filename or the srcset beside it",
     "2023-23-45-424": "part of an image filename or the srcset beside it",
+    "60003561250146": "part of a social profile URL, not a phone number",
+    "2021-16-90-583": "part of an image filename or the srcset beside it",
+    "2022-61-46-728": "part of an image filename or the srcset beside it",
     "1794677085": "a cache-busting ?ver= on a stylesheet or script",
     "1793436319": "a cache-busting ?ver= on a stylesheet or script",
     "1793200723": "a cache-busting ?ver= on a stylesheet or script",
     "1791229711": "a cache-busting ?ver= on a stylesheet or script",
-    "526770182": "digits inside Cloudflare's email-protection hex, which hides the address from harvesters"
+    "012054804": "digits out of Cloudflare's obfuscated-email hex"
   }
 }

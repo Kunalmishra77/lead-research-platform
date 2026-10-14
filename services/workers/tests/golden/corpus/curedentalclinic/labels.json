@@ -1,0 +1,54 @@
+{
+  "slug": "curedentalclinic",
+  "harvested_at": "2026-10-13T13:27:50+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://curedentalclinic.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://curedentalclinic.example.in/contactus.php"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://curedentalclinic.example.in/aboutus.php"
+    }
+  ],
+  "expect": {
+    "phone": "+919108996496"
+  },
+  "also_theirs": [],
+  "absent": [
+    "box85@curedentalclinic-85.com",
+    "5520207361916",
+    "1726668443",
+    "1724109739",
+    "1726966969",
+    "1726462934",
+    "1726494716",
+    "1726845148",
+    "1726235758",
+    "1726775569",
+    "1721307894",
+    "3442044087743"
+  ],
+  "absent_because": {
+    "box85@curedentalclinic-85.com": "an address the site masks with asterisks, so there is no address to read",
+    "5520207361916": "digits out of Cloudflare's obfuscated-email hex",
+    "1726668443": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1724109739": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1726966969": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1726462934": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1726494716": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1726845148": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1726235758": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1726775569": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1721307894": "inside a src, href or data- attribute, which the text extractor never reads",
+    "3442044087743": "digits out of Cloudflare's obfuscated-email hex"
+  }
+}

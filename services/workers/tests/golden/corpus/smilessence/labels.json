@@ -1,6 +1,6 @@
 {
   "slug": "smilessence",
-  "harvested_at": "2026-10-13T11:53:47+00:00",
+  "harvested_at": "2026-10-13T13:25:35+00:00",
   "draft": false,
   "pages": [
     {
@@ -30,17 +30,9 @@
     "+919452790471"
   ],
   "absent": [
-    "60002237703662",
-    "17.6202864",
-    "32.8331557",
-    "82.8768263",
-    "37.921836"
+    "60002237703662"
   ],
   "absent_because": {
-    "60002237703662": "part of a social profile URL, not a phone number",
-    "17.6202864": "a decimal number -- a coordinate, a price or a version",
-    "32.8331557": "a map coordinate from the page's geo metadata",
-    "82.8768263": "a map coordinate from the page's geo metadata",
-    "37.921836": "a decimal number -- a coordinate, a price or a version"
+    "60002237703662": "part of a social profile URL, not a phone number"
   }
 }

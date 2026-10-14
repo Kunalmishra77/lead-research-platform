@@ -115,3 +115,15 @@ def test_every_role_part_is_lowercase_and_has_no_at_sign() -> None:
         assert part == part.lower(), part
         assert "@" not in part, part
         assert part.strip() == part, part
+
+
+def test_a_masked_address_is_refused_rather_than_unmasked() -> None:
+    """`*` is legal atext under RFC 5322, so the crawler read ten asterisks as part of a mailbox
+    name and produced `**********info@curedentalclinic.com` from that clinic's own JSON-LD.
+
+    Refused, not stripped. Stripping guesses at the characters the site chose to hide and hands
+    a customer an address that looks right and bounces, which is worse than handing them none.
+    """
+    assert normalize("**********info@curedentalclinic.com") is None
+    assert normalize("in*fo@clinic.in") is None
+    assert normalize("info@clinic.in") == "info@clinic.in"

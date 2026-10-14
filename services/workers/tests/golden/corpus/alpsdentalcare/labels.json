@@ -1,0 +1,33 @@
+{
+  "slug": "alpsdentalcare",
+  "harvested_at": "2026-10-13T13:27:33+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://alpsdentalcare.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://alpsdentalcare.example.in/contact"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://alpsdentalcare.example.in/about"
+    }
+  ],
+  "expect": {
+    "email": "info@alpsdentalcare-97.in",
+    "phone": "+918860643534"
+  },
+  "also_theirs": [],
+  "absent": [
+    "+19 67466"
+  ],
+  "absent_because": {
+    "+19 67466": "an input's placeholder or label, which is an example rather than a contact"
+  }
+}

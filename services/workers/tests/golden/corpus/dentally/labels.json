@@ -1,0 +1,50 @@
+{
+  "slug": "dentally",
+  "harvested_at": "2026-10-13T13:26:29+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://dentally.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://dentally.example.in/contact-us"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://dentally.example.in/about-us"
+    }
+  ],
+  "expect": {
+    "email": "box26@dentally-26.com",
+    "phone": "919823707617"
+  },
+  "also_theirs": [
+    "919591369699",
+    "9809857041",
+    "9399136368",
+    "011-4797 1329"
+  ],
+  "absent": [
+    "1761722991",
+    "8966 8800",
+    "416 8601",
+    "575 7964",
+    "84981010",
+    "5614804082",
+    "32797831"
+  ],
+  "absent_because": {
+    "1761722991": "inside a src, href or data- attribute, which the text extractor never reads",
+    "8966 8800": "part of a URL's host",
+    "416 8601": "part of a URL's host",
+    "575 7964": "part of a URL's host",
+    "84981010": "inside a src, href or data- attribute, which the text extractor never reads",
+    "5614804082": "inside a src, href or data- attribute, which the text extractor never reads",
+    "32797831": "inside a src, href or data- attribute, which the text extractor never reads"
+  }
+}

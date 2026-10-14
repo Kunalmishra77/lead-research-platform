@@ -58,6 +58,23 @@ _NOT_A_PHONE: Final[tuple[tuple[re.Pattern[str], str], ...]] = (
     (re.compile(r"(?i)(z-index|opacity|cursor)[^;]*$"), "a CSS value, escaped inside an attribute"),
     (re.compile(r"(?i)(title|alt)=[\"'][^\"'<>]*$"),
      "inside a title or alt attribute, which the text extractor never reads"),
+    (re.compile(r"""(?i)\b(src|srcset|href|data-[a-z-]+)=["'][^"'<>]*$"""),
+     "inside a src, href or data- attribute, which the text extractor never reads"),
+    (re.compile(r"\*{2,}$"),
+     "an address the site masks with asterisks, so there is no address to read"),
+    (re.compile(r"""(?i)https?://[^"'<>]*$"""), "part of a URL's host"),
+    (re.compile(r"""(?i)/[^\s"'<>]{8,}$"""),
+     "glued to the end of a URL path, which cannot happen to a number printed in prose"),
+    (re.compile(r"""(?i)%[0-9a-f]{2}[^\s"'<>]*$"""), "part of a percent-encoded URL"),
+    (re.compile(r"(?i)[?&][a-z_]{1,12}=$"),
+     "a parameter in a URL's query string, such as an image resize"),
+    (re.compile(r"""(?i)(/img/|/images?/|/uploads?/|amazonaws\.com/)[^"'<>]*$"""),
+     "part of a path to an image"),
+    (re.compile(r"""(?i)\bid=["'][^"'<>]*$"""), "an element id"),
+    (re.compile(r"""(?i)schema[\\/]+[a-z]*[\\/]+$"""),
+     "a JSON-LD node id under the page's own schema namespace"),
+    (re.compile(r"""(?i)(placeholder|aria-label)=["'][^"'<>]*$"""),
+     "an input's placeholder or label, which is an example rather than a contact"),
 )
 
 #: Someone else's number or address, named in the markup around it.
@@ -74,6 +91,7 @@ _SHAPES: Final[tuple[tuple[re.Pattern[str], str], ...]] = (
     (re.compile(r"^\d{13,}$"), "a run of 13+ digits: longer than any phone number, so an id"),
     (re.compile(r"^\d{1,3}\.\d{3,}$"), "a decimal number -- a coordinate, a price or a version"),
     (re.compile(r"^(19|20)\d\d[-/]"), "a date"),
+    (re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}$"), "an IP address"),
 )
 
 #: A unix timestamp in seconds: 1.6 to 1.9 billion for the years this corpus is built in, so ten
@@ -183,14 +201,33 @@ def _strongest_context(site: Labels, value: str, root: Path) -> str:
 def _what_it_is(value: str, linked: bool, places: list[tuple[str, str]]) -> str | None:
     """What this value is, when something says plainly, or None when nothing does.
 
-    The markup is asked first because it gives the better reason: "a map coordinate from the
-    page's geo metadata" tells the next reviewer more than "a decimal number", and
-    `absent_because` is read by people, not by code.
+    The order matters twice over.
+
+    A link the page itself got wrong is named first. `tel:+01240723201` is on a live clinic
+    page, and a `+` in front of a trunk zero is not a number anything can dial; "the page's own
+    link is malformed" tells the next reviewer what happened, where "inside an href attribute"
+    would merely be true. The check is cheap and only fires in a contact context.
+
+    Then the markup, which gives a better reason than the digits do: "a map coordinate from the
+    page's geo metadata" says more than "a decimal number", and `absent_because` is read by
+    people rather than by code.
     """
-    for before, after in places:
+    if linked and not _is_a_contact(value):
+        return "the page's own link is malformed, so nothing can read a contact out of it"
+
+    for before, _after in places:
         for pattern, reason in _NOT_A_PHONE:
-            if pattern.search(before) or pattern.search(after[:40]):
+            # The markup *before* the value only. Looking ahead as well named a number in a
+            # paragraph after the `<link href=...>` that happened to follow it: what comes next
+            # says nothing about what a value is, and every rule here is anchored to its left.
+            if pattern.search(before):
                 return reason
+
+    if "@" in value and "*" in value.split("@", maxsplit=1)[0]:
+        # The site masked its own address: `"email": "**********info@…"` in its own JSON-LD.
+        # There is nothing to extract, and `app/normalize/emails.py` refuses it rather than
+        # guessing at the hidden characters.
+        return "an address the site masks with asterisks, so no address can be read from it"
 
     if "@" not in value:
         bare = value.strip()
@@ -199,13 +236,6 @@ def _what_it_is(value: str, linked: bool, places: list[tuple[str, str]]) -> str 
                 return reason
         if not linked and _TIMESTAMP.match(bare):
             return "a unix timestamp in seconds, not a number in any range this page dials"
-
-    if linked and not _is_a_contact(value):
-        # Their own link, and unusable: `tel:+01240723201` is on a live clinic page, and a `+`
-        # in front of a trunk zero is not a number anything can dial. The extractor must not
-        # report it, so the label has to say so -- and has to say why, or the next reviewer
-        # "fixes" it back.
-        return "the page's own link is malformed, so nothing can read a contact out of it"
     return None
 
 
@@ -251,12 +281,21 @@ def write(site: Labels, root: Path = CORPUS) -> list[str]:
     happens. Hand-editing the JSON instead is what dropped a value from a label once already,
     leaving a substituted number in no category and so unchecked by the leak gate.
 
-    Values left undecided are written nowhere: a value in no category fails that same gate,
-    which is the point -- the corpus cannot be half-labelled quietly.
+    Nothing is written while anything is undecided, and that is a correction. The first version
+    wrote the decided values and simply left the rest out, trusting the leak gate to complain.
+    The gate did complain -- but the dropped value was now missing from the labels too, so the
+    next `propose` could not see it and the loss compounded run after run: one site lost a value
+    on the second pass and a second site lost one on the third. A partial labelling is refused
+    whole instead. `labels.json` is only ever written complete, and an undecided value stays
+    where the harvester put it until a rule or a human accounts for it.
     """
     import json  # noqa: PLC0415 -- the only place this module touches the filesystem.
 
     proposal = propose(site, root)
+    left = [value for value, _context, _before in proposal.undecided]
+    if left:
+        return left
+
     path = root / site.slug / "labels.json"
     raw = json.loads(path.read_text(encoding="utf-8"))
     raw["expect"] = proposal.expect
@@ -265,4 +304,4 @@ def write(site: Labels, root: Path = CORPUS) -> list[str]:
     raw["absent_because"] = proposal.absent_because
     raw["draft"] = True
     path.write_text(json.dumps(raw, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    return [value for value, _context, _before in proposal.undecided]
+    return []

@@ -1,0 +1,40 @@
+{
+  "slug": "thedentalhome",
+  "harvested_at": "2026-10-13T13:27:26+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://thedentalhome.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://thedentalhome.example.in/contact-us-2/"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://thedentalhome.example.in/about-us/"
+    }
+  ],
+  "expect": {
+    "email": "box94@thedentalhome-94.com",
+    "phone": "+919003845092"
+  },
+  "also_theirs": [
+    "0124-4987937",
+    "9519218286"
+  ],
+  "absent": [
+    "72120406",
+    "73024594",
+    "2572247453"
+  ],
+  "absent_because": {
+    "72120406": "part of an image filename or the srcset beside it",
+    "73024594": "part of a percent-encoded URL",
+    "2572247453": "part of an image filename or the srcset beside it"
+  }
+}

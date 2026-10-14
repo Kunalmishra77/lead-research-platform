@@ -1,6 +1,6 @@
 {
   "slug": "drbhutanidentalclinic",
-  "harvested_at": "2026-10-13T11:54:00+00:00",
+  "harvested_at": "2026-10-13T13:25:50+00:00",
   "draft": false,
   "pages": [
     {
@@ -21,11 +21,11 @@
   ],
   "expect": {
     "email": "box16@drbhutanidentalclini-16.com",
-    "phone": "+91 95842-71386"
+    "phone": "+91-84286-73846"
   },
   "also_theirs": [
-    "+91-84286-73846",
     "+91 94770-16375",
+    "+91 95842-71386",
     "+91-8122795979",
     "011 4048-3783",
     "+919213090376",
@@ -35,13 +35,9 @@
     "011 46885336"
   ],
   "absent": [
-    "45.4867065",
-    "1784128795",
-    "15.7955008"
+    "1784128795"
   ],
   "absent_because": {
-    "45.4867065": "a map coordinate from the page's geo metadata",
-    "1784128795": "part of an image filename or the srcset beside it",
-    "15.7955008": "a map coordinate from the page's geo metadata"
+    "1784128795": "part of an image filename or the srcset beside it"
   }
 }

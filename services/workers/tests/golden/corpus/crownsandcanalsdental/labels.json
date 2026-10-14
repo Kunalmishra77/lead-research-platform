@@ -1,0 +1,58 @@
+{
+  "slug": "crownsandcanalsdental",
+  "harvested_at": "2026-10-13T13:27:17+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://crownsandcanalsdental.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://crownsandcanalsdental.example.in/contact-us/"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://crownsandcanalsdental.example.in/about-us/"
+    }
+  ],
+  "expect": {
+    "email": "info@crownsandcanalsdenta-21.com",
+    "phone": "+91 8812854745"
+  },
+  "also_theirs": [
+    "+91 8141018338",
+    "+91 9777747258",
+    "+919287875143",
+    "9543636906"
+  ],
+  "absent": [
+    "1764036499",
+    "1642491894",
+    "1676249710",
+    "1764003771",
+    "1799467306",
+    "1765023121",
+    "60368986",
+    "89638952",
+    "1791783692",
+    "1638634198",
+    "1791748596"
+  ],
+  "absent_because": {
+    "1764036499": "a cache-busting ?ver= on a stylesheet or script",
+    "1642491894": "an element id",
+    "1676249710": "an element id",
+    "1764003771": "a cache-busting ?ver= on a stylesheet or script",
+    "1799467306": "a cache-busting ?ver= on a stylesheet or script",
+    "1765023121": "a cache-busting ?ver= on a stylesheet or script",
+    "60368986": "a CSS value, escaped inside an attribute",
+    "89638952": "a cache-busting ?ver= on a stylesheet or script",
+    "1791783692": "a cache-busting ?ver= on a stylesheet or script",
+    "1638634198": "an element id",
+    "1791748596": "a cache-busting ?ver= on a stylesheet or script"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "slug": "sgthospital",
+  "harvested_at": "2026-10-13T13:26:33+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://sgthospital.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://sgthospital.example.in/appoinment.html"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://sgthospital.example.in/about.html"
+    }
+  ],
+  "expect": {
+    "email": "box56@sgthospital-56.org",
+    "phone": "0124-2968068"
+  },
+  "also_theirs": [
+    "0124-6778358",
+    "9417338097",
+    "+91-124-2843594"
+  ],
+  "absent": [
+    "049123715",
+    "27575452",
+    "+23-362-37603",
+    "+0124-6089864"
+  ],
+  "absent_because": {
+    "049123715": "digits out of Cloudflare's obfuscated-email hex",
+    "27575452": "part of a social profile URL, not a phone number",
+    "+23-362-37603": "the page's own link is malformed, so nothing can read a contact out of it",
+    "+0124-6089864": "the page's own link is malformed, so nothing can read a contact out of it"
+  }
+}

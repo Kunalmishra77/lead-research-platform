@@ -1,0 +1,51 @@
+{
+  "slug": "oneaesthetics",
+  "harvested_at": "2026-10-13T13:26:55+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://oneaesthetics.example.in/"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://oneaesthetics.example.in/about-us/"
+    }
+  ],
+  "expect": {
+    "phone": "+919698327446"
+  },
+  "also_theirs": [
+    "+919716813443",
+    "+919012372919",
+    "+919145995155",
+    "9910 404 400",
+    "9750 681 137",
+    "9150 640 597",
+    "9531 015 323"
+  ],
+  "absent": [
+    "box78@oneaesthetics-78.com",
+    "31803110441985",
+    "24203406142321",
+    "+9 02 046 317",
+    "74191524887",
+    "62329736105",
+    "01778415035",
+    "1783122097",
+    "31504101590644"
+  ],
+  "absent_because": {
+    "box78@oneaesthetics-78.com": "an input's placeholder or label, which is an example rather than a contact",
+    "31803110441985": "inside a src, href or data- attribute, which the text extractor never reads",
+    "24203406142321": "inside a src, href or data- attribute, which the text extractor never reads",
+    "+9 02 046 317": "an input's placeholder or label, which is an example rather than a contact",
+    "74191524887": "inside a src, href or data- attribute, which the text extractor never reads",
+    "62329736105": "inside a src, href or data- attribute, which the text extractor never reads",
+    "01778415035": "glued to the end of a URL path, which cannot happen to a number printed in prose",
+    "1783122097": "inside a src, href or data- attribute, which the text extractor never reads",
+    "31504101590644": "inside a src, href or data- attribute, which the text extractor never reads"
+  }
+}

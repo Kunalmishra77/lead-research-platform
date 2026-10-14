@@ -1,0 +1,71 @@
+{
+  "slug": "clovedental",
+  "harvested_at": "2026-10-13T13:27:42+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://clovedental.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://clovedental.example.in/contact-us"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://clovedental.example.in/blog/filling-root-canal/cavities-symptoms-causes-treatments"
+    }
+  ],
+  "expect": {
+    "phone": "+9111 3501 1931",
+    "email": "first41.last41@clovedental-41.in"
+  },
+  "also_theirs": [
+    "first10.last10@clovedental-10.in",
+    "box98@clovedental-98.in",
+    "box92@clovedental-92.in",
+    "+91 9313111043",
+    "+91 9403052152",
+    "1800-562-6851",
+    "9165698078",
+    "9258722450",
+    "+919034390287",
+    "+919397595998",
+    "+91-11-3258-2381"
+  ],
+  "absent": [
+    "1744907146",
+    "1753344863",
+    "1003946459",
+    "1782285860",
+    "1744901889",
+    "1755406527",
+    "668153328",
+    "541904294",
+    "3947288-2",
+    "687402801",
+    "152996694",
+    "278215695",
+    "917848223",
+    "4393359123"
+  ],
+  "absent_because": {
+    "1744907146": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1753344863": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1003946459": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1782285860": "a cache-busting ?ver= on a stylesheet or script",
+    "1744901889": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1755406527": "inside a src, href or data- attribute, which the text extractor never reads",
+    "668153328": "inside a src, href or data- attribute, which the text extractor never reads",
+    "541904294": "part of an image filename or the srcset beside it",
+    "3947288-2": "part of an image filename or the srcset beside it",
+    "687402801": "inside a src, href or data- attribute, which the text extractor never reads",
+    "152996694": "inside a src, href or data- attribute, which the text extractor never reads",
+    "278215695": "part of an image filename or the srcset beside it",
+    "917848223": "part of an image filename or the srcset beside it",
+    "4393359123": "glued to the end of a URL path, which cannot happen to a number printed in prose"
+  }
+}

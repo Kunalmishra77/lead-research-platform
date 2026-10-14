@@ -1,6 +1,6 @@
 {
   "slug": "cosmodontistindia",
-  "harvested_at": "2026-10-13T11:53:56+00:00",
+  "harvested_at": "2026-10-13T13:25:45+00:00",
   "draft": false,
   "pages": [
     {
@@ -21,41 +21,29 @@
   ],
   "expect": {
     "email": "box71@cosmodontistindia-71.com",
-    "phone": "+919050388117"
+    "phone": "+919401927500"
   },
   "also_theirs": [
-    "+919401927500",
+    "+919050388117",
     "918851468978",
     "+918239693334"
   ],
   "absent": [
     "101003497913119",
     "+01240723201",
-    "1792909809",
+    "1791884422",
+    "3277 1630",
     "1664 8310",
     "5575 3909",
-    "63.772645",
-    "31.096675",
-    "12.496578",
-    "85.659692",
-    "85.939678",
-    "3277 1630",
-    "93.62502",
-    "1796189179"
+    "1790106486"
   ],
   "absent_because": {
-    "101003497913119": "a run of 13+ digits: longer than any phone number, so an id",
+    "101003497913119": "glued to the end of a URL path, which cannot happen to a number printed in prose",
     "+01240723201": "the page's own link is malformed, so nothing can read a contact out of it",
-    "1792909809": "a form's hidden timestamp field",
+    "1791884422": "a form's hidden timestamp field",
+    "3277 1630": "a CSS or image dimension",
     "1664 8310": "a CSS or image dimension",
     "5575 3909": "a CSS or image dimension",
-    "63.772645": "a map coordinate from the page's geo metadata",
-    "31.096675": "a map coordinate from the page's geo metadata",
-    "12.496578": "a map coordinate from the page's geo metadata",
-    "85.659692": "a map coordinate from the page's geo metadata",
-    "85.939678": "a map coordinate from the page's geo metadata",
-    "3277 1630": "a CSS or image dimension",
-    "93.62502": "a map coordinate from the page's geo metadata",
-    "1796189179": "a form's hidden timestamp field"
+    "1790106486": "a form's hidden timestamp field"
   }
 }

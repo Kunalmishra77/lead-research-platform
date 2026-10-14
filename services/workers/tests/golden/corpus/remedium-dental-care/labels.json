@@ -1,6 +1,6 @@
 {
   "slug": "remedium-dental-care",
-  "harvested_at": "2026-10-13T11:54:14+00:00",
+  "harvested_at": "2026-10-13T13:26:04+00:00",
   "draft": false,
   "pages": [
     {
@@ -26,13 +26,9 @@
     "+919109688862"
   ],
   "absent": [
-    "20201119092140",
-    "48.704691",
-    "41.471421"
+    "20201119092140"
   ],
   "absent_because": {
-    "20201119092140": "a run of 13+ digits: longer than any phone number, so an id",
-    "48.704691": "a map coordinate from the page's geo metadata",
-    "41.471421": "a map coordinate from the page's geo metadata"
+    "20201119092140": "the page's own link is malformed, so nothing can read a contact out of it"
   }
 }

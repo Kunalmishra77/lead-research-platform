@@ -1,0 +1,18 @@
+{
+  "slug": "teethnbraces",
+  "harvested_at": "2026-10-13T13:27:00+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://teethnbraces.example.in/"
+    }
+  ],
+  "expect": {
+    "phone": "918723204957"
+  },
+  "also_theirs": [],
+  "absent": [],
+  "absent_because": {}
+}

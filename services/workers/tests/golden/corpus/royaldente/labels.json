@@ -1,6 +1,6 @@
 {
   "slug": "royaldente",
-  "harvested_at": "2026-10-13T11:54:17+00:00",
+  "harvested_at": "2026-10-13T13:26:08+00:00",
   "draft": false,
   "pages": [
     {
@@ -20,6 +20,6 @@
     "1711964724"
   ],
   "absent_because": {
-    "1711964724": "a unix timestamp in seconds, not a number in any range this page dials"
+    "1711964724": "inside a src, href or data- attribute, which the text extractor never reads"
   }
 }

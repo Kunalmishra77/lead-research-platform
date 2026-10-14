@@ -69,11 +69,31 @@ _NUMERIC_TLD: Final[re.Pattern[str]] = re.compile(r"\.[0-9]+$")
 #: `replace_phone`, so widening the span here costs nothing and closes that class.
 _PHONE: Final[re.Pattern[str]] = re.compile(r"(?<![\w.])(\+?\d[\d\s\-().]{6,24}\d)(?!\d)")
 
-#: An ISO date, which `_PHONE` reads as an eight-digit number: `2024-03-12` became `3644-44-80`
-#: in six fixtures, so a `<time dateTime>` and a JSON-LD `uploadDate` both held a nonsense date.
-#: Left alone instead. A date is nobody's personal data, no Indian number is written this way, so
-#: skipping it hides nothing -- and a fixture with a real date is what the page actually serves.
-_ISO_DATE: Final[re.Pattern[str]] = re.compile(r"^(19|20)\d\d-\d{1,2}-\d{1,2}$")
+#: Numbers that cannot be a contact detail by their very shape, and which the scrubber therefore
+#: leaves exactly as served. None of them is anybody's personal data, and substituting into them
+#: does real damage:
+#:
+#: * an ISO date became `3644-44-80`, so six fixtures held a `<time>` element no page ever served;
+#: * an IPv4 address became `103.638.519.26`, mangling a link to a clinic's own booking page;
+#: * a longitude became `02.911353`, and a leading zero is **invalid JSON** -- which silently
+#:   disabled structured extraction for all three of that site's pages and understated recall by
+#:   a corpus artefact rather than a defect.
+#:
+#: Nothing is hidden by skipping them. No phone number is written as a single dot with three
+#: decimals, and if one ever were, the leak gate asks `phonenumbers` rather than this pattern --
+#: so it would fail loudly instead of publishing quietly.
+_NOT_A_CONTACT_SHAPE: Final[tuple[re.Pattern[str], ...]] = (
+    re.compile(r"^(19|20)\d\d-\d{1,2}-\d{1,2}$"),
+    re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}$"),
+    re.compile(r"^\d{1,4}\.\d{2,}$"),
+)
+
+
+def is_structural(value: str) -> bool:
+    """Whether this is a date, an IP address or a decimal number rather than a contact."""
+    bare = value.strip()
+    return any(pattern.match(bare) for pattern in _NOT_A_CONTACT_SHAPE)
+
 
 #: A `tel:` or `mailto:` with percent-escapes in it, which is how five numbers survived
 #: scrubbing: `tel:099103%2008147` splits into `099103` and `2008147` around the `%`, both too
@@ -84,6 +104,7 @@ _ISO_DATE: Final[re.Pattern[str]] = re.compile(r"^(19|20)\d\d-\d{1,2}-\d{1,2}$")
 #: `app/crawl/contacts.py` unquotes hrefs as well, so a decoded fixture is the string the
 #: extractor works from in any case.
 _LINK_HREF: Final[re.Pattern[str]] = re.compile(r"""(?i)(?:tel|mailto):[^"'<>\s]*""")
+
 
 #: Elements no contact extractor reads, and which are most of a page's bytes.
 _STRIP: Final[tuple[str, ...]] = ("style", "svg", "noscript", "iframe", "canvas", "template")
@@ -454,7 +475,7 @@ def scrub(html: str, *, slug: str, reduce: bool = True) -> Scrubbed:
         digits = [c for c in original if c.isdigit()]
         if not 7 <= len(digits) <= 15:
             return original
-        if _ISO_DATE.match(original.strip()):
+        if is_structural(original):
             return original
         key = f"phone:{''.join(digits)}"
         if key not in seen:

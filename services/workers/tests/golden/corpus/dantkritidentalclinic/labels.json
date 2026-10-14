@@ -1,0 +1,33 @@
+{
+  "slug": "dantkritidentalclinic",
+  "harvested_at": "2026-10-14T10:15:19+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://dantkritidentalclinic.example.in/"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://dantkritidentalclinic.example.in/about-us.html"
+    }
+  ],
+  "expect": {
+    "email": "box50@dantkritidentalclini-50.com",
+    "phone": "+91-9482346268"
+  },
+  "also_theirs": [
+    "+9101246991373",
+    "+918338262380",
+    "+911244912764",
+    "0124 2335106",
+    "8510432578",
+    "9199301416",
+    "+919930114647"
+  ],
+  "absent": [],
+  "absent_because": {},
+  "decided": {}
+}

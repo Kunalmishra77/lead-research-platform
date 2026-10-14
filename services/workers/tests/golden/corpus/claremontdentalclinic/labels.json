@@ -1,6 +1,6 @@
 {
   "slug": "claremontdentalclinic",
-  "harvested_at": "2026-10-13T13:25:41+00:00",
+  "harvested_at": "2026-10-14T10:12:32+00:00",
   "draft": false,
   "pages": [
     {
@@ -19,14 +19,15 @@
   ],
   "absent": [
     "100001893555005",
-    "1674000763",
     "1674093816",
+    "1674000763",
     "04737020"
   ],
   "absent_because": {
     "100001893555005": "part of a social profile URL, not a phone number",
-    "1674000763": "a cache-busting ?ver= on a stylesheet or script",
     "1674093816": "a cache-busting ?ver= on a stylesheet or script",
-    "04737020": "a page-builder element id"
-  }
+    "1674000763": "a cache-busting ?ver= on a stylesheet or script",
+    "04737020": "inside a src, href, class or data- attribute, which the text extractor never reads"
+  },
+  "decided": {}
 }

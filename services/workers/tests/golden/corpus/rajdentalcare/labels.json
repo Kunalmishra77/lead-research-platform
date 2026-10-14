@@ -1,0 +1,28 @@
+{
+  "slug": "rajdentalcare",
+  "harvested_at": "2026-10-14T10:14:59+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://rajdentalcare.example.in/"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://rajdentalcare.example.in/"
+    }
+  ],
+  "expect": {
+    "email": "box64@rajdentalcare-64.com",
+    "phone": "+917387403796"
+  },
+  "also_theirs": [
+    "01244071271",
+    "7577490757"
+  ],
+  "absent": [],
+  "absent_because": {},
+  "decided": {}
+}

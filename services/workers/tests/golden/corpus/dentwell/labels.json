@@ -1,6 +1,6 @@
 {
   "slug": "dentwell",
-  "harvested_at": "2026-10-13T13:26:01+00:00",
+  "harvested_at": "2026-10-14T10:12:55+00:00",
   "draft": false,
   "pages": [
     {
@@ -32,11 +32,11 @@
     "60003561250146",
     "2021-16-90-583",
     "2022-61-46-728",
-    "1794677085",
-    "1793436319",
-    "1793200723",
-    "1791229711",
-    "012054804"
+    "1798191180",
+    "485294309",
+    "1791997389",
+    "1791921164",
+    "1795883237"
   ],
   "absent_because": {
     "2020-34-86-285077": "part of an image filename or the srcset beside it",
@@ -44,10 +44,11 @@
     "60003561250146": "part of a social profile URL, not a phone number",
     "2021-16-90-583": "part of an image filename or the srcset beside it",
     "2022-61-46-728": "part of an image filename or the srcset beside it",
-    "1794677085": "a cache-busting ?ver= on a stylesheet or script",
-    "1793436319": "a cache-busting ?ver= on a stylesheet or script",
-    "1793200723": "a cache-busting ?ver= on a stylesheet or script",
-    "1791229711": "a cache-busting ?ver= on a stylesheet or script",
-    "012054804": "digits out of Cloudflare's obfuscated-email hex"
-  }
+    "1798191180": "a cache-busting ?ver= on a stylesheet or script",
+    "485294309": "digits inside Cloudflare's email-protection hex, which hides the address from harvesters",
+    "1791997389": "a cache-busting ?ver= on a stylesheet or script",
+    "1791921164": "a cache-busting ?ver= on a stylesheet or script",
+    "1795883237": "a cache-busting ?ver= on a stylesheet or script"
+  },
+  "decided": {}
 }

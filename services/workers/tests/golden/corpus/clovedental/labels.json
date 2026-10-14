@@ -1,6 +1,6 @@
 {
   "slug": "clovedental",
-  "harvested_at": "2026-10-13T13:27:42+00:00",
+  "harvested_at": "2026-10-14T10:14:19+00:00",
   "draft": false,
   "pages": [
     {
@@ -21,10 +21,10 @@
   ],
   "expect": {
     "phone": "+9111 3501 1931",
-    "email": "first41.last41@clovedental-41.in"
+    "email": "first10.last10@clovedental-10.in"
   },
   "also_theirs": [
-    "first10.last10@clovedental-10.in",
+    "first41.last41@clovedental-41.in",
     "box98@clovedental-98.in",
     "box92@clovedental-92.in",
     "+91 9313111043",
@@ -40,32 +40,33 @@
     "1744907146",
     "1753344863",
     "1003946459",
-    "1782285860",
     "1744901889",
     "1755406527",
-    "668153328",
+    "1782285860",
     "541904294",
-    "3947288-2",
-    "687402801",
-    "152996694",
-    "278215695",
     "917848223",
+    "152996694",
+    "668153328",
+    "687402801",
+    "278215695",
+    "3947288-2",
     "4393359123"
   ],
   "absent_because": {
-    "1744907146": "inside a src, href or data- attribute, which the text extractor never reads",
-    "1753344863": "inside a src, href or data- attribute, which the text extractor never reads",
-    "1003946459": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1744907146": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "1753344863": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "1003946459": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "1744901889": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "1755406527": "inside a src, href, class or data- attribute, which the text extractor never reads",
     "1782285860": "a cache-busting ?ver= on a stylesheet or script",
-    "1744901889": "inside a src, href or data- attribute, which the text extractor never reads",
-    "1755406527": "inside a src, href or data- attribute, which the text extractor never reads",
-    "668153328": "inside a src, href or data- attribute, which the text extractor never reads",
     "541904294": "part of an image filename or the srcset beside it",
-    "3947288-2": "part of an image filename or the srcset beside it",
-    "687402801": "inside a src, href or data- attribute, which the text extractor never reads",
-    "152996694": "inside a src, href or data- attribute, which the text extractor never reads",
-    "278215695": "part of an image filename or the srcset beside it",
     "917848223": "part of an image filename or the srcset beside it",
+    "152996694": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "668153328": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "687402801": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "278215695": "part of an image filename or the srcset beside it",
+    "3947288-2": "part of an image filename or the srcset beside it",
     "4393359123": "glued to the end of a URL path, which cannot happen to a number printed in prose"
-  }
+  },
+  "decided": {}
 }

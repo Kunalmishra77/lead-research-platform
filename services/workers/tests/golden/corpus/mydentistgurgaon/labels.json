@@ -1,6 +1,6 @@
 {
   "slug": "mydentistgurgaon",
-  "harvested_at": "2026-10-13T13:27:37+00:00",
+  "harvested_at": "2026-10-14T10:14:13+00:00",
   "draft": false,
   "pages": [
     {
@@ -36,10 +36,11 @@
     "1600039893574-01"
   ],
   "absent_because": {
-    "1580027832531-34": "inside a src, href or data- attribute, which the text extractor never reads",
+    "1580027832531-34": "inside a src, href, class or data- attribute, which the text extractor never reads",
     "1571879254997": "a CSS value, escaped inside an attribute",
     "1593734923901": "a CSS value, escaped inside an attribute",
-    "1546652687": "inside a src, href or data- attribute, which the text extractor never reads",
-    "1600039893574-01": "inside a src, href or data- attribute, which the text extractor never reads"
-  }
+    "1546652687": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "1600039893574-01": "inside a src, href, class or data- attribute, which the text extractor never reads"
+  },
+  "decided": {}
 }

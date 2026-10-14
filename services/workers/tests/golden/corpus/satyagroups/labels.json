@@ -1,0 +1,39 @@
+{
+  "slug": "satyagroups",
+  "harvested_at": "2026-10-14T10:14:45+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://satyagroups.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://satyagroups.example.in/contact-us"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://satyagroups.example.in/about-us"
+    }
+  ],
+  "expect": {
+    "email": "info@satyagroups-92.com",
+    "phone": "01245953491"
+  },
+  "also_theirs": [
+    "+91 9031 607 851",
+    "+91 9537 174 360",
+    "9995833597",
+    "9978022354"
+  ],
+  "absent": [
+    "1 (704) 607-6807"
+  ],
+  "absent_because": {
+    "1 (704) 607-6807": "an input's placeholder or label, which is an example rather than a contact"
+  },
+  "decided": {}
+}

@@ -58,8 +58,8 @@ _NOT_A_PHONE: Final[tuple[tuple[re.Pattern[str], str], ...]] = (
     (re.compile(r"(?i)(z-index|opacity|cursor)[^;]*$"), "a CSS value, escaped inside an attribute"),
     (re.compile(r"(?i)(title|alt)=[\"'][^\"'<>]*$"),
      "inside a title or alt attribute, which the text extractor never reads"),
-    (re.compile(r"""(?i)\b(src|srcset|href|data-[a-z-]+)=["'][^"'<>]*$"""),
-     "inside a src, href or data- attribute, which the text extractor never reads"),
+    (re.compile(r"""(?i)\b(src|srcset|href|class|data-[a-z-]+)=["'][^"'<>]*$"""),
+     "inside a src, href, class or data- attribute, which the text extractor never reads"),
     (re.compile(r"\*{2,}$"),
      "an address the site masks with asterisks, so there is no address to read"),
     (re.compile(r"""(?i)https?://[^"'<>]*$"""), "part of a URL's host"),
@@ -147,6 +147,13 @@ def propose(site: Labels, root: Path = CORPUS) -> Proposal:
         # asked first, so every value `phonenumbers` accepted became the business's -- four
         # WordPress timestamps among them. What a value *is* comes first; whether it can be
         # dialled only matters once nothing has named it as something else.
+        if value in site.decided:
+            # A human already ruled on this one. Checked before every rule, because a rule that
+            # disagrees with a person is a rule to fix, not a label to overwrite.
+            out.absent.append(value)
+            out.absent_because[value] = site.decided[value]
+            continue
+
         if any(_SOMEBODY_ELSE.search(before) for before, _ in places):
             out.absent.append(value)
             out.absent_because[value] = "credited to whoever built the site, not the business"
@@ -302,6 +309,7 @@ def write(site: Labels, root: Path = CORPUS) -> list[str]:
     raw["also_theirs"] = proposal.also_theirs
     raw["absent"] = proposal.absent
     raw["absent_because"] = proposal.absent_because
+    raw["decided"] = site.decided
     raw["draft"] = True
     path.write_text(json.dumps(raw, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return []

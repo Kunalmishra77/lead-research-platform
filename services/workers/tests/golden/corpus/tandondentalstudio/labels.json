@@ -1,0 +1,53 @@
+{
+  "slug": "tandondentalstudio",
+  "harvested_at": "2026-10-14T10:14:27+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://tandondentalstudio.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://tandondentalstudio.example.in/contact-us/"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://tandondentalstudio.example.in/about-us/"
+    }
+  ],
+  "expect": {
+    "email": "box18@tandondentalstudio-18.com",
+    "phone": "+91-91450 40466"
+  },
+  "also_theirs": [
+    "+91-9611757722",
+    "9042763131"
+  ],
+  "absent": [
+    "3.4.80974846589",
+    "1753285528",
+    "1755233993",
+    "1756149652",
+    "1786821709",
+    "1786948716",
+    "1754142739",
+    "1787978349",
+    "1787939101"
+  ],
+  "absent_because": {
+    "3.4.80974846589": "a cache-busting ?ver= on a stylesheet or script",
+    "1753285528": "a cache-busting ?ver= on a stylesheet or script",
+    "1755233993": "a cache-busting ?ver= on a stylesheet or script",
+    "1756149652": "part of an image filename or the srcset beside it",
+    "1786821709": "a cache-busting ?ver= on a stylesheet or script",
+    "1786948716": "a cache-busting ?ver= on a stylesheet or script",
+    "1754142739": "a cache-busting ?ver= on a stylesheet or script",
+    "1787978349": "a cache-busting ?ver= on a stylesheet or script",
+    "1787939101": "a cache-busting ?ver= on a stylesheet or script"
+  },
+  "decided": {}
+}

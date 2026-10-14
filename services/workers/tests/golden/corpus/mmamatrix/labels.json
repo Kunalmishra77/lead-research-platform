@@ -1,0 +1,63 @@
+{
+  "slug": "mmamatrix",
+  "harvested_at": "2026-10-14T10:15:46+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://mmamatrix.example.in/"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://mmamatrix.example.in/about.php"
+    }
+  ],
+  "expect": {
+    "phone": "+91 99372 00923"
+  },
+  "also_theirs": [
+    "+91 90122 30351",
+    "+91 82831 78676",
+    "+91 70251 41317",
+    "+91 93263 68849",
+    "+91 92001 03563",
+    "+91 85676 56766",
+    "+91 72188 70073",
+    "+91 95547 52968",
+    "+91 74169 62846",
+    "+91 98322 11781",
+    "+91 90213 19786",
+    "+91 85544 10644",
+    "+91 9552036079",
+    "+91 8306302656",
+    "+91 9283726022",
+    "+91 9024193616",
+    "+91 8147715394",
+    "+91 9347516276"
+  ],
+  "absent": [
+    "1-111139132283",
+    "60002522089816",
+    "60004165425705",
+    "60003699291595",
+    "60003548017367",
+    "60002045227859",
+    "2-4488392",
+    "32202060",
+    "4-812513"
+  ],
+  "absent_because": {
+    "1-111139132283": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "60002522089816": "part of a social profile URL, not a phone number",
+    "60004165425705": "part of a social profile URL, not a phone number",
+    "60003699291595": "part of a social profile URL, not a phone number",
+    "60003548017367": "part of a social profile URL, not a phone number",
+    "60002045227859": "part of a social profile URL, not a phone number",
+    "2-4488392": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "32202060": "glued to the end of a URL path, which cannot happen to a number printed in prose",
+    "4-812513": "inside a src, href, class or data- attribute, which the text extractor never reads"
+  },
+  "decided": {}
+}

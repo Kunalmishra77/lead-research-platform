@@ -30,5 +30,6 @@
   ],
   "absent_because": {
     "20201119092140": "the page's own link is malformed, so nothing can read a contact out of it"
-  }
+  },
+  "decided": {}
 }

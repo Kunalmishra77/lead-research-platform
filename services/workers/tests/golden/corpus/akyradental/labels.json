@@ -1,0 +1,28 @@
+{
+  "slug": "akyradental",
+  "harvested_at": "2026-10-14T10:15:33+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://akyradental.example.in/"
+    }
+  ],
+  "expect": {
+    "email": "box65@akyradental-65.com",
+    "phone": "+919148841132"
+  },
+  "also_theirs": [
+    "01245215710"
+  ],
+  "absent": [
+    "6329-2374",
+    "7255-985"
+  ],
+  "absent_because": {
+    "6329-2374": "part of a URL's host",
+    "7255-985": "inside a src, href, class or data- attribute, which the text extractor never reads"
+  },
+  "decided": {}
+}

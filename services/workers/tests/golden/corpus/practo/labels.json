@@ -1,0 +1,38 @@
+{
+  "slug": "practo",
+  "harvested_at": "2026-10-14T09:51:24+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://practo.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://practo.example.in/company/contact"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://practo.example.in/company/about"
+    }
+  ],
+  "expect": {
+    "email": "support@practo-99.com",
+    "phone": "+91 8715 527 741"
+  },
+  "also_theirs": [],
+  "absent": [
+    "1023893298",
+    "815415159"
+  ],
+  "absent_because": {
+    "1023893298": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "815415159": "an App Store id in `<meta name=\"apple-itunes-app\" content=\"app-id=...\">`"
+  },
+  "decided": {
+    "815415159": "an App Store id in `<meta name=\"apple-itunes-app\" content=\"app-id=...\">`"
+  }
+}

@@ -55,6 +55,19 @@ _EMAIL: Final[re.Pattern[str]] = re.compile(
 #: with a mailbox.
 _NUMERIC_TLD: Final[re.Pattern[str]] = re.compile(r"\.[0-9]+$")
 
+#: A file extension where `_EMAIL` otherwise reads a domain. Retina assets are named
+#: `logo@2x.webp`, and Webflow serves them percent-encoded as `logo%402x.webp` -- which this
+#: pattern matches, because `%40` is one of the spellings of `@` it exists to catch. The
+#: substitution then rewrote an asset URL into a mailbox, and the label recorded the `@` spelling
+#: while the page held `%40`, so `occurrences` could never find it again and the value fell out of
+#: the labels entirely. The leak gate caught that, as it should: from its side a value in no
+#: category is indistinguishable from an address nobody scrubbed.
+#:
+#: Skipping these cannot lose a real address, because none of these is a top-level domain.
+_ASSET_SUFFIX: Final[re.Pattern[str]] = re.compile(
+    r"(?i)\.(webp|png|jpe?g|gif|svg|ico|bmp|avif|css|js|mjs|json|woff2?|ttf|eot|mp4|webm|pdf)$"
+)
+
 #: Any run of digits long enough to be a phone number, with the separators people use. Broader
 #: than `phonenumbers` accepts on purpose: a PIN code, a price and a year all match, and the
 #: labelling step is where they are marked as things the extractor must *not* report.
@@ -63,11 +76,27 @@ _NUMERIC_TLD: Final[re.Pattern[str]] = re.compile(r"\.[0-9]+$")
 #: the end of a sentence -- `... or on 097111 74449.` -- and left a real phone number in a fixture
 #: bound for a public repository. A boundary that fails closed is not a boundary.
 #:
+#: The separator class carries the Unicode dashes and `\ufffd` as well as ASCII. A clinic's
+#: footer came back mis-decoded, so the gap inside `0124 519 9464` arrived as a replacement
+#: character; `\s` does not match it, the number split into two runs too short to match, and the
+#: scrubber replaced only half of it. Being generous here costs nothing -- a false match is
+#: labelled absent -- while being strict leaves real digits in a published file.
+#:
 #: The span is `{6,24}` and was `{6,16}`, which is one short of a ten-digit number written with a
 #: separator between every digit: `9-2-1-7-8-3-6-5-2-1` needs 17, matched nothing, and six real
 #: numbers went into the corpus untouched. The digit count is checked afterwards, in
 #: `replace_phone`, so widening the span here costs nothing and closes that class.
-_PHONE: Final[re.Pattern[str]] = re.compile(r"(?<![\w.])(\+?\d[\d\s\-().]{6,24}\d)(?!\d)")
+#: The separators are spelled as escapes so this file stays ASCII and a reader can tell a hyphen
+#: from an en dash, which is the whole reason ruff objects to the literal characters.
+#:
+#: Beyond ASCII: the Unicode dashes, the middle dot and the bullet, which sites use as visual
+#: separators -- one clinic's footer prints `0124 · 519 9464` -- and `�`, for a page
+#: that arrives mis-decoded. `\s` matches none of them, so the number split into two runs too
+#: short to match and the scrubber replaced only half of it, leaving real digits in a published
+#: file. Being generous here costs nothing, because a false match is labelled absent; being
+#: strict costs somebody their phone number.
+_SEPARATORS: Final[str] = "\\d\\s\\-().\\u00b7\\u2010-\\u2015\\u2022\\ufffd"
+_PHONE: Final[re.Pattern[str]] = re.compile(rf"(?<![\w.])(\+?\d[{_SEPARATORS}]{{6,24}}\d)(?!\d)")
 
 #: Numbers that cannot be a contact detail by their very shape, and which the scrubber therefore
 #: leaves exactly as served. None of them is anybody's personal data, and substituting into them
@@ -83,9 +112,19 @@ _PHONE: Final[re.Pattern[str]] = re.compile(r"(?<![\w.])(\+?\d[\d\s\-().]{6,24}\
 #: decimals, and if one ever were, the leak gate asks `phonenumbers` rather than this pattern --
 #: so it would fail loudly instead of publishing quietly.
 _NOT_A_CONTACT_SHAPE: Final[tuple[re.Pattern[str], ...]] = (
+    # An ISO date, and the `dd.mm.yyyy` a news list prints: `<span class="mj-news-date">`.
     re.compile(r"^(19|20)\d\d-\d{1,2}-\d{1,2}$"),
+    re.compile(r"^\d{1,2}\.\d{1,2}\.\d{2,4}$"),
+    # An IPv4 address.
     re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}$"),
+    # A decimal: a coordinate, a price, a version.
     re.compile(r"^\d{1,4}\.\d{2,}$"),
+    # A number with dot thousand separators. One clinic's site carries an Indonesian template,
+    # prices and all: `Earn 1.418.793 points`.
+    re.compile(r"^\d{1,3}(?:\.\d{3})+$"),
+    # A year range, which is what a copyright line and an award badge print: `Copyright © 2019-2024`
+    # became `4159-6201`, and `Satya Developers (2012 - 2023)` became `(0112 - 5880)`.
+    re.compile(r"^(19|20)\d\d\s*[-\u2013]\s*((19|20)?\d\d)$"),
 )
 
 
@@ -452,7 +491,7 @@ def scrub(html: str, *, slug: str, reduce: bool = True) -> Scrubbed:
         local, joiner, domain = match.group(1), match.group(2), match.group(3)
         flat_domain = re.sub(r"\s*(?:\(\s*dot\s*\)|\[\s*dot\s*\])\s*", ".", domain)
         flat_domain = re.sub(r"\s+", "", flat_domain)
-        if _NUMERIC_TLD.search(flat_domain):
+        if _NUMERIC_TLD.search(flat_domain) or _ASSET_SUFFIX.search(flat_domain):
             return match.group(0)
         key = f"email:{local}@{flat_domain}".lower()
         if key not in seen:

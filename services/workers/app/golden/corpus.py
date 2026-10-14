@@ -64,6 +64,13 @@ class Labels:
     also_theirs: list[str] = field(default_factory=list)
     #: Why each `absent` entry is absent, so the next person does not "fix" the label.
     absent_because: dict[str, str] = field(default_factory=dict)
+    #: A human's call on a value no rule could name, as value -> reason. It **outranks** every
+    #: rule in `app/golden/propose.py` and survives a re-proposal, which is the point: a
+    #: proposal is a machine reading markup, and what makes a label a label is somebody agreeing
+    #: with it (ADR-0020). Without this, the residue had nowhere to go -- `propose --write` is
+    #: all-or-nothing, so one unnameable value per site blocked the whole site, and the only
+    #: alternative was hand-editing JSON, which has already dropped a value once.
+    decided: dict[str, str] = field(default_factory=dict)
     #: Set while a site is harvested and not yet reviewed. The report refuses to score these
     #: rather than counting a draft as ground truth.
     draft: bool = True
@@ -80,6 +87,7 @@ class Labels:
                     "also_theirs": self.also_theirs,
                     "absent": self.absent,
                     "absent_because": self.absent_because,
+                    "decided": self.decided,
                 },
                 indent=2,
                 sort_keys=False,
@@ -102,6 +110,7 @@ class Labels:
             absent_because={
                 str(k): str(v) for k, v in (raw.get("absent_because") or {}).items()
             },
+            decided={str(k): str(v) for k, v in (raw.get("decided") or {}).items()},
             draft=bool(raw.get("draft", False)),
         )
 

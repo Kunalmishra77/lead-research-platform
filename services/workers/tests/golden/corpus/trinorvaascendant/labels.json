@@ -1,0 +1,39 @@
+{
+  "slug": "trinorvaascendant",
+  "harvested_at": "2026-10-14T10:15:36+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://trinorvaascendant.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://trinorvaascendant.example.in/contact/"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://trinorvaascendant.example.in/about/"
+    }
+  ],
+  "expect": {
+    "email": "box50@trinorvaascendant-50.com",
+    "phone": "690 542 6910"
+  },
+  "also_theirs": [
+    "info@trinorvaascendant-23.com",
+    "895-784-9095"
+  ],
+  "absent": [
+    "1779885861",
+    "54092787"
+  ],
+  "absent_because": {
+    "1779885861": "a cache-busting ?ver= on a stylesheet or script",
+    "54092787": "part of an image filename or the srcset beside it"
+  },
+  "decided": {}
+}

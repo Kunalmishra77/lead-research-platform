@@ -1,0 +1,33 @@
+{
+  "slug": "thedentalroots",
+  "harvested_at": "2026-10-14T10:15:11+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://thedentalroots.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://thedentalroots.example.in/contact-us"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://thedentalroots.example.in/about-us"
+    }
+  ],
+  "expect": {
+    "phone": "+91-8651200867",
+    "email": "enquiry@thedentalroots-66.com"
+  },
+  "also_theirs": [
+    "8554399397",
+    "+918185857824"
+  ],
+  "absent": [],
+  "absent_because": {},
+  "decided": {}
+}

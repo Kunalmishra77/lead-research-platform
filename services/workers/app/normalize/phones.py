@@ -43,6 +43,23 @@ _LINE_TYPES: Final[dict[int, str]] = {
 #: `company_locations.phone_e164` is CHECKed against this shape. A number `phonenumbers` calls
 #: valid should always satisfy it, and the guard stays anyway: a CheckViolation fails the whole
 #: batch, so the last word on what goes in that column belongs next to the column's own rule.
+#: Characters a page uses to space a number out, folded to a plain space before parsing.
+#: `phonenumbers` knows the ASCII punctuation and nothing else, so a clinic whose footer prints
+#: `0124 U+00B7 519 9464` was unreadable to the whole pipeline -- `0124 519 9464` is a valid
+#: Gurugram landline and the middle dot alone was enough to lose it. The golden corpus found it
+#: (task 3.14): the scrubber matched the number, `to_e164` refused it, and the label had nowhere
+#: to go. `app/crawl/contacts.py` already folds the Unicode dashes for the same reason; this is
+#: one level down, where every source passes through.
+#:
+#: Spelled as escapes, because a file that prints a non-breaking space as a space is a file
+#: nobody can review -- which is what ruff's ambiguous-character rule is for.
+_VISUAL_SEPARATORS: Final[dict[int, str]] = str.maketrans(
+    dict.fromkeys(
+        "\u00a0\u00b7\u2022\u2027\u2010\u2011\u2012\u2013\u2014\u2015",
+        " ",
+    )
+)
+
 _E164_MIN_DIGITS: Final[int] = 7
 _E164_MAX_DIGITS: Final[int] = 15
 
@@ -61,7 +78,8 @@ def parse(raw: str | None, region: str | None = None) -> phonenumbers.PhoneNumbe
     if not raw:
         return None
     try:
-        parsed = phonenumbers.parse(raw, (region or "").upper() or None)
+        cleaned = raw.translate(_VISUAL_SEPARATORS)
+        parsed = phonenumbers.parse(cleaned, (region or "").upper() or None)
     except phonenumbers.NumberParseException:
         return None
     return parsed if phonenumbers.is_valid_number(parsed) else None

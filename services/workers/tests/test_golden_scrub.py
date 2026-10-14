@@ -318,3 +318,52 @@ def test_a_structural_shape_is_not_a_way_to_hide_a_number() -> None:
     assert not is_structural("+91 98765 43210")
     assert not is_structural("0124 456 7890")
     assert is_structural("22.845769")
+
+
+def test_a_visual_separator_does_not_split_a_number() -> None:
+    r"""One clinic's footer prints its number as `0124 · 519 9464`, with a middle dot.
+
+    `\s` does not match U+00B7, so the number split into two runs too short to match and the
+    scrubber replaced only half of it, leaving real digits in a published file. The bullet, the
+    Unicode dashes and U+FFFD are in the separator class for the same reason. (I first read the
+    character as U+FFFD off a cp1252 console; it is a middle dot, and the comment in `scrub.py`
+    now says so.)
+    """
+    html = "<p>Call 0124 " + chr(0x00B7) + " 519 9464 today</p>"
+    [phone] = scrub(html, slug="p").substitutions
+    assert "0124" not in phone.replacement or phone.replacement.count("0124") == 1
+    assert "519 9464" not in scrub(html, slug="p").html, "the real digits must be gone"
+
+
+def test_a_year_range_and_a_dotted_date_are_structure() -> None:
+    """`Copyright © 2019-2024` became `4159-6201` and a news list's `12.03.2024` became
+    `01.60.6402`. Neither is anybody's contact detail, and mangling them corrupts the page."""
+    for value in ("2019-2024", "2012 - 2023", "12.03.2024", "1.418.793"):
+        assert is_structural(value), value
+        assert scrub(f"<p>{value}</p>", slug="p").substitutions == [], value
+
+
+def test_a_real_number_is_still_not_structure() -> None:
+    """The guard list has grown to six shapes, so this is worth asserting as it grows."""
+    for value in ("+91 98765 43210", "0124 456 7890", "011 4567 8900", "1800 123 4567"):
+        assert not is_structural(value), value
+        assert scrub(f"<p>{value}</p>", slug="p").substitutions, value
+
+
+def test_an_asset_filename_is_not_an_address() -> None:
+    """A retina asset is named `logo@2x.webp`, and Webflow serves it as `logo%402x.webp` --
+    which the email pattern matches, because `%40` is one of the spellings of `@` it exists to
+    catch. The substitution rewrote an asset URL into a mailbox, and because the label recorded
+    the `@` spelling while the page kept `%40`, the value then fell out of the labels entirely.
+    """
+    html = '<img src="https://cdn.example/a/logo%402x.webp"><img src="https://c.example/b@2x.png">'
+    result = scrub(html, slug="p")
+    assert result.substitutions == []
+    assert "logo%402x.webp" in result.html
+    assert "b@2x.png" in result.html
+
+
+def test_a_real_address_at_a_real_domain_is_still_substituted() -> None:
+    """The guard is on the suffix, so an address is still an address."""
+    [email] = scrub('<a href="mailto:info@clinic.in">x</a>', slug="p").substitutions
+    assert email.kind == "email"

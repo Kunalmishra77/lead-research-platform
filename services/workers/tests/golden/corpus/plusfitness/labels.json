@@ -1,0 +1,33 @@
+{
+  "slug": "plusfitness",
+  "harvested_at": "2026-10-14T10:15:53+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://plusfitness.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://plusfitness.example.in/gym-membership/"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://plusfitness.example.in/about-us"
+    }
+  ],
+  "expect": {},
+  "also_theirs": [],
+  "absent": [
+    "4886923498",
+    "62237415"
+  ],
+  "absent_because": {
+    "4886923498": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "62237415": "part of a social profile URL, not a phone number"
+  },
+  "decided": {}
+}

@@ -118,3 +118,20 @@ def test_parse_and_to_e164_agree_on_what_is_a_number() -> None:
     """
     for raw in ["085277 87137", "+918860692858", "not a phone", "110001", "0215 900 1060"]:
         assert (parse(raw, "IN") is None) == (to_e164(raw, "IN") is None), raw
+
+
+def test_a_visual_separator_does_not_lose_a_number() -> None:
+    """One clinic prints its footer number as `0124 U+00B7 519 9464`, with a middle dot.
+
+    `phonenumbers` knows the ASCII punctuation and nothing else, so that number was unreadable
+    to the whole pipeline while `0124 519 9464` is a valid Gurugram landline -- the separator
+    alone lost it. Found by the golden corpus (task 3.14): the scrubber matched the number and
+    `to_e164` then refused it, which is a contradiction the labels could not express.
+    """
+    expected = "+911245199464"
+    for separator in ("\u00b7", "\u2022", "\u2027", "\u2013", "\u2014", "\u00a0"):
+        assert to_e164(f"0124 {separator} 519 9464", "IN") == expected, repr(separator)
+    assert to_e164("0124\u00a0519 9464", "IN") == expected
+
+    # Still not a licence to invent: a separator is not a digit.
+    assert to_e164("0124 \u00b7 519", "IN") is None

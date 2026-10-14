@@ -1,6 +1,6 @@
 {
   "slug": "symmetrydentals",
-  "harvested_at": "2026-10-13T13:27:04+00:00",
+  "harvested_at": "2026-10-14T10:13:39+00:00",
   "draft": false,
   "pages": [
     {
@@ -27,5 +27,6 @@
   ],
   "absent_because": {
     "211055200141": "glued to the end of a URL path, which cannot happen to a number printed in prose"
-  }
+  },
+  "decided": {}
 }

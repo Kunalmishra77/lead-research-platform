@@ -1,0 +1,39 @@
+{
+  "slug": "32shinedental",
+  "harvested_at": "2026-10-14T10:36:56+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://32shinedental.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://32shinedental.example.in/contact"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://32shinedental.example.in/about"
+    }
+  ],
+  "expect": {
+    "email": "box78@32shinedental-78.com",
+    "phone": "+91-124-460-1196"
+  },
+  "also_theirs": [
+    "0124 423 1412",
+    "919979665276",
+    "+911244536469",
+    "0124 \u00b7 490 9431"
+  ],
+  "absent": [
+    "677110072"
+  ],
+  "absent_because": {
+    "677110072": "inside a src, href, class or data- attribute, which the text extractor never reads"
+  },
+  "decided": {}
+}

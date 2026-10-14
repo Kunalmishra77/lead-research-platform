@@ -1,0 +1,32 @@
+{
+  "slug": "medanta",
+  "harvested_at": "2026-10-14T10:15:29+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://medanta.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://medanta.example.in/contact-us"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://medanta.example.in/about"
+    }
+  ],
+  "expect": {
+    "email": "info@medanta-46.org",
+    "phone": "+91-89-3174-9433"
+  },
+  "also_theirs": [
+    "+91-847-993-1838"
+  ],
+  "absent": [],
+  "absent_because": {},
+  "decided": {}
+}

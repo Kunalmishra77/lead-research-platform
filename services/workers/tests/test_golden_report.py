@@ -31,9 +31,12 @@ from app.golden.report import render, run, same
 #:
 #: So this sits just under the measured value: any regression trips it, and the number goes up
 #: when the extractors improve. Raising it is the point -- it is the one place the corpus says out
-#: loud how good the pipeline currently is. It has gone 1.0 (two sites, chosen) -> 0.92 (ten
-#: sites, measured) -> 0.96 (twenty-five sites, after the corpus found two real defects).
-RECALL_FLOOR = 0.96
+#: loud how good the pipeline currently is. It has gone 1.0 (two sites, chosen by hand) -> 0.92
+#: (ten sites, measured) -> 0.96 (twenty-five) -> 0.95 (fifty). It went *down* at fifty, and that
+#: is the floor doing its job rather than failing: the last twenty-five sites include a
+#: marketplace whose contact details are rendered by JavaScript, which nothing here fetches until
+#: task 3.5, so the corpus now measures a gap it could not see before.
+RECALL_FLOOR = 0.95
 
 
 def test_the_corpus_has_sites_in_it() -> None:

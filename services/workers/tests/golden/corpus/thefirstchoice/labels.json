@@ -1,0 +1,77 @@
+{
+  "slug": "thefirstchoice",
+  "harvested_at": "2026-10-14T10:16:02+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://thefirstchoice.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://thefirstchoice.example.in/contact/"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://thefirstchoice.example.in/about/"
+    }
+  ],
+  "expect": {
+    "email": "support@thefirstchoice-99.in",
+    "phone": "+91-720-720-9270"
+  },
+  "also_theirs": [
+    "917977121682",
+    "7364700208"
+  ],
+  "absent": [
+    "60001626453920",
+    "60003743019769",
+    "2462786-3948",
+    "2465413-234",
+    "2467200-581",
+    "2465401-288",
+    "1741356825",
+    "1748561455",
+    "1742211527",
+    "1796047673",
+    "1791781458",
+    "1795326172",
+    "1792631334",
+    "1791961840",
+    "1792271559",
+    "2643301-004",
+    "2641327-533",
+    "2648799-639",
+    "2647274-209",
+    "1799885850",
+    "1792344450"
+  ],
+  "absent_because": {
+    "60001626453920": "part of a social profile URL, not a phone number",
+    "60003743019769": "part of a social profile URL, not a phone number",
+    "2462786-3948": "part of an image filename or the srcset beside it",
+    "2465413-234": "part of an image filename or the srcset beside it",
+    "2467200-581": "part of an image filename or the srcset beside it",
+    "2465401-288": "part of an image filename or the srcset beside it",
+    "1741356825": "a cache-busting ?ver= on a stylesheet or script",
+    "1748561455": "a cache-busting ?ver= on a stylesheet or script",
+    "1742211527": "a cache-busting ?ver= on a stylesheet or script",
+    "1796047673": "a cache-busting ?ver= on a stylesheet or script",
+    "1791781458": "a cache-busting ?ver= on a stylesheet or script",
+    "1795326172": "a cache-busting ?ver= on a stylesheet or script",
+    "1792631334": "a cache-busting ?ver= on a stylesheet or script",
+    "1791961840": "a cache-busting ?ver= on a stylesheet or script",
+    "1792271559": "a cache-busting ?ver= on a stylesheet or script",
+    "2643301-004": "part of an image filename or the srcset beside it",
+    "2641327-533": "part of an image filename or the srcset beside it",
+    "2648799-639": "part of an image filename or the srcset beside it",
+    "2647274-209": "part of an image filename or the srcset beside it",
+    "1799885850": "a cache-busting ?ver= on a stylesheet or script",
+    "1792344450": "a cache-busting ?ver= on a stylesheet or script"
+  },
+  "decided": {}
+}

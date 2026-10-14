@@ -1,6 +1,6 @@
 {
   "slug": "drmadaandentalclinic",
-  "harvested_at": "2026-10-13T13:25:32+00:00",
+  "harvested_at": "2026-10-14T10:12:23+00:00",
   "draft": false,
   "pages": [
     {
@@ -17,25 +17,24 @@
     "09875293306"
   ],
   "absent": [
-    "2149225291",
-    "1792220356",
-    "2147866942",
-    "1732643476",
-    "1732598654",
-    "2149296295",
     "2145091001",
-    "57487657",
-    "07699487"
+    "2149296295",
+    "1732643476",
+    "2147866942",
+    "1732598654",
+    "2149225291",
+    "1791964679",
+    "57487657"
   ],
   "absent_because": {
-    "2149225291": "part of an image filename or the srcset beside it",
-    "1792220356": "a date or time in the markup",
-    "2147866942": "part of an image filename or the srcset beside it",
-    "1732643476": "a cache-busting ?ver= on a stylesheet or script",
-    "1732598654": "a cache-busting ?ver= on a stylesheet or script",
-    "2149296295": "part of an image filename or the srcset beside it",
     "2145091001": "part of an image filename or the srcset beside it",
-    "57487657": "a page-builder element id",
-    "07699487": "a form's one-time token"
-  }
+    "2149296295": "part of an image filename or the srcset beside it",
+    "1732643476": "a cache-busting ?ver= on a stylesheet or script",
+    "2147866942": "part of an image filename or the srcset beside it",
+    "1732598654": "a cache-busting ?ver= on a stylesheet or script",
+    "2149225291": "part of an image filename or the srcset beside it",
+    "1791964679": "a date or time in the markup",
+    "57487657": "inside a src, href, class or data- attribute, which the text extractor never reads"
+  },
+  "decided": {}
 }

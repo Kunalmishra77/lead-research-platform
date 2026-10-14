@@ -1,6 +1,6 @@
 {
   "slug": "royaldente",
-  "harvested_at": "2026-10-13T13:26:08+00:00",
+  "harvested_at": "2026-10-14T10:12:58+00:00",
   "draft": false,
   "pages": [
     {
@@ -20,6 +20,7 @@
     "1711964724"
   ],
   "absent_because": {
-    "1711964724": "inside a src, href or data- attribute, which the text extractor never reads"
-  }
+    "1711964724": "inside a src, href, class or data- attribute, which the text extractor never reads"
+  },
+  "decided": {}
 }

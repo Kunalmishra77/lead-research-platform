@@ -1,0 +1,66 @@
+{
+  "slug": "drdikshakakkar",
+  "harvested_at": "2026-10-14T10:14:37+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://drdikshakakkar.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://drdikshakakkar.example.in/contact/"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://drdikshakakkar.example.in/about-us/"
+    }
+  ],
+  "expect": {
+    "email": "box12@drdikshakakkar-12.com",
+    "phone": "+91-9997653992"
+  },
+  "also_theirs": [],
+  "absent": [
+    "1788241209",
+    "1792119754",
+    "1787830319",
+    "1782563139",
+    "1786027729",
+    "1781632917",
+    "1788532897",
+    "1788965551",
+    "1782462431",
+    "1784006808",
+    "1796087461",
+    "1780205758",
+    "89137210",
+    "83709287",
+    "74745165",
+    "1796981586",
+    "1791000897"
+  ],
+  "absent_because": {
+    "1788241209": "a date or time in the markup",
+    "1792119754": "a cache-busting ?ver= on a stylesheet or script",
+    "1787830319": "a date or time in the markup",
+    "1782563139": "a date or time in the markup",
+    "1786027729": "a date or time in the markup",
+    "1781632917": "a date or time in the markup",
+    "1788532897": "a cache-busting ?ver= on a stylesheet or script",
+    "1788965551": "part of an image filename or the srcset beside it",
+    "1782462431": "a date or time in the markup",
+    "1784006808": "a date or time in the markup",
+    "1796087461": "a cache-busting ?ver= on a stylesheet or script",
+    "1780205758": "a date or time in the markup",
+    "89137210": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "83709287": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "74745165": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "1796981586": "a cache-busting ?ver= on a stylesheet or script",
+    "1791000897": "a cache-busting ?ver= on a stylesheet or script"
+  },
+  "decided": {}
+}

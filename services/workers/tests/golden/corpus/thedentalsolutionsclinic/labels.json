@@ -1,0 +1,34 @@
+{
+  "slug": "thedentalsolutionsclinic",
+  "harvested_at": "2026-10-14T10:15:15+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://thedentalsolutionsclinic.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://thedentalsolutionsclinic.example.in/contact"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://thedentalsolutionsclinic.example.in/about"
+    }
+  ],
+  "expect": {
+    "email": "box57@thedentalsolutionscl-57.com",
+    "phone": "+919185731490"
+  },
+  "also_theirs": [],
+  "absent": [
+    "7001686812114"
+  ],
+  "absent_because": {
+    "7001686812114": "digits inside Cloudflare's email-protection hex, which hides the address from harvesters"
+  },
+  "decided": {}
+}

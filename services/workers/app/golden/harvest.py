@@ -200,10 +200,19 @@ async def harvest_many(
     doing it politely costs nothing we need.
     """
     added: list[str] = []
+    used: set[str] = set()
     for name, domain in sites:
         if len(added) >= want:
             break
         slug = slug_for(name, domain)
+        if slug in used:
+            # A collision, and it was silently destructive: `anytimefitness.com`,
+            # `anytimefitness.co.in` and `anytimefitness.co` are three companies in the graph and
+            # one slug, so a single refresh harvested the same directory three times and each
+            # pass overwrote the last. The suffix makes them distinct; the first domain on a stem
+            # keeps the bare slug, so no existing fixture is renamed.
+            slug = f"{slug}-{domain.lower().partition('.')[2].replace('.', '-')}"
+        used.add(slug)
         known = (root / slug / LABELS).exists()
         if known and not refresh:
             continue

@@ -1,0 +1,77 @@
+{
+  "slug": "implantoz",
+  "harvested_at": "2026-10-14T10:14:42+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://implantoz.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://implantoz.example.in/contact-us/"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://implantoz.example.in/about-us/"
+    }
+  ],
+  "expect": {
+    "email": "contact@implantoz-97.com",
+    "phone": "+91-7615695898"
+  },
+  "also_theirs": [
+    "box29@implantoz-29.com",
+    "+917574293614",
+    "+917066443189",
+    "07172052528"
+  ],
+  "absent": [
+    "1709789139",
+    "1706822804",
+    "1688239293",
+    "1689077782",
+    "1787955693",
+    "1696758988",
+    "1686413904",
+    "1707204779",
+    "1780379021",
+    "35684254",
+    "67372276",
+    "91173633",
+    "11952385",
+    "97212165",
+    "96197585",
+    "63950170",
+    "1781255862",
+    "99388545",
+    "06715367",
+    "1782327684"
+  ],
+  "absent_because": {
+    "1709789139": "a date or time in the markup",
+    "1706822804": "a date or time in the markup",
+    "1688239293": "a date or time in the markup",
+    "1689077782": "a date or time in the markup",
+    "1787955693": "part of an image filename or the srcset beside it",
+    "1696758988": "a date or time in the markup",
+    "1686413904": "a date or time in the markup",
+    "1707204779": "a date or time in the markup",
+    "1780379021": "a cache-busting ?ver= on a stylesheet or script",
+    "35684254": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "67372276": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "91173633": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "11952385": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "97212165": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "96197585": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "63950170": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "1781255862": "a cache-busting ?ver= on a stylesheet or script",
+    "99388545": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "06715367": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "1782327684": "a cache-busting ?ver= on a stylesheet or script"
+  },
+  "decided": {}
+}

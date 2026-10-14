@@ -18,7 +18,7 @@ from typing import Final
 from urllib.parse import unquote
 
 from app.golden.corpus import CORPUS
-from app.golden.scrub import _EMAIL, _NUMERIC_TLD, _PHONE, is_structural
+from app.golden.scrub import _ASSET_SUFFIX, _EMAIL, _NUMERIC_TLD, _PHONE, is_structural
 from app.normalize.phones import to_e164
 
 
@@ -34,6 +34,9 @@ def _accounted_for() -> set[str]:
         known.update(str(v).lower() for v in (raw.get("expect") or {}).values())
         known.update(str(v).lower() for v in (raw.get("absent") or []))
         known.update(str(v).lower() for v in (raw.get("also_theirs") or []))
+        # A value a human ruled on is accounted for. It is also in `absent` after the next
+        # `propose --write`, but the gate must not depend on that having been run.
+        known.update(str(v).lower() for v in (raw.get("decided") or {}))
     return known
 
 
@@ -89,8 +92,10 @@ def test_every_address_in_the_corpus_is_one_the_scrubber_wrote() -> None:
         for match in _EMAIL.finditer(html):
             flat = re.sub(r"\s", "", f"{match.group(1)}@{match.group(3)}").lower()
             flat = re.sub(r"\(dot\)|\[dot\]", ".", flat)
-            if _NUMERIC_TLD.search(flat):
-                # What the scrubber deliberately leaves: `bootstrap@5.3.8` in a CDN URL. The
+            if _NUMERIC_TLD.search(flat) or _ASSET_SUFFIX.search(flat):
+                # What the scrubber deliberately leaves: `bootstrap@5.3.8` in a CDN URL and
+                # `logo@2x.webp` in an asset path. Both use the scrubber's own constants, so
+                # the exemption here cannot drift wider than the one there. The
                 # same constant it uses, so the exemption here cannot drift wider than the
                 # one there -- and a numeric TLD is not a thing that exists.
                 continue

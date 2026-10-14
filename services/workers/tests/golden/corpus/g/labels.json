@@ -1,0 +1,17 @@
+{
+  "slug": "g",
+  "harvested_at": "2026-10-14T09:52:46+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://g.example.in/"
+    }
+  ],
+  "expect": {},
+  "also_theirs": [],
+  "absent": [],
+  "absent_because": {},
+  "decided": {}
+}

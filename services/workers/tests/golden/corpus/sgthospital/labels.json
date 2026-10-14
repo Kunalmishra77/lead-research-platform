@@ -1,6 +1,6 @@
 {
   "slug": "sgthospital",
-  "harvested_at": "2026-10-13T13:26:33+00:00",
+  "harvested_at": "2026-10-14T10:13:24+00:00",
   "draft": false,
   "pages": [
     {
@@ -29,15 +29,14 @@
     "+91-124-2843594"
   ],
   "absent": [
-    "049123715",
     "27575452",
     "+23-362-37603",
     "+0124-6089864"
   ],
   "absent_because": {
-    "049123715": "digits out of Cloudflare's obfuscated-email hex",
     "27575452": "part of a social profile URL, not a phone number",
     "+23-362-37603": "the page's own link is malformed, so nothing can read a contact out of it",
     "+0124-6089864": "the page's own link is malformed, so nothing can read a contact out of it"
-  }
+  },
+  "decided": {}
 }

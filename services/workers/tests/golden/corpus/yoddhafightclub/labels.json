@@ -1,0 +1,29 @@
+{
+  "slug": "yoddhafightclub",
+  "harvested_at": "2026-10-14T10:16:05+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://yoddhafightclub.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://yoddhafightclub.example.in/contact.html"
+    }
+  ],
+  "expect": {
+    "email": "info@yoddhafightclub-39.com",
+    "phone": "919547379476"
+  },
+  "also_theirs": [
+    "info@yoddhafightclub-12.in",
+    "9284923655",
+    "+919138639482"
+  ],
+  "absent": [],
+  "absent_because": {},
+  "decided": {}
+}

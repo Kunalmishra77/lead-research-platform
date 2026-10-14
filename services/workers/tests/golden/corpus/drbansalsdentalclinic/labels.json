@@ -1,0 +1,36 @@
+{
+  "slug": "drbansalsdentalclinic",
+  "harvested_at": "2026-10-14T10:15:24+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://drbansalsdentalclinic.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://drbansalsdentalclinic.example.in/deep-cleaning.html"
+    }
+  ],
+  "expect": {
+    "phone": "+6285880633371"
+  },
+  "also_theirs": [
+    "+62-855-6621-6599"
+  ],
+  "absent": [
+    "+60 042 6240 3800",
+    "96457026",
+    "11059966"
+  ],
+  "absent_because": {
+    "+60 042 6240 3800": "a Malaysian number in Indonesian boilerplate the site's template carries ('Kementerian Perdagangan RI'), not this clinic's contact detail",
+    "96457026": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "11059966": "inside a src, href, class or data- attribute, which the text extractor never reads"
+  },
+  "decided": {
+    "+60 042 6240 3800": "a Malaysian number in Indonesian boilerplate the site's template carries ('Kementerian Perdagangan RI'), not this clinic's contact detail"
+  }
+}

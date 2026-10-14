@@ -37,7 +37,7 @@ def occurrences(site: Labels, root: Path = CORPUS) -> list[Occurrence]:
     gate caught it, which is what the gate is for, but the cause was here.
     """
     wanted = sorted(
-        {*site.expect.values(), *site.also_theirs, *site.absent},
+        {*site.expect.values(), *site.also_theirs, *site.absent, *site.decided},
         key=len,
         reverse=True,
     )

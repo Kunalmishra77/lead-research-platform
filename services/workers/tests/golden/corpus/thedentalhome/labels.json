@@ -1,6 +1,6 @@
 {
   "slug": "thedentalhome",
-  "harvested_at": "2026-10-13T13:27:26+00:00",
+  "harvested_at": "2026-10-14T10:14:03+00:00",
   "draft": false,
   "pages": [
     {
@@ -30,11 +30,12 @@
   "absent": [
     "72120406",
     "73024594",
-    "2572247453"
+    "2981625865"
   ],
   "absent_because": {
     "72120406": "part of an image filename or the srcset beside it",
     "73024594": "part of a percent-encoded URL",
-    "2572247453": "part of an image filename or the srcset beside it"
-  }
+    "2981625865": "part of an image filename or the srcset beside it"
+  },
+  "decided": {}
 }

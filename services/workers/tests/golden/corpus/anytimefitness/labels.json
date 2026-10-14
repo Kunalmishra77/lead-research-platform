@@ -1,0 +1,65 @@
+{
+  "slug": "anytimefitness",
+  "harvested_at": "2026-10-14T10:58:52+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://anytimefitness.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://anytimefitness.example.in/contact"
+    },
+    {
+      "role": "careers",
+      "file": "careers.html",
+      "url": "https://anytimefitness.example.in/employment"
+    }
+  ],
+  "expect": {
+    "email": "box20@anytimefitness-20.com",
+    "phone": "81784621-58"
+  },
+  "also_theirs": [
+    "first65.last65@anytimefitness-65.com",
+    "box98@anytimefitness-98.com",
+    "18008299517",
+    "8626917560"
+  ],
+  "absent": [
+    "2290-0758539",
+    "602973162829",
+    "5493-1669-6",
+    "6216415486",
+    "094745690",
+    "216695316",
+    "4089-764",
+    "1-886-104-8995",
+    "6000128269427",
+    "548651748579",
+    "4957-4818",
+    "2054-2978-7",
+    "907186450"
+  ],
+  "absent_because": {
+    "2290-0758539": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "602973162829": "part of a percent-encoded URL",
+    "5493-1669-6": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "6216415486": "part of a URL's host",
+    "094745690": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "216695316": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "4089-764": "an element id",
+    "1-886-104-8995": "a US-format franchise support number in the anchor text of a link; the Indian region cannot parse it, so nothing here can read it as a contact, and the clinic-level numbers are elsewhere on the page",
+    "6000128269427": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "548651748579": "the page's own link is malformed, so nothing can read a contact out of it",
+    "4957-4818": "inside a src, href, class or data- attribute, which the text extractor never reads",
+    "2054-2978-7": "part of a percent-encoded URL",
+    "907186450": "inside a src, href, class or data- attribute, which the text extractor never reads"
+  },
+  "decided": {
+    "1-886-104-8995": "a US-format franchise support number in the anchor text of a link; the Indian region cannot parse it, so nothing here can read it as a contact, and the clinic-level numbers are elsewhere on the page"
+  }
+}

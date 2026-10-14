@@ -1,0 +1,29 @@
+{
+  "slug": "old-skool-fitness",
+  "harvested_at": "2026-10-14T09:52:27+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://old-skool-fitness.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://old-skool-fitness.example.in/contact"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://old-skool-fitness.example.in/about"
+    }
+  ],
+  "expect": {
+    "phone": "9952245786"
+  },
+  "also_theirs": [],
+  "absent": [],
+  "absent_because": {},
+  "decided": {}
+}

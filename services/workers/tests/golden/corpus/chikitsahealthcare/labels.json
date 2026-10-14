@@ -1,0 +1,43 @@
+{
+  "slug": "chikitsahealthcare",
+  "harvested_at": "2026-10-14T10:14:57+00:00",
+  "draft": false,
+  "pages": [
+    {
+      "role": "homepage",
+      "file": "homepage.html",
+      "url": "https://chikitsahealthcare.example.in/"
+    },
+    {
+      "role": "contact",
+      "file": "contact.html",
+      "url": "https://chikitsahealthcare.example.in/contact-us/"
+    },
+    {
+      "role": "about",
+      "file": "about.html",
+      "url": "https://chikitsahealthcare.example.in/who-we-are/"
+    }
+  ],
+  "expect": {},
+  "also_theirs": [],
+  "absent": [
+    "3882016-2664",
+    "6034018-8142",
+    "4267412-9366",
+    "3847882-1081",
+    "3846570-0219",
+    "1235895-0743",
+    "6602685449"
+  ],
+  "absent_because": {
+    "3882016-2664": "part of an image filename or the srcset beside it",
+    "6034018-8142": "part of an image filename or the srcset beside it",
+    "4267412-9366": "part of an image filename or the srcset beside it",
+    "3847882-1081": "part of an image filename or the srcset beside it",
+    "3846570-0219": "part of an image filename or the srcset beside it",
+    "1235895-0743": "part of an image filename or the srcset beside it",
+    "6602685449": "inside a src, href, class or data- attribute, which the text extractor never reads"
+  },
+  "decided": {}
+}
